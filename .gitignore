@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+.worktrees/
+
+# Local configuration and secrets
+.env
+.env.*
+*.pem
+*.key
+
+# External repositories and dependencies
+repos/
+vendor/
+third_party/
+
+# Non-versioned research artifacts
+data/
+outputs/
+checkpoints/
+logs/
+visualization/
+result/
+*.ckpt
+*.pth
+*.pt
+**/desdf.npy
+**/depth40.txt
+**/depth160.txt
+
+# Operating system and editor files
+.DS_Store
+.idea/
+.vscode/

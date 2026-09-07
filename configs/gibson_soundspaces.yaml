@@ -1,0 +1,17 @@
+data_root_env: AVFPLOC_DATA_ROOT
+scene: Springhill
+pose_indices: [0, 141, 283]
+audio:
+  sample_rate_hz: 8000
+  source_height_m: 1.25
+  microphone_count: 6
+  microphone_ring_radius_m: 0.05
+  direct_guard_samples: 16
+  echoscan_samples: 1024
+  indirect_rays: 4096
+  indirect_ray_depth: 6
+  source_rays: 512
+  source_ray_depth: 6
+  diffraction: false
+  transmission: false
+  materials_enabled: false
