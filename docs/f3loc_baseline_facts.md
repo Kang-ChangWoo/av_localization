@@ -4,7 +4,17 @@
 
 - External repository: `https://github.com/felix-ch/f3loc`
 - Reviewed source revision: `9e8027d9219ca505078283ebfd925580f476ab97`
-- Baseline source is not vendored here.
+- Since 2026-09-07 the baseline networks and localization utilities **are** vendored, at `third_party/f3loc`, unchanged from that revision. See the decision log for why the earlier no-vendoring boundary was reversed.
+
+## Training gaps in the released code
+
+Upstream released evaluation code and Lightning wrappers but no training script; its README states the training pipeline was Azure ML specific. Three mismatches block `trainer.fit()` on the released code as-is:
+
+- `depth_net_pl.training_step` reads `batch["img"]` and `batch["gt_rays"]`; `GridSeqDataset` emits `ref_img` and `ref_depth`.
+- `mv_depth_net.forward` indexes `x["ref_mask"]` and `x["src_mask"]` unconditionally, while the dataset omits those keys when roll/pitch augmentation is off, and `None` cannot survive `default_collate`.
+- `comp_d_net` receives already-trained `mv_net` and `mono_net` instances and freezes them, so the three networks must be trained in sequence and only the selector MLP is fit in the last stage.
+
+`mv_depth_net_pl` also defaults to `d_hyp=1.0` while `eval_observation.py` constructs the multi-view net with `d_hyp=-0.2`; training must use the evaluation value.
 
 ## Relevant behavior
 
