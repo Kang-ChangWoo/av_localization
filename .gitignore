@@ -20,6 +20,10 @@ venv/
 repos/
 vendor/
 third_party/
+# The F3Loc baseline is vendored deliberately so visual training is reproducible
+# from this repository alone. See docs/decision_log.md (2026-09-07).
+!third_party/
+!third_party/**
 
 # Non-versioned research artifacts
 data/
@@ -39,3 +43,6 @@ result/
 .DS_Store
 .idea/
 .vscode/
+
+# Local simulator environment (SoundSpaces / habitat-sim)
+.envs/
