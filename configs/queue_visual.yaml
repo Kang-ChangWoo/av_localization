@@ -1,0 +1,187 @@
+# Visual reproduction queue.
+#
+# Multi-GPU jobs take two devices each, so three run side by side on the
+# seven-GPU pool while single-GPU sweep jobs fill the remainder.
+# NOTE: device count sets the effective batch (per-GPU batch x devices).
+# All tier-0 jobs use the same count so they stay comparable to each other.
+#
+# Two tiers share one GPU pool. The reproduction runs come first and each takes
+# the whole pool, so they finish as fast as the hardware allows; the sweep runs
+# are declared after them and take one GPU each, so several run side by side
+# once the reproduction path is done.
+#
+# Sweep runs are shorter and single-GPU, so their effective batch differs from
+# the reproduction runs. They rank settings; the winner is worth re-running with
+# the full multi-GPU recipe.
+#
+#   python scripts/run_queue.py --jobs configs/queue_visual.yaml
+
+gpus: "1,2,3,4,5,6,7"     # GPU 0 left free
+
+defaults:
+  eval: [gibson_f, gibson_g]
+  eval_bn_modes: [upstream]   # the protocol the published numbers use
+  devices: 1
+
+jobs:
+  # ---- tier 0: maximum fidelity to the reference implementation -----------
+  # Every value that exists in upstream's code is taken from upstream's code:
+  # bare Adam at 1e-3, no scheduler, no gradient clipping, fp32. These are the
+  # runs to compare against the published table.
+  - name: mono_faithful
+    net: mono
+    devices: 2
+    config: configs/visual_mono_faithful.yaml
+    eval_bn_modes: [upstream, eval]
+
+  - name: mono_faithful_noshape
+    net: mono
+    devices: 2
+    config: configs/visual_mono_faithful.yaml
+    eval_bn_modes: [upstream, eval]
+    # upstream depth_net_pl defaults shape_loss_weight to None; the paper says
+    # the mono net uses it. Only one of these two can match the release.
+    args: {set: ["model.shape_loss_weight=null"]}
+
+  - name: mv_faithful
+    net: mv
+    devices: 2
+    config: configs/visual_mv_faithful.yaml
+    eval_bn_modes: [upstream, eval]
+
+  - name: comp_faithful
+    net: comp
+    devices: 2
+    config: configs/visual_comp_faithful.yaml
+    eval_bn_modes: [upstream, eval]
+    after: [mono_faithful, mv_faithful]
+    args:
+      mono_ckpt: outputs/mono_faithful/mono.ckpt
+      mv_ckpt: outputs/mv_faithful/mv.ckpt
+
+  # ---- tier A: tuned reproduction (kept for comparison) -------------------
+  - name: mono_primary
+    eval_bn_modes: [eval, upstream]   # compare against the paper AND with BatchNorm fixed
+    net: mono
+    devices: 2
+    config: configs/visual_mono.yaml
+
+  - name: mv_primary
+    eval_bn_modes: [eval, upstream]   # compare against the paper AND with BatchNorm fixed
+    net: mv
+    devices: 2
+    config: configs/visual_mv.yaml
+
+  - name: comp_primary
+    eval_bn_modes: [eval, upstream]   # compare against the paper AND with BatchNorm fixed
+    net: comp
+    devices: 2
+    config: configs/visual_comp.yaml
+    after: [mono_primary, mv_primary]
+    args:
+      mono_ckpt: outputs/mono_primary/mono.ckpt
+      mv_ckpt: outputs/mv_primary/mv.ckpt
+
+  # ---- tier B: monocular sweep, one GPU each ------------------------------
+  - name: mono_lr1e-4
+    net: mono
+    args: {epochs: 4, lr: 1.0e-4}
+
+  - name: mono_lr3e-4_seed1
+    net: mono
+    args: {epochs: 4, lr: 3.0e-4, seed: 1}
+
+  - name: mono_lr1e-3
+    net: mono
+    args: {epochs: 4, lr: 1.0e-3}
+
+  - name: mono_shape_off
+    net: mono
+    args: {epochs: 4, set: ["model.shape_loss_weight=null"]}
+
+  - name: mono_shape_0p5
+    net: mono
+    args: {epochs: 4, set: ["model.shape_loss_weight=0.5"]}
+
+  - name: mono_shape_2
+    net: mono
+    args: {epochs: 4, set: ["model.shape_loss_weight=2.0"]}
+
+  - name: mono_views_all
+    net: mono
+    # 4x the monocular supervision; measures how far above the paper that goes
+    args: {epochs: 4, set: ["data.views=all"]}
+
+  - name: mono_upstream_optim
+    net: mono
+    # upstream configure_optimizers exactly: bare Adam at 1e-3, no schedule
+    args: {epochs: 4, lr: 1.0e-3, set: ["model.schedule=none", "model.warmup_steps=0"]}
+
+  - name: mono_only_f
+    net: mono
+    args: {epochs: 4, datasets: [gibson_f]}
+
+  - name: mono_only_g
+    net: mono
+    args: {epochs: 4, datasets: [gibson_g]}
+
+  - name: mono_rollpitch
+    net: mono
+    args:
+      epochs: 4
+      set: ["data.add_rp=true", "data.roll=0.1", "data.pitch=0.1"]
+
+  # ---- tier B: multi-view sweep ------------------------------------------
+  - name: mv_lr1e-4
+    net: mv
+    args: {epochs: 8, lr: 1.0e-4}
+
+  - name: mv_lr3e-4_seed1
+    net: mv
+    args: {epochs: 8, lr: 3.0e-4, seed: 1}
+
+  - name: mv_lr1e-3
+    net: mv
+    args: {epochs: 8, lr: 1.0e-3}
+
+  - name: mv_shape_1
+    net: mv
+    args: {epochs: 8, set: ["model.shape_loss_weight=1.0"]}
+
+  - name: mv_dhyp_upstream_default
+    net: mv
+    # ablation: mv_depth_net_pl's own default, which eval_observation.py does not use
+    args: {epochs: 8, set: ["model.d_hyp=1.0"]}
+
+  - name: mv_only_f
+    net: mv
+    args: {epochs: 8, datasets: [gibson_f]}
+
+  # ---- tier B: complementary sweep (needs the tier A checkpoints) ---------
+  - name: comp_lr1e-3
+    net: comp
+    after: [mono_primary, mv_primary]
+    args:
+      epochs: 6
+      lr: 1.0e-3
+      mono_ckpt: outputs/mono_primary/mono.ckpt
+      mv_ckpt: outputs/mv_primary/mv.ckpt
+
+  - name: comp_lr1e-4
+    net: comp
+    after: [mono_primary, mv_primary]
+    args:
+      epochs: 6
+      lr: 1.0e-4
+      mono_ckpt: outputs/mono_primary/mono.ckpt
+      mv_ckpt: outputs/mv_primary/mv.ckpt
+
+  - name: comp_no_pred
+    net: comp
+    after: [mono_primary, mv_primary]
+    # selector keyed on relative pose only, without the two predicted depths
+    args:
+      epochs: 6
+      mono_ckpt: outputs/mono_primary/mono.ckpt
+      mv_ckpt: outputs/mv_primary/mv.ckpt
+      set: ["model.use_pred=false"]

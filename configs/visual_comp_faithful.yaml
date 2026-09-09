@@ -1,0 +1,51 @@
+# MAXIMUM-FIDELITY variant: every value that exists in the upstream code is
+# taken from the upstream code. Only things upstream never specifies
+# (epochs, batch size, which collections) remain AV-FPLoc choices.
+# Compare against configs/visual_comp.yaml, which is tuned instead.
+
+# Complementary network (paper: "Ours_f").
+#
+# comp_d_net freezes the monocular and multi-view networks in its constructor,
+# so this stage only fits the selector MLP that weights the two probability
+# volumes from the relative poses and the two predicted depths. It therefore
+# requires the checkpoints produced by the mono and mv stages.
+
+data:
+  # staged copy: the shared dataset export is not reliably fast enough
+  # for multi-GPU training. scripts/stage_f3loc_dataset.py refreshes this.
+  root: /root/storage/implementation/shared_audio/av_localization/av_localization/data/f3loc
+  datasets: [gibson_f, gibson_g]
+  L: 3
+  batch_size: 12          # per GPU
+  num_workers: 4          # per GPU (a 4-view sample is ~15 MB, so keep the pool small)
+  prefetch_factor: 2
+  add_rp: false
+  roll: 0.0
+  pitch: 0.0
+
+model:
+  lr: 1.0e-3              # upstream configure_optimizers default
+  shape_loss_weight: null
+  L: 3
+  d_min: 0.1
+  d_max: 15.0
+  d_hyp: -0.2
+  D: 128
+  F_W: 0.375
+  use_pred: true
+  warmup_steps: 0
+  schedule: none          # upstream returns a bare Adam, no scheduler
+  mono_ckpt: outputs/mono/mono.ckpt
+  mv_ckpt: outputs/mv/mv.ckpt
+
+train:
+  gpus: "1,2,3,4"
+  epochs: 10
+  precision: 32-true      # upstream code uses no mixed precision
+  gradient_clip_val: 0.0  # upstream does not clip
+  accumulate_grad_batches: 1
+  log_every_n_steps: 50
+  matmul_precision: high
+  seed: 0
+  run_name: comp_faithful
+  output_dir: outputs

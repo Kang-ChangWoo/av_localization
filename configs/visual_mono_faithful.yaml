@@ -1,0 +1,54 @@
+# MAXIMUM-FIDELITY variant: every value that exists in the upstream code is
+# taken from the upstream code. Only things upstream never specifies
+# (epochs, batch size, which collections) remain AV-FPLoc choices.
+# Compare against configs/visual_mono.yaml, which is tuned instead.
+
+# Monocular structural depth network (paper: "Ours_s").
+#
+# The paper does not publish training hyperparameters (they live in the
+# unavailable supplementary), so architecture values come from upstream's
+# evaluation defaults and optimisation values are AV-FPLoc choices. Every
+# deviation is called out in README.md.
+
+data:
+  # staged copy: the shared dataset export is not reliably fast enough
+  # for multi-GPU training. scripts/stage_f3loc_dataset.py refreshes this.
+  root: /root/storage/implementation/shared_audio/av_localization/av_localization/data/f3loc
+  datasets: [gibson_f, gibson_g]
+  L: 3
+  # "ref" keeps only the frame upstream's GridSeqDataset exposes as reference,
+  # so the sample definition matches the baseline exactly. "all" would treat
+  # every view as its own monocular sample -- valid, since depth40 has one
+  # target row per frame, but it quadruples supervision and overshoots the
+  # published numbers, so it is a sweep variant rather than the default.
+  views: ref
+  batch_size: 24          # per GPU
+  num_workers: 8          # per GPU
+  prefetch_factor: 2
+  add_rp: false           # the Gibson collections are upright; evaluation uses no masks
+  roll: 0.0
+  pitch: 0.0
+
+model:
+  lr: 1.0e-3              # upstream configure_optimizers default
+  shape_loss_weight: 1.0  # paper states the mono net adds the cosine shape term;
+                          # note upstream depth_net_pl defaults this to null
+  d_min: 0.1
+  d_max: 15.0
+  d_hyp: -0.2
+  D: 128
+  F_W: 0.375
+  warmup_steps: 0
+  schedule: none          # upstream returns a bare Adam, no scheduler
+
+train:
+  gpus: "1,2,3,4"         # GPU 0 left free; smaller pool = fewer concurrent readers
+  epochs: 20
+  precision: 32-true      # upstream code uses no mixed precision
+  gradient_clip_val: 0.0  # upstream does not clip
+  accumulate_grad_batches: 1
+  log_every_n_steps: 50
+  matmul_precision: high
+  seed: 0
+  run_name: mono_faithful
+  output_dir: outputs
