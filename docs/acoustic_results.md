@@ -20,18 +20,53 @@ python scripts/plot_probability_maps.py                       # figures
 
 ## 1. Reproduction fidelity on Gibson
 
-Same dataset, same protocol, same metric definitions as the paper, so these are
-directly comparable. Upstream evaluates mono and mv in train mode; `--bn-mode
-upstream` matches that and reproduces their published script bit-exactly.
+**Corrected 2026-09-09.** An earlier version of this section compared the
+retrained checkpoints against the paper's printed table and concluded the
+reproduction was at or above it. The authors' released weights are now
+downloaded (`scripts/fetch_official_checkpoints.sh`) and evaluated through the
+same code, which changes the reading.
 
-| | 0.1 m | 0.5 m | 1 m | 1 m/30° |
+The evaluation pipeline itself is verified. Running the official `comp.ckpt` on
+`gibson_g` reproduces the published row to within 0.1 point:
+
+| | 0.1 m | 0.5 m | 1 m | 1 m/30 deg |
 |---|---|---|---|---|
-| F3Loc paper, Ours_s (gibson_f) | 4.7% | 28.6% | 36.6% | 35.1% |
-| ours, mono (gibson_f) | 5.8% | 33.3% | **39.6%** | 38.6% |
-| F3Loc paper, Ours_m (gibson_f) | 13.2% | 40.9% | 45.2% | 43.7% |
-| ours, mv (gibson_f) | 13.6% | 41.9% | **47.2%** | 45.1% |
 | F3Loc paper, Ours_f (gibson_g) | 12.2% | 39.4% | 44.5% | 43.2% |
-| ours, comp (gibson_g) | 11.1% | 40.1% | **45.3%** | 43.6% |
+| official `comp.ckpt`, our eval | 12.2% | 39.3% | **44.4%** | 43.1% |
+
+That same verified pipeline does *not* reproduce the paper's monocular row from
+the released `mono.ckpt`, which scores ten points higher than the table says:
+
+| gibson_f, 1 m | paper | official ckpt |
+|---|---|---|
+| mono / Ours_s | 36.6% | **46.8%** |
+| mv / Ours_m | 45.2% | 47.3% |
+
+Since `comp` lands on its published number exactly, the discrepancy is not in
+this evaluation. The paper's Ours_s row is most likely not the standalone
+released `mono.ckpt` measured this way.
+
+**Our retrained checkpoints against the released ones**, which is the honest
+comparison and was not previously made:
+
+| | ours | official | difference |
+|---|---|---|---|
+| mono gibson_f | 39.6% | 46.8% | **−7.2** |
+| mono gibson_g | 35.4% | 43.5% | **−8.0** |
+| mv gibson_f | 47.2% | 47.3% | −0.0 |
+| mv gibson_g | 34.0% | 30.7% | +3.3 |
+| comp gibson_f | 49.0% | 47.4% | +1.6 |
+| comp gibson_g | 45.3% | 44.4% | +1.0 |
+
+The multiview and complementary branches match or beat the released weights.
+The monocular branch is 7 to 8 points behind. Upstream published no training
+script, so the learning rate, epoch count, and shape-loss weight are this
+project's choices, and they are evidently poor for the single-frame net.
+
+**This bounds every Replica acoustic number in this document.** The visual
+baseline there is the retrained `mono`, so it sits 7 to 8 points below what the
+architecture can reach. A correctly trained visual branch would raise the
+as-is bar and would probably shrink the acoustic gain reported below.
 
 ## 2. The acoustic feature has to keep frequency
 
