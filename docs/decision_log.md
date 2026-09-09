@@ -44,3 +44,44 @@
 - Acoustic field of view, beam count, yaw-zero convention, and invalid-ray policy.
 - Likelihood calibration: fixed temperature, learned temperature, or confidence-conditioned fusion.
 - Valid-pose-mask construction: occupancy erosion radius, navigability source, and boundary policy.
+
+## 2026-09-09 — Acoustic score is one-sided, not symmetric
+
+**Decision:** Add `track1_core/likelihood/events.py` with an asymmetric dense
+score and a sparse geometric event-matching score, keeping `score_envelopes`
+unchanged as the `l1` baseline.
+
+**Reason:** A symmetric normalised L1 asks a 2D floorplan to equal a real room.
+Furniture, scattering, and floor/ceiling paths are unpredictable from a
+floorplan and penalise the candidate anyway. The checkable claim is only that
+predicted paths are a subset of real arrivals, which is what the one-sided score
+measures. Measured on 180 real-scan observations across the three test scenes it
+moves GT percentile from 60.0 to 66.0 and median GT rank from 411 to 342 of 700.
+
+## 2026-09-09 — Predicted and observed delays share the window clock
+
+**Decision:** `EventMatchConfig.path_m_to_ms` subtracts `r/c + guard/fs`, and
+`tests/test_acoustic_events.py::test_time_origin_convention` pins it.
+
+**Reason:** The reflection window starts at the direct peak plus the guard, and
+the direct peak is itself the ring-radius crossing. Predicted absolute path
+times were therefore 2.146 ms ahead of observed window times, more than twice
+the 1 ms matching tolerance, so the two sides did not overlap. Correcting it
+moved GT rank on office_4 from 249 to 85 of 683. Time-origin conventions between
+a synthesised proxy and a measured response now have a test rather than a
+comment.
+
+## 2026-09-09 — The 2D delay-only representation is the bottleneck
+
+**Decision:** Stop improving the 2D matching. Treat inter-channel time
+difference across the ring, or a rendered candidate grid, as the next direction.
+
+**Reason:** With the comparison fixed, the tracer verified against DESDF to
+0.006 m, and the time convention tested, the matched-domain control still leaves
+the true pose at rank 199 of 700 with no clutter present at all. Reflection
+orders 2 and 3, one-corner NLOS paths, robust path dropout, amplitude
+confidence, three temporal tolerances, and two observation-sparsity policies
+were each measured and none improved ranking. A round-trip delay set from a
+co-located source and receiver is close to a rotationally symmetric signature of
+local wall distances, and rooms contain many cells that share one. Full evidence
+in `docs/acoustic_event_matching.md`.
