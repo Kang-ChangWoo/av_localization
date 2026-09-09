@@ -69,7 +69,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--indirect-rays", type=int, default=4096)
     p.add_argument("--ray-depth", type=int, default=6)
     p.add_argument("--source-rays", type=int, default=512)
+    p.add_argument("--diffraction", action="store_true",
+                   help="match the shipped recordings, which enable it")
+    p.add_argument("--max-diffraction-order", type=int, default=10)
     p.add_argument("--limit", type=int, default=None, help="cells to render (smoke tests)")
+    p.add_argument("--shard", type=int, default=0,
+                   help="this worker's index; cells are split round-robin so every "
+                        "shard covers the whole room and a partial run is still usable")
+    p.add_argument("--shards", type=int, default=1)
     p.add_argument("--progress-every", type=int, default=100)
     return p.parse_args()
 
@@ -97,7 +104,17 @@ def build_simulator(glb: str, args):
     ac.sourceRayDepth = args.ray_depth
     ac.direct = True
     ac.indirect = True
-    ac.diffraction = False
+    # The shipped recordings were re-rendered with diffraction on to order 10.
+    # A candidate grid without it is a strictly simpler model than the
+    # observation, which is the mismatch that made the matched-domain score
+    # collapse from GT rank 6 to 1474; these have to agree.
+    ac.diffraction = args.diffraction
+    if args.diffraction:
+        try:
+            ac.maxDiffractionOrder = args.max_diffraction_order
+        except AttributeError:
+            print("[render] this build exposes no maxDiffractionOrder; "
+                  "diffraction is on at the engine default")
     ac.transmission = False
     ac.enableMaterials = False
 
@@ -125,7 +142,11 @@ def main() -> int:
     rows, cols = np.nonzero(mask)
     if args.limit:
         rows, cols = rows[: args.limit], cols[: args.limit]
-    print(f"[render] {scene}: {len(rows)} candidate cells x {args.yaw_bins} yaw x 6 mics")
+    if args.shards > 1:
+        keep = np.arange(len(rows)) % args.shards == args.shard
+        rows, cols = rows[keep], cols[keep]
+    print(f"[render] {scene}: {len(rows)} candidate cells x {args.yaw_bins} yaw x 6 mics"
+          + (f"  [shard {args.shard}/{args.shards}]" if args.shards > 1 else ""))
 
     sim = build_simulator(glb, args)
     node = sim.get_active_scene_graph().get_root_node().cumulative_bb

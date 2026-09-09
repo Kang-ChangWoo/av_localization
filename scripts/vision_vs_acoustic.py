@@ -347,7 +347,11 @@ def main() -> int:
     fig.savefig(p, dpi=130); plt.close(fig)
     print(f"\nwrote {p}")
 
-    o = REPO_ROOT / "outputs" / "metrics" / "vision_vs_acoustic.json"
+    # The metrics path has to follow --out-dir, not sit at a fixed location:
+    # a second run with different checkpoints silently overwrote the first
+    # because only the figure path was parameterised.
+    o = (out_dir / "vision_vs_acoustic.json") if args.out_dir \
+        else (REPO_ROOT / "outputs" / "metrics" / "vision_vs_acoustic.json")
     slim = {n: [{k: v for k, v in r.items() if not k.startswith("_")} for r in rs]
             for n, rs in recs.items() if rs}
     o.write_text(json.dumps({"condition": args.condition, "fuse_weight": args.fuse_weight,

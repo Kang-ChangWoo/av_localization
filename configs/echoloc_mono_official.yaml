@@ -1,0 +1,48 @@
+# Monocular depth on the Replica echoloc_dataset, with the authors' own
+# optimiser settings.
+#
+# Those settings are not in the paper and not in the released code, but the
+# released checkpoints carry Lightning optimizer state, which recovers them:
+# Adam, constant lr 1e-3, no weight decay, no scheduler, and model selection on
+# l1_loss-valid. The authors trained the monocular net for 69,400 steps and
+# reached l1_loss-valid 0.1618.
+#
+# The earlier Replica run used lr 3e-4 with a cosine decay over 5,500 steps,
+# which is a third of the learning rate and a twelfth of the training. This
+# config matches the authors' step budget instead: 6,600 chunks over both
+# collections at batch 24 is 275 steps/epoch, so 250 epochs is 68,750 steps.
+
+data:
+  root: /root/storage/echoloc_dataset
+  datasets: [replica_f, replica_g]
+  L: 3
+  views: ref
+  batch_size: 48
+  num_workers: 8
+  prefetch_factor: 2
+  add_rp: false           # the renderer fixes roll = pitch = 0
+  roll: 0.0
+  pitch: 0.0
+
+model:
+  lr: 0.0014            # sqrt-scaled from the authors 1e-3 at effective batch 96
+  shape_loss_weight: 1.0
+  d_min: 0.1
+  d_max: 15.0
+  d_hyp: -0.2
+  D: 128
+  F_W: 0.375              # matches K = [[240,0,320],[0,240,240],[0,0,1]]
+  warmup_steps: 0         # the authors used no warmup and no decay
+  schedule: none
+
+train:
+  gpus: "0,1,2,3"
+  epochs: 250
+  precision: bf16-mixed
+  gradient_clip_val: 1.0
+  accumulate_grad_batches: 1
+  log_every_n_steps: 50
+  matmul_precision: high
+  seed: 0
+  run_name: echoloc_mono_hb
+  output_dir: outputs

@@ -1,0 +1,45 @@
+# Complementary selector on the Replica-based echoloc_dataset.
+#
+# Only meaningful once replica_g is present: replica_f is forward-motion only,
+# so a selector trained on it alone would just learn "always trust mv". The
+# 35% in-place-rotation chunks in replica_g are the degenerate case the
+# selector exists to detect.
+#
+# Requires the mono and mv checkpoints trained on the same two collections.
+
+data:
+  root: /root/storage/echoloc_dataset
+  datasets: [replica_f, replica_g]
+  L: 3
+  batch_size: 12
+  num_workers: 3          # the SoundSpaces re-render owns most of the CPU
+  prefetch_factor: 2
+  add_rp: false
+  roll: 0.0
+  pitch: 0.0
+
+model:
+  lr: 5.0e-4              # only the ~5.3k-parameter selector MLP is trainable
+  shape_loss_weight: null
+  L: 3
+  d_min: 0.1
+  d_max: 15.0
+  d_hyp: -0.2
+  D: 128
+  F_W: 0.375
+  use_pred: true
+  warmup_steps: 100
+  mono_ckpt: outputs/echoloc_mono_hb/mono.ckpt
+  mv_ckpt: outputs/echoloc_mv_hb/mv.ckpt
+
+train:
+  gpus: "5,6"
+  epochs: 25
+  precision: bf16-mixed
+  gradient_clip_val: 1.0
+  accumulate_grad_batches: 1
+  log_every_n_steps: 20
+  matmul_precision: high
+  seed: 0
+  run_name: echoloc_comp_hb
+  output_dir: outputs

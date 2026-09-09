@@ -51,3 +51,7 @@ result/
 # in its README. Reproducible with scripts/fetch_official_checkpoints.sh.
 outputs/official_ckpt/
 outputs/f3loc_official/
+
+__pycache__/
+**/__pycache__/
+*.pyc

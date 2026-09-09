@@ -1,8 +1,17 @@
 # Can sound assist visual floorplan localization?
 
-Results as of 2026-09-09. Everything here is measured with F3Loc's own metric
+Results as of 2026-09-10. Everything here is measured with F3Loc's own metric
 definitions on the Replica-derived dataset at `/root/storage/echoloc_dataset`,
 except §1, which is on Gibson against the published table.
+
+§4 and §5 were re-measured on 2026-09-10 against a candidate grid re-rendered to
+match the shipped recordings, after the dataset was re-rendered underneath this
+code at a different sample rate and every acoustic number collapsed to chance.
+`docs/data_provenance_incident.md` records what happened. The recovered numbers
+agree with the pre-incident ones, so the earlier results were sound and the
+break was in reading the files, not in the method. §2 and §3 still quote the
+pre-incident grid; their conclusions were re-checked but their tables were not
+re-run.
 
 The question is not whether sound can localize. It cannot, on its own, in this
 setting. The question is whether sound can reject visually plausible but
@@ -12,10 +21,10 @@ uncertain, and only once the feature keeps frequency.
 Reproduce with:
 
 ```
-python scripts/margin_gated_fusion.py --feature band          # §3, §4
-python scripts/stft_band_sweep.py                             # §2
-python scripts/f3loc_comparison.py                            # §1, §5
-python scripts/plot_probability_maps.py                       # figures
+python scripts/replica_official_eval.py --per-scene            # §4, §5
+python scripts/envelope_rerank_eval.py --grid-dir outputs/acoustic_grid_v2
+python scripts/stft_band_sweep.py                              # §2
+python scripts/plot_probability_maps.py                        # figures
 ```
 
 ## 1. Reproduction fidelity on Gibson
@@ -126,60 +135,94 @@ computable at inference time, so the gate is part of the method, not an oracle.
 Entropy, the obvious alternative signal, orders the strata the wrong way
 (+4.2 confident, −1.8 ambiguous) and should not be used.
 
-## 4. Result, band feature with the margin gate
+## 4. Result, on the metric set the papers report
 
-Vision produces the `(H, W, 36)` posterior and its top-50 poses; the acoustic
-term only reorders that shortlist, and only when the margin is below threshold.
-Candidate generation is entirely visual, and orientation always comes from
-vision.
+Every earlier Replica number in this project was recall at 1 m, which is one row
+of the four that F3Loc, SemRayLoc and DisCo-FLoc all report. It is also the most
+forgiving: a fusion rule can gain at 1 m by moving mass into roughly the right
+room while getting no better at putting the pose in the right 0.1 m cell or at
+recovering heading. `scripts/replica_official_eval.py` runs the full set, error
+definitions copied from `f3loc/eval_observation.py`.
 
-| | 0.1 m | 0.5 m | 1 m | 1 m/30° | vs vision |
+Five rows per backbone, 600 poses over the three test scenes and both
+collections, candidate grid `outputs/acoustic_grid_v2`, envelope at 2 ms.
+
+**F3Loc mono**, fusion weight 2, gate at q=0.6:
+
+| | 0.1 m | 0.5 m | 1 m | 1 m/30 deg | median | vs vision |
+|---|---|---|---|---|---|---|
+| vision only | 5.2% | 30.0% | 38.3% | 34.7% | 2.15 m | |
+| audio only | 3.0% | 13.8% | 23.7% | — | 3.13 m | −14.7 |
+| rerank top-50 | 4.8% | 30.7% | 41.5% | 35.5% | 1.91 m | +3.2 |
+| fused | 3.3% | 27.8% | 41.3% | 33.8% | 1.72 m | +3.0 |
+| **gated fusion** | **5.7%** | **36.0%** | **45.3%** | **38.8%** | **1.39 m** | **+7.0** |
+
+**DisCo-FLoc RRP**, fusion weight 4:
+
+| | 0.1 m | 0.5 m | 1 m | 1 m/30 deg | median | vs vision |
+|---|---|---|---|---|---|---|
+| vision only | 0.8% | 15.5% | 31.0% | 29.7% | 2.42 m | |
+| audio only | 3.0% | 13.8% | 23.7% | — | 3.13 m | −7.3 |
+| rerank top-50 | 2.3% | 20.7% | 34.3% | 31.5% | 2.34 m | +3.3 |
+| **fused** | **2.5%** | **23.7%** | **40.3%** | **35.5%** | **1.90 m** | **+9.3** |
+| gated fusion | 1.8% | 19.5% | 36.8% | 32.2% | 1.92 m | +5.8 |
+
+Four things the 1 m row alone did not show.
+
+**The gain survives the tight thresholds.** Gated mono improves 0.1 m as well as
+1 m, and cuts median error from 2.15 m to 1.39 m. The fusion is not only moving
+mass into the right room.
+
+**Heading improves even though sound supplies none.** The acoustic score is one
+number per cell, flat over the 36 heading bins, so it cannot move the per-cell
+heading argmax; every fused heading is vision's own heading at whichever cell
+wins. The 1 m/30 deg gain (+4.2 mono, +5.8 DisCo) comes entirely from landing on
+a cell whose visual heading was already right.
+
+**Audio alone is not competitive and does not need to be.** It reaches 23.7% at
+1 m against vision's 38.3%, and adds 7.0 points on top of it. What it
+contributes is decorrelated error, not accuracy.
+
+**The two backbones want different rules.** Mono is best gated, DisCo is best
+fused unconditionally. DisCo's confidence is less informative here: its margin
+does not separate its own successes from its failures as cleanly as mono's does,
+so gating on it discards good fusions.
+
+## 5. The gain tracks visual weakness, per scene
+
+| backbone | scene | vision 1 m | audio 1 m | best 1 m | gain |
 |---|---|---|---|---|---|
-| mono, vision only | 4.5% | 30.1% | 38.2% | 34.9% | |
-| mono + acoustic | 5.6% | 36.2% | 44.6% | 40.6% | **+6.4** |
-| mv, vision only | 5.8% | 24.3% | 32.9% | 28.9% | |
-| mv + acoustic | 6.9% | 28.6% | 37.0% | 32.9% | **+4.1** |
-| comp, vision only | 5.1% | 31.5% | 38.6% | 35.5% | |
-| comp + acoustic | 5.6% | 37.3% | 45.2% | 41.4% | **+6.6** |
+| mono | office_4 | 20.0% | 34.0% | 32.5% | **+12.5** |
+| mono | apartment_2 | 18.5% | 27.0% | 32.0% | **+13.5** |
+| mono | frl_apartment_5 | 76.5% | 10.0% | 75.0% | −1.5 |
+| DisCo RRP | office_4 | 32.0% | 34.0% | 43.5% | **+11.5** |
+| DisCo RRP | apartment_2 | 32.0% | 27.0% | 41.5% | +9.5 |
+| DisCo RRP | frl_apartment_5 | 29.0% | 10.0% | 36.0% | +7.0 |
 
-`q=0.6` was chosen by looking at the whole sweep, so it is optimistic. Fitting
-the threshold on replica_f alone and reporting on replica_g removes that:
+frl_apartment_5 is the test. It is the one room where sound is nearly useless on
+its own, at 10% against a chance of roughly 0. Mono already reaches 76.5% there
+and correctly gains nothing; the gate limits the damage to 1.5 points. DisCo
+reaches only 29.0% in the same room off the same images, and there sound is
+worth +7.0 despite being weak in absolute terms.
 
-| held out on replica_g | 0.1 m | 0.5 m | 1 m | vs vision |
-|---|---|---|---|---|
-| mono vision | 3.7% | 29.7% | 37.0% | |
-| mono gated | 5.1% | 36.2% | **43.6%** | **+6.6** |
-| mv vision | 3.2% | 17.7% | 29.1% | |
-| mv gated | 4.4% | 22.6% | **32.4%** | **+3.3** |
-| comp vision | 4.1% | 30.7% | 37.2% | |
-| comp gated | 5.1% | 36.3% | **44.1%** | **+6.9** |
+So the axis is not the room and not the recording quality. It is how much the
+visual posterior is failing, and that holds within a room across two backbones,
+not only across rooms. A single-number claim of the form "sound adds N points"
+is the wrong shape for this result.
 
-**Per scene** (mono, gate at q=0.6), so an average cannot hide a gain that only
-one room produces:
+**What caps reranking.** Truth is inside vision's top-50 only 83–84% of the
+time, and reranking cannot exceed that. Weighted fusion is not capped the same
+way, which is why it beats reranking for DisCo (+9.3 against +3.3).
 
-| collection | scene | n | vision 1 m | gated 1 m | gain |
-|---|---|---|---|---|---|
-| replica_f | apartment_2 | 300 | 24.3% | 29.0% | +4.7 |
-| replica_f | frl_apartment_5 | 300 | 74.3% | 72.0% | −2.3 |
-| replica_f | office_4 | 300 | 19.3% | 32.7% | **+13.3** |
-| replica_g | apartment_2 | 300 | 17.0% | 29.7% | **+12.7** |
-| replica_g | frl_apartment_5 | 300 | 71.3% | 73.7% | +2.3 |
-| replica_g | office_4 | 300 | 22.7% | 30.3% | +7.7 |
+## 5b. How large is this, in F3Loc's terms
 
-Five of six pairs gain. The gain tracks visual weakness: the two rooms where
-vision sits near 20% gain 5–13 points, and frl_apartment_5, where vision already
-reaches 71–74%, gains nothing. That is the same effect the gate was built for,
-now visible across rooms rather than across poses.
+In the paper, going from a single view to multiview is 36.6% to 45.2% at 1 m, so
+a whole extra camera view is worth +8.6 points under this metric. The acoustic
+gain is +7.0 for mono and +9.3 for DisCo, which is the size of an extra camera,
+from a microphone and a pre-rendered grid.
 
-## 5. How large is this, in F3Loc's terms
-
-In the paper, going from a single view to multiview is 36.6% → 45.2% at 1 m, so
-a whole extra camera view is worth +8.6 points under this metric. The held-out
-acoustic gain is +6.6 (mono), +3.3 (mv), +6.9 (comp), or roughly 40–80% of an
-extra view, at no extra view.
-
-The paper's gap is Gibson and ours is Replica, so this is a sense of scale
-rather than an equality. What it establishes is that the gain is the size of an
+The paper's gap is Gibson and this is Replica, so it is a sense of scale rather
+than an equality. What it establishes is that the gain is the size of an
 architectural change, not noise.
 
 ## 6. What is not established
