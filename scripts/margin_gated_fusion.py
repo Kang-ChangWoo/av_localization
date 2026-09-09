@@ -53,6 +53,15 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--guard-samples", type=int, default=16)
     p.add_argument("--usable-samples", type=int, default=1024)
     p.add_argument("--sample-rate", type=int, default=8000)
+    p.add_argument("--feature", default="chan_shape", choices=["chan_shape", "band"],
+                   help="broadband energy envelope, or the same split into "
+                        "frequency bands")
+    p.add_argument("--nfft", type=int, default=64)
+    p.add_argument("--hop", type=int, default=16)
+    p.add_argument("--bands", nargs="+", default=None,
+                   help="band edges in Hz, e.g. '0 500 1500 4000'. One band "
+                        "('0 4000') is the control that isolates the coarser "
+                        "time resolution from the frequency split.")
     p.add_argument("--n-poses", type=int, default=300)
     p.add_argument("--holdout", default="replica_g",
                    help="collection kept out when the threshold is chosen")
@@ -61,11 +70,52 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
+# Bands, in Hz. 8 kHz sampling puts Nyquist at 4 kHz. The split is by
+# wavelength against furniture size: 343/500 = 69 cm diffracts around a chair
+# and carries wall geometry, 343/3000 = 11 cm scatters off it and carries the
+# clutter the floorplan does not have.
+STFT_BANDS = [(0, 500), (500, 1500), (1500, 4000)]
+
+
 def featurize(env: np.ndarray) -> np.ndarray:
+    """``chan_shape``: per-channel temporal shape, plus the energy split across
+    channels, which is what carries direction."""
     per = env / env.sum(axis=-1, keepdims=True).clip(1e-12)
     total = env.sum(axis=(-1, -2))
     split = env.sum(axis=-1) / np.clip(total[..., None], 1e-12, None)
     return np.concatenate([per, np.repeat(split[..., None], 4, axis=-1)], axis=-1)
+
+
+def band_envelope(rir: np.ndarray, guard: int, usable: int, nfft: int, hop: int,
+                  sample_rate: int, bands: list) -> np.ndarray:
+    """Energy per (channel, band, frame): ``chan_shape`` with a frequency axis.
+
+    The broadband envelope sums over frequency, so a wall return and the
+    furniture scatter arriving in the same 0.125 ms window are indistinguishable.
+    Splitting by band keeps them apart wherever they differ in spectrum, which
+    is the only axis along which the model's error is known to be structured.
+    """
+    peak = int(np.abs(rir).max(axis=0).argmax())
+    seg = rir[:, peak + guard: peak + guard + usable]
+    if seg.shape[1] < usable:
+        seg = np.pad(seg, ((0, 0), (0, usable - seg.shape[1])))
+    freqs = np.fft.rfftfreq(nfft, 1.0 / sample_rate)
+    sel = [(freqs >= lo) & (freqs < hi) for lo, hi in bands]
+    w = np.hanning(nfft)
+    frames = 1 + (usable - nfft) // hop
+    out = np.empty((seg.shape[0], len(bands), frames), dtype=np.float32)
+    for t in range(frames):
+        p = np.abs(np.fft.rfft(seg[:, t * hop: t * hop + nfft] * w, axis=-1)) ** 2
+        for b, s in enumerate(sel):
+            out[:, b, t] = p[:, s].sum(-1)
+    return out.reshape(seg.shape[0] * len(bands), frames)
+
+
+# The band description is laid out as (channel x band, frame), i.e. the same
+# shape contract as the broadband envelope with the rows split by frequency, so
+# the identical normalisation applies: temporal shape within each row, plus the
+# energy split across rows, with the overall render gain cancelling either way.
+featurize_band = featurize
 
 
 def main() -> int:
@@ -91,6 +141,25 @@ def main() -> int:
     win = max(1, int(round(args.sample_rate * args.window_ms / 1000.0)))
     CLS = {"mono": MonoDepthModule, "mv": MVDepthModule, "comp": CompDepthModule}
 
+    if args.feature == "chan_shape":
+        def describe(rir):
+            return envelope(rir, args.guard_samples, args.usable_samples, win)
+        featurize_fn = featurize
+    else:
+        if args.bands:
+            e = [float(x) for x in args.bands]
+            bands = list(zip(e[:-1], e[1:]))
+        else:
+            bands = STFT_BANDS
+
+        def describe(rir):
+            return band_envelope(rir, args.guard_samples, args.usable_samples,
+                                 args.nfft, args.hop, args.sample_rate, bands)
+        featurize_fn = featurize_band
+        print(f"[gate] bands={bands}  nfft={args.nfft} hop={args.hop} "
+              f"({1000*args.hop/args.sample_rate:.2f} ms per frame)")
+    print(f"[gate] feature={args.feature}")
+
     # geometry and acoustic candidates are per (collection, scene) because the
     # floorplan raster differs between the two collections
     geo = {}
@@ -105,14 +174,15 @@ def main() -> int:
             pg = PoseGrid.from_desdf(desdf, occ.shape)
             blob = np.load(g)
             cand, index = blob["rir"], blob["index"]
-            env = np.stack([envelope(c, args.guard_samples, args.usable_samples, win) for c in cand])
+            env = np.stack([describe(c) for c in cand])
             env /= env.sum(axis=(1, 2), keepdims=True).clip(1e-20)
-            acoustic = np.zeros((pg.height, pg.width, env.shape[1], env.shape[2]))
+            acoustic = np.zeros((pg.height, pg.width, env.shape[1], env.shape[2]),
+                                dtype=np.float32)
             acoustic[index[:, 0], index[:, 1]] = env
             geo[(coll, scene)] = dict(
                 pg=pg, mask=valid_pose_mask(occ, pg),
                 desdf_t=torch.tensor(desdf["desdf"], device=device),
-                acoustic=featurize(acoustic),
+                acoustic=featurize_fn(acoustic),
                 poses=np.array([[float(v) for v in l.split()]
                                 for l in open(root / coll / scene / "poses.txt") if l.strip()]))
     print(f"[gate] {len(geo)} (collection, scene) pairs, K={args.topk}")
@@ -171,8 +241,8 @@ def main() -> int:
                 second = flat[order][far].max() if far.any() else 0.0
                 margin = float(np.log((flat[order[0]] + 1e-300) / (second + 1e-300)))
 
-                obs = envelope(np.load(f), args.guard_samples, args.usable_samples, win)
-                obs_f = featurize(obs / max(obs.sum(), 1e-20))
+                obs = describe(np.load(f))
+                obs_f = featurize_fn(obs / max(obs.sum(), 1e-20))
                 cand = G["acoustic"][r_, c_]
                 nw = min(cand.shape[2], obs_f.shape[1])
                 ac = -np.abs(cand[:, :, :nw] - obs_f[None, :, :nw]).sum(axis=(1, 2))
@@ -182,16 +252,17 @@ def main() -> int:
                                 for o in o_])
                 # visual score on the shortlist, log domain, for the soft gate
                 vlog = np.log(np.clip(flat[order], 1e-300, None))
-                recs.append(dict(coll=coll, margin=margin, err=err, yaw=yaw,
+                recs.append(dict(coll=coll, scene=scene, margin=margin, err=err, yaw=yaw,
                                  ac=ac, vlog=vlog))
 
         if not recs:
             continue
         margins = np.array([r["margin"] for r in recs])
 
-        def evaluate(pick_fn):
-            e = np.array([r["err"][pick_fn(r)] for r in recs])
-            y = np.array([r["yaw"][pick_fn(r)] for r in recs])
+        def evaluate(pick_fn, subset=None):
+            g = recs if subset is None else subset
+            e = np.array([r["err"][pick_fn(r)] for r in g])
+            y = np.array([r["yaw"][pick_fn(r)] for r in g])
             return dict(n=int(len(e)), r01=float((e < 0.1).mean()),
                         r05=float((e < 0.5).mean()), r1=float((e < 1.0).mean()),
                         r1_30=float(((e < 1.0) & (y < 30)).mean()),
@@ -220,6 +291,21 @@ def main() -> int:
 
             rows[f"soft gate beta={beta}"] = evaluate(pick)
 
+        # --- per scene and per collection, so an average cannot hide a gain
+        # that only one room produces -------------------------------------
+        tau_mid = float(np.quantile(margins, 0.6))
+        gate = lambda r, t=tau_mid: int(r["ac"].argmax()) if r["margin"] < t else 0
+        breakdown = []
+        for coll in sorted({r["coll"] for r in recs}):
+            for scene in sorted({r["scene"] for r in recs if r["coll"] == coll}):
+                sub = [r for r in recs if r["coll"] == coll and r["scene"] == scene]
+                v = evaluate(lambda r: 0, sub)
+                a = evaluate(gate, sub)
+                breakdown.append(dict(collection=coll, scene=scene, n=v["n"],
+                                      vision_r1=v["r1"], gated_r1=a["r1"],
+                                      gain=a["r1"] - v["r1"],
+                                      vision_r05=v["r05"], gated_r05=a["r05"]))
+
         # --- honest check: choose tau on one collection, report on the other -
         if args.holdout in {r["coll"] for r in recs}:
             fit = [r for r in recs if r["coll"] != args.holdout]
@@ -247,7 +333,7 @@ def main() -> int:
                     r1=float((he < 1).mean()), r1_30=float(((he < 1) & (hy < 30)).mean()),
                     median_m=float(np.median(he)))
 
-        results[spec] = dict(rows=rows, sweep=sweep,
+        results[spec] = dict(rows=rows, sweep=sweep, breakdown=breakdown,
                              margin_quantiles={str(q): float(np.quantile(margins, q))
                                                for q in (0.1, 0.25, 0.5, 0.75, 0.9)})
 
@@ -259,6 +345,15 @@ def main() -> int:
             d = "" if k == "vision only" else f"{100*(m['r1']-base):+9.1f}"
             print(f"{k:36s} {100*m['r01']:6.1f}% {100*m['r05']:6.1f}% "
                   f"{100*m['r1']:6.1f}% {100*m['r1_30']:7.1f}% {d:>10s}")
+
+        print(f"\n--- {net}: per scene, gate at q=0.6 "
+              f"(does every room gain, or only one?)")
+        print(f"{'collection':12s} {'scene':18s} {'n':>4s} {'vision 1m':>10s} "
+              f"{'gated 1m':>9s} {'gain':>7s}")
+        for b in breakdown:
+            print(f"{b['collection']:12s} {b['scene']:18s} {b['n']:4d} "
+                  f"{100*b['vision_r1']:9.1f}% {100*b['gated_r1']:8.1f}% "
+                  f"{100*b['gain']:+6.1f}")
 
     out = args.out or REPO_ROOT / "outputs" / "metrics" / "margin_gated_fusion.json"
     out.write_text(json.dumps({"topk": args.topk, "condition": args.condition,
