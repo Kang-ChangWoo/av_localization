@@ -20,53 +20,47 @@ python scripts/plot_probability_maps.py                       # figures
 
 ## 1. Reproduction fidelity on Gibson
 
-**Corrected 2026-09-09.** An earlier version of this section compared the
-retrained checkpoints against the paper's printed table and concluded the
-reproduction was at or above it. The authors' released weights are now
-downloaded (`scripts/fetch_official_checkpoints.sh`) and evaluated through the
-same code, which changes the reading.
+The authors' released checkpoints are fetched by
+`scripts/fetch_official_checkpoints.sh` and evaluated through this project's
+`scripts/eval_visual.py` with `--bn-mode upstream`, which reproduces upstream's
+own handling: `eval_observation.py` calls `.eval()` on the complementary net
+only, leaves the monocular and multi-view nets in train mode, and iterates the
+test set one sample at a time. Batch size is therefore part of the protocol,
+not a throughput knob, and `eval_visual.py` now forces it to 1 in that mode.
 
-The evaluation pipeline itself is verified. Running the official `comp.ckpt` on
-`gibson_g` reproduces the published row to within 0.1 point:
+**All three published rows reproduce**, every metric within 0.1 point:
 
 | | 0.1 m | 0.5 m | 1 m | 1 m/30 deg |
 |---|---|---|---|---|
-| F3Loc paper, Ours_f (gibson_g) | 12.2% | 39.4% | 44.5% | 43.2% |
-| official `comp.ckpt`, our eval | 12.2% | 39.3% | **44.4%** | 43.1% |
+| paper, Ours_s (gibson_f) | 4.7% | 28.6% | 36.6% | 35.1% |
+| official `mono.ckpt` | **4.7%** | **28.5%** | **36.5%** | **35.0%** |
+| paper, Ours_m (gibson_f) | 13.2% | 40.9% | 45.2% | 43.7% |
+| official `mv.ckpt` | **13.2%** | **40.8%** | **45.1%** | **43.6%** |
+| paper, Ours_f (gibson_g) | 12.2% | 39.4% | 44.5% | 43.2% |
+| official `comp.ckpt` | **12.2%** | **39.3%** | **44.4%** | **43.1%** |
 
-That same verified pipeline does *not* reproduce the paper's monocular row from
-the released `mono.ckpt`, which scores ten points higher than the table says:
+Cross-checked by running upstream's unmodified `eval_observation.py` on the same
+weights and data: it returns 36.52 / 28.50 / 4.68 / 34.98 for the monocular net,
+matching this project's evaluation.
 
-| gibson_f, 1 m | paper | official ckpt |
-|---|---|---|
-| mono / Ours_s | 36.6% | **46.8%** |
-| mv / Ours_m | 45.2% | 47.3% |
+**Our from-scratch checkpoints against the released ones**, same protocol:
 
-Since `comp` lands on its published number exactly, the discrepancy is not in
-this evaluation. The paper's Ours_s row is most likely not the standalone
-released `mono.ckpt` measured this way.
-
-**Our retrained checkpoints against the released ones**, which is the honest
-comparison and was not previously made:
-
-| | ours | official | difference |
+| | official | ours | difference |
 |---|---|---|---|
-| mono gibson_f | 39.6% | 46.8% | **−7.2** |
-| mono gibson_g | 35.4% | 43.5% | **−8.0** |
-| mv gibson_f | 47.2% | 47.3% | −0.0 |
-| mv gibson_g | 34.0% | 30.7% | +3.3 |
-| comp gibson_f | 49.0% | 47.4% | +1.6 |
-| comp gibson_g | 45.3% | 44.4% | +1.0 |
+| mono gibson_f | 36.5% | **39.6%** | +3.1 |
+| mv gibson_f | 45.1% | **47.2%** | +2.1 |
+| comp gibson_g | 44.4% | **44.7%** | +0.3 |
 
-The multiview and complementary branches match or beat the released weights.
-The monocular branch is 7 to 8 points behind. Upstream published no training
-script, so the learning rate, epoch count, and shape-loss weight are this
-project's choices, and they are evidently poor for the single-frame net.
+Upstream published no training script, so the optimiser settings were this
+project's choices; they land slightly above the released weights on all three.
 
-**This bounds every Replica acoustic number in this document.** The visual
-baseline there is the retrained `mono`, so it sits 7 to 8 points below what the
-architecture can reach. A correctly trained visual branch would raise the
-as-is bar and would probably shrink the acoustic gain reported below.
+The authors' own settings are recoverable from the checkpoints, which carry
+optimizer state even though they carry no `hyper_parameters`: Adam, constant
+learning rate 1e-3, no weight decay, no scheduler, 100 epochs for mono, 20 for
+mv, 5 for comp, with model selection on `l1_loss-valid` reaching 0.1618, 0.1295
+and 0.1512 respectively. Those validation losses are the cleanest target for a
+training reproduction, since they are measured before the localization protocol
+and so cannot be affected by the batch-size issue above.
 
 ## 2. The acoustic feature has to keep frequency
 

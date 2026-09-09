@@ -122,9 +122,21 @@ def main() -> int:
         gt_poses[scene] = poses
 
     scene_start_idx = np.array(dataset.scene_start_idx)
+    # A BatchNorm layer in train mode normalises by the batch, so with
+    # --bn-mode upstream the batch size is part of the model, not a throughput
+    # knob: at batch 16 the monocular net scores 46.8% on gibson_f and at batch
+    # 1, which is what eval_observation.py actually does, it scores 36.5% and
+    # lands on the published number. Anything but 1 here silently evaluates a
+    # different model, so it is forced rather than warned about.
+    batch_size = args.batch_size
+    if args.bn_mode == "upstream" and args.net in ("mono", "mv", "comp_s") and batch_size != 1:
+        print(f"[eval] --bn-mode upstream leaves {args.net} in train mode; forcing "
+              f"batch size 1 (requested {batch_size}) so BatchNorm sees one sample, "
+              f"as eval_observation.py does")
+        batch_size = 1
     loader = DataLoader(
         dataset,
-        batch_size=args.batch_size,
+        batch_size=batch_size,
         shuffle=False,
         num_workers=args.num_workers,
         collate_fn=collate_with_optional_masks,
@@ -190,6 +202,7 @@ def main() -> int:
     metrics = {
         "net": args.net,
         "bn_mode": args.bn_mode,
+        "batch_size": batch_size,
         "dataset": args.dataset,
         "split": args.split,
         "samples": int(acc.shape[0]),
