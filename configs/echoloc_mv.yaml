@@ -1,0 +1,42 @@
+# Multi-view structural depth on the Replica-based echoloc_dataset.
+#
+# replica_f is forward-motion only, which is the well-conditioned case for
+# triangulation, so this should sit above the monocular result. The degenerate
+# case (in-place rotation) lives in replica_g, which is still transferring;
+# without it the comp selector has nothing to arbitrate.
+#
+# d_hyp is -0.2, matching what upstream's evaluation constructs the multi-view
+# net with, not the mv_depth_net_pl constructor default of 1.0.
+
+data:
+  root: /root/storage/echoloc_dataset
+  datasets: [replica_f]
+  L: 3
+  batch_size: 12
+  num_workers: 8
+  prefetch_factor: 2
+  add_rp: false
+  roll: 0.0
+  pitch: 0.0
+
+model:
+  lr: 3.0e-4
+  shape_loss_weight: null
+  d_min: 0.1
+  d_max: 15.0
+  d_hyp: -0.2
+  D: 128
+  F_W: 0.375
+  warmup_steps: 200
+
+train:
+  gpus: "0"               # the reproduction queue owns GPUs 1-7
+  epochs: 30
+  precision: bf16-mixed
+  gradient_clip_val: 1.0
+  accumulate_grad_batches: 1
+  log_every_n_steps: 20
+  matmul_precision: high
+  seed: 0
+  run_name: echoloc_mv
+  output_dir: outputs

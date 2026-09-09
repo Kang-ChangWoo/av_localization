@@ -1,0 +1,42 @@
+# Monocular structural depth on the Replica-based echoloc_dataset.
+#
+# Same recipe as configs/visual_mono.yaml, retargeted at the new collection.
+# The dataset is ~6x smaller than the Gibson pair (3,300 train chunks over 11
+# scenes vs 62,529 over 100), so epochs are cheap and more of them are needed;
+# generalization here is limited by scene count, not by chunk count.
+#
+# replica_g is still transferring, so only replica_f is used.
+
+data:
+  root: /root/storage/echoloc_dataset
+  datasets: [replica_f]
+  L: 3
+  views: ref
+  batch_size: 24
+  num_workers: 8
+  prefetch_factor: 2
+  add_rp: false           # the renderer fixes roll = pitch = 0
+  roll: 0.0
+  pitch: 0.0
+
+model:
+  lr: 3.0e-4
+  shape_loss_weight: 1.0
+  d_min: 0.1
+  d_max: 15.0
+  d_hyp: -0.2
+  D: 128
+  F_W: 0.375              # matches the dataset's K = [[240,0,320],[0,240,240],[0,0,1]]
+  warmup_steps: 200
+
+train:
+  gpus: "0"               # the reproduction queue owns GPUs 1-7
+  epochs: 30
+  precision: bf16-mixed
+  gradient_clip_val: 1.0
+  accumulate_grad_batches: 1
+  log_every_n_steps: 20
+  matmul_precision: high
+  seed: 0
+  run_name: echoloc_mono
+  output_dir: outputs
