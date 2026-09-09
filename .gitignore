@@ -46,3 +46,8 @@ result/
 
 # Local simulator environment (SoundSpaces / habitat-sim)
 .envs/
+
+# Official F3Loc checkpoints, downloaded from the upstream Drive folder linked
+# in its README. Reproducible with scripts/fetch_official_checkpoints.sh.
+outputs/official_ckpt/
+outputs/f3loc_official/

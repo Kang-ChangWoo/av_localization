@@ -286,3 +286,53 @@ The two directions with actual headroom both leave delay-only 2D:
    reaches 66.0 and 342. That is the size of the representation gap, and it
    violates the training-free-and-render-free constraint, so it belongs in the
    decision about what the constraint is worth rather than in this method.
+
+## H. As-is against to-be, in F3Loc's metrics
+
+600 poses, both collections, three test scenes, identical candidate set
+(4507 valid cells on average) for every row, `raw_scan_open` recordings.
+Figure: `outputs/figures/vision_vs_acoustic.png`.
+
+| mono | 0.1 m | 0.5 m | 1 m | median | GT rank | vs as-is |
+|---|---|---|---|---|---|---|
+| **as-is: F3Loc vision only** | 5.2% | 30.0% | **38.3%** | 2.15 m | 255 | |
+| acoustic 2D floorplan, alone | 0.0% | 2.8% | 7.0% | 4.02 m | 1189 | −31.3 |
+| acoustic rendered grid, alone | 2.8% | 12.8% | 20.2% | 3.35 m | 308 | −18.2 |
+| to-be: + acoustic 2D | 0.7% | 13.3% | 23.8% | 2.99 m | | −14.5 |
+| to-be: + acoustic 2D, gated | 4.8% | 27.8% | 34.7% | 2.56 m | | −3.7 |
+| to-be: + rendered | 4.3% | 30.5% | 41.5% | 2.04 m | | +3.2 |
+| **to-be: + rendered, gated** | 6.7% | 35.8% | **44.8%** | 1.56 m | | **+6.5** |
+
+| 1 m recall | as-is | + 2D, gated | + rendered, gated |
+|---|---|---|---|
+| mono | 38.3% | 34.7% (−3.7) | **44.8% (+6.5)** |
+| mv | 34.3% | 29.8% (−4.5) | **39.3% (+5.0)** |
+| comp | 39.3% | 35.0% (−4.3) | **45.2% (+5.8)** |
+
+Two different answers, and which one applies depends entirely on whether a
+per-scene render is allowed.
+
+**Under the constraint this task was given** -- 2D floorplan only, training-free,
+render-free -- acoustics costs 4 to 5 points even with the gate. Alone it reaches
+7.0% against vision's 38.3%, and its median GT rank is 1189 of 4507, which is
+worse than the 308 the same matching achieves against a rendered grid and far
+worse than vision's 255. Panel C of the figure is the clearest single view: the
+rendered curve tracks vision almost exactly while the 2D curve sits an order of
+magnitude to the right at every quantile.
+
+**With a per-scene render allowed**, the picture inverts and acoustics is worth
+about as much as an extra camera view: +6.5, +5.0, +5.8 points at 1 m, and the
+median error falls from 2.15 m to 1.56 m for mono. That is the number reported
+in `docs/acoustic_results.md`, reproduced here on the identical candidate set so
+it can be read against the 2D rows rather than only against vision.
+
+The gate matters in both directions. Panel D splits by visual margin, computed
+without ground truth: in the confident third the ungated 2D fusion destroys
+vision (70.5% to 44.2%) and the gate restores it exactly (70.5%), because the
+gate is off there by construction. In the ambiguous third the gate is always on,
+so gated and ungated coincide, and the 2D score is simply not good enough to
+help: 19.5% for vision, 13.4% fused. The rendered score does help there, 31.0%.
+
+So the honest summary of this task is that the *comparison* was fixed and the
+*representation* was not, and the size of what is left is measurable: 1189
+against 308 against 255, on the same poses and the same candidates.
