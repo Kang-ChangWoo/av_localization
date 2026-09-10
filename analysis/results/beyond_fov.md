@@ -1,6 +1,6 @@
 # C. Does the acoustic evidence come from beyond the field of view?
 
-Decidable pairs only: vision's two strongest hypotheses, exactly one of which is within 1 m of the true pose, so chance is 50%. Geometry is read from the same DESDF the localiser uses, split into the 11 yaw bins the camera spans and the 25 it does not.
+Condition `raw_scan_open`. Decidable pairs only: vision's two strongest hypotheses, exactly one of which is within 1 m of the true pose, so chance is 50%. Geometry is read from the same DESDF the localiser uses, split into the 11 yaw bins the camera spans and the 25 it does not.
 
 
 ## Marginal effect of each quantity (unlocSTFT, 193 pairs)
@@ -44,4 +44,4 @@ The geometry is a property of the room, so the effect should not depend on which
 |---|---|---|---|---|
 | unlocSTFT | 193 | 61.5% | 70.3% | **+8.8** |
 | f3STFT | 154 | 63.5% | 66.7% | **+3.2** |
-| discoSTFT | 141 | 76.6% | 72.3% | **-4.3** |
+| discoID | 162 | 70.4% | 75.9% | **+5.6** |

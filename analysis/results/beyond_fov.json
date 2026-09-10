@@ -124,25 +124,25 @@
         "low": 0.6346153846153846,
         "high": 0.6666666666666666
       },
-      "discoSTFT": {
-        "n": 141,
-        "low": 0.7659574468085106,
-        "high": 0.723404255319149
+      "discoID": {
+        "n": 162,
+        "low": 0.7037037037037037,
+        "high": 0.7592592592592593
       }
     }
   },
   "provenance": {
-    "utc": "2026-09-10T13:58:20Z",
+    "utc": "2026-09-10T15:29:30Z",
     "argv": [
       "analysis/beyond_fov.py",
       "--backbone",
       "unlocSTFT"
     ],
     "git": {
-      "commit": "1d8fcce97ba1",
+      "commit": "30899cd033bb",
       "dirty": true,
-      "diff_sha1": "fa99bdf6b5c1",
-      "diff_lines": 139
+      "diff_sha1": "8a4e47f8d95b",
+      "diff_lines": 766
     },
     "env": {
       "python": "3.8.20",
