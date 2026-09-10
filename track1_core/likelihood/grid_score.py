@@ -153,14 +153,17 @@ def band_energy(rir: np.ndarray, config: GridScoreConfig,
     freqs = np.fft.rfftfreq(config.nfft, 1.0 / config.sample_rate_hz)
     sel = [(freqs >= lo) & (freqs < hi) for lo, hi in config.bands]
     w = np.hanning(config.nfft)
-    out = np.empty((seg.shape[0], len(config.bands), config.n_frames), dtype=np.float32)
-    for t in range(config.n_frames):
-        p = np.abs(np.fft.rfft(seg[:, t * config.hop: t * config.hop + config.nfft] * w,
-                               axis=-1)) ** 2
-        for b, m in enumerate(sel):
-            out[:, b, t] = p[:, m].sum(-1)
+    # One batched transform rather than a Python loop over frames. At 48 kHz a
+    # 128 ms window is 381 frames, and the loop made a whole-grid featurisation
+    # cost minutes per configuration, which is enough to stop a sweep being run
+    # at all. `test_stft_vectorisation_matches_the_loop` pins the equivalence.
+    from numpy.lib.stride_tricks import sliding_window_view
+    frames = sliding_window_view(seg, config.nfft, axis=-1)[:, :: config.hop]
+    frames = frames[:, : config.n_frames]                      # (C, T, nfft)
+    power = np.abs(np.fft.rfft(frames * w, axis=-1)) ** 2      # (C, T, F)
+    out = np.stack([power[:, :, m].sum(-1) for m in sel], axis=1)  # (C, B, T)
     e = out.reshape(seg.shape[0] * len(config.bands), config.n_frames)
-    return e[:, config.first_frame: config.last_frame]
+    return e[:, config.first_frame: config.last_frame].astype(np.float32)
 
 
 def normalise(e: np.ndarray, config: GridScoreConfig) -> np.ndarray:

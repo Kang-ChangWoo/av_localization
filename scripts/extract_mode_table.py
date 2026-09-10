@@ -65,6 +65,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--checkpoint", default=None,
                    help="visual weights; defaults per backbone")
     p.add_argument("--window-ms", type=float, default=2.0)
+    p.add_argument("--feature", default="envelope", choices=["envelope", "stft_band"])
+    p.add_argument("--nfft", type=int, default=64)
+    p.add_argument("--hop", type=int, default=16)
+    p.add_argument("--tag", default="", help="suffix on the output filenames")
     p.add_argument("--nms-radius-m", type=float, default=1.5)
     p.add_argument("--n-modes", type=int, default=10)
     p.add_argument("--local-radius-m", type=float, default=0.5)
@@ -182,11 +186,14 @@ def main() -> int:
             inputs.append(g)
             blob = np.load(g)
             sr = int(json.loads(str(blob["config"]))["sample_rate"])
-            full = GridScoreConfig(feature="envelope", window_ms=args.window_ms,
+            full = GridScoreConfig(feature=args.feature, window_ms=args.window_ms,
+                                   nfft=args.nfft, hop=args.hop,
                                    sample_rate_hz=sr,
                                    direct_guard_samples=int(round(sr * 2 / 1000)),
                                    usable_samples=int(round(sr * 128 / 1000)))
-            fpm = 1.0 / args.window_ms   # frames per millisecond
+            # frames per millisecond, whichever feature is in use: the envelope
+            # frame is window_ms long, the STFT frame is hop/sample_rate long
+            fpm = 1.0 / full.ms_per_frame
 
             desdf = np.load(root / "desdf" / scene / "desdf.npy", allow_pickle=True).item()
             desdf["desdf"][desdf["desdf"] > 10] = 10
@@ -362,7 +369,7 @@ def main() -> int:
         print("nothing extracted")
         return 1
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    tag = f"{args.condition}_{args.backbone}"
+    tag = f"{args.condition}_{args.backbone}{args.tag}"
     # written with the standard library: the two conda environments this has to
     # run in do not share a pandas, and a dependency here would silently make
     # one backbone unrunnable
@@ -380,6 +387,7 @@ def main() -> int:
             checkpoint=str(ck), condition=args.condition, backbone=args.backbone,
             nms_radius_m=args.nms_radius_m, n_modes=args.n_modes,
             local_radius_m=args.local_radius_m, window_ms=args.window_ms,
+            feature=args.feature, nfft=args.nfft, hop=args.hop,
             time_ranges=[list(t) for t in TIME_RANGES])), indent=2))
     print(f"{len(q_rows)} queries")
     return 0
