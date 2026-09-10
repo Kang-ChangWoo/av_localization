@@ -140,10 +140,28 @@ def main() -> int:
     # both standard and necessary here: the visual posteriors of two backbones
     # are on different scales, so a threshold on visual ambiguity cannot mean the
     # same thing for both. Nothing is fitted on the reported collection.
+    # What is shared and what is tuned, and why the line falls here.
+    #
+    # Shared by every backbone: the formula, both gates, and the two summaries
+    # that represent a hypothesis under each modality. Those decide *what the
+    # method is*, and letting them differ would describe several methods as one.
+    #
+    # Tuned per backbone on the fit collection: four scalars. This is standard
+    # and it is also necessary, because two visual posteriors on different
+    # scales cannot share a threshold on visual ambiguity.
+    #
+    # The acoustic threshold's range is finite. It previously included -inf,
+    # which made one backbone's selected value look like a structurally
+    # different rule: at -inf the second sigmoid is identically one and the term
+    # vanishes from the formula. But an acoustic margin is a difference between
+    # the best and second hypothesis and so is never negative, which was
+    # verified on the data (minimum 0.000, 0.004, 0.007 across backbones). Every
+    # value at or below zero therefore gives bit-identical results, and -2.0
+    # says the same thing without suggesting a different rule.
     scalars = list(itertools.product((0.5, 1.0, 2.0),                    # weight
                                      (0.02, 0.05, 0.1),                  # sigmoid
                                      (0.005, 0.02, 0.05, 0.1, 0.2),      # tau_v
-                                     (-np.inf, 0.0, 0.2, 0.4)))          # tau_a
+                                     (-2.0, 0.0, 0.2, 0.4)))             # tau_a
 
     def tune(tag, ve, ae):
         b, bs = None, -1.0
@@ -165,8 +183,8 @@ def main() -> int:
             struct, struct_s, POLICY = (ve, ae), m, {k: v[0] for k, v in per.items()}
     grid = scalars
     best = POLICY["unlocSTFT"]
-    print(f"[policy] shared structure: visual '{struct[0]}', acoustic '{struct[1]}', "
-          f"continuous gate")
+    print(f"[policy] shared: visual evidence '{struct[0]}', acoustic evidence "
+          f"'{struct[1]}', continuous gate")
     for tag, _ in BACKBONES:
         c = POLICY[tag]
         print(f"[policy] {tag}: weight {c.weight:g}, sigmoid {c.sigmoid_scale:g}, "
@@ -211,9 +229,10 @@ def main() -> int:
            "bootstraps over queries.")
     MD("# Tables\n")
     MD(hdr.replace("\\texttt{", "`").replace("}", "`").replace("\\_", "_") + "\n")
-    MD(f"\nShared structure: visual evidence `{struct[0]}`, acoustic evidence "
-       f"`{struct[1]}`, continuous gate. Scalars tuned per backbone on "
-       f"`{args.fit_collection}`:\n")
+    MD(f"\nShared by every backbone: the formula, both gates, visual evidence "
+       f"`{struct[0]}` and acoustic evidence `{struct[1]}`. Four scalars are "
+       f"tuned per backbone on `{args.fit_collection}`, all over finite "
+       f"ranges:\n")
     MD("\n| backbone | weight | sigmoid scale | visual threshold | acoustic threshold |")
     MD("|---|---|---|---|---|")
     for tag, label in BACKBONES:

@@ -196,17 +196,17 @@
     }
   },
   "provenance": {
-    "utc": "2026-09-10T15:29:25Z",
+    "utc": "2026-09-10T16:57:27Z",
     "argv": [
       "analysis/run_analysis.py",
       "--backbone",
       "unlocSTFT"
     ],
     "git": {
-      "commit": "30899cd033bb",
+      "commit": "d7206a32353f",
       "dirty": true,
-      "diff_sha1": "581b2d99d948",
-      "diff_lines": 486
+      "diff_sha1": "1a1a6e13a0b0",
+      "diff_lines": 79
     },
     "env": {
       "python": "3.8.20",

@@ -132,17 +132,17 @@
     }
   },
   "provenance": {
-    "utc": "2026-09-10T15:29:30Z",
+    "utc": "2026-09-10T16:57:32Z",
     "argv": [
       "analysis/beyond_fov.py",
       "--backbone",
       "unlocSTFT"
     ],
     "git": {
-      "commit": "30899cd033bb",
+      "commit": "d7206a32353f",
       "dirty": true,
-      "diff_sha1": "8a4e47f8d95b",
-      "diff_lines": 766
+      "diff_sha1": "4d2b85e07ff9",
+      "diff_lines": 105
     },
     "env": {
       "python": "3.8.20",

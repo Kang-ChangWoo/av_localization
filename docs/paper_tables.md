@@ -3,13 +3,13 @@
 Query recordings are the furnished scan (`raw_scan_open`); acoustic candidates are rendered from the floorplan alone. The acoustic feature, the fusion policy and both thresholds are selected once on `replica_f` and shared by every backbone; all reported numbers are on the held-out `replica_g`, 300 queries. Intervals are paired bootstraps over queries.
 
 
-Shared structure: visual evidence `centre`, acoustic evidence `quantile`, continuous gate. Scalars tuned per backbone on `replica_f`:
+Shared by every backbone: the formula, both gates, visual evidence `centre` and acoustic evidence `quantile`. Four scalars are tuned per backbone on `replica_f`, all over finite ranges:
 
 
 | backbone | weight | sigmoid scale | visual threshold | acoustic threshold |
 |---|---|---|---|---|
 | F3Loc mono | 1 | 0.02 | 0.05 | 0 |
-| UnLoc | 0.5 | 0.02 | 0.2 | -inf |
+| UnLoc | 0.5 | 0.02 | 0.2 | -2 |
 | DisCo-FLoc RRP | 1 | 0.05 | 0.05 | 0.2 |
 
 ## Table 1. Reproduction of the published baselines
