@@ -10,6 +10,7 @@ Shared structure: visual evidence `centre`, acoustic evidence `quantile`, contin
 |---|---|---|---|---|
 | F3Loc mono | 1 | 0.02 | 0.05 | 0 |
 | UnLoc | 0.5 | 0.02 | 0.2 | -inf |
+| DisCo-FLoc RRP | 1 | 0.1 | 0.2 | 0.2 |
 
 ## Table 1. Reproduction of the published baselines
 
@@ -36,15 +37,19 @@ Shared structure: visual evidence `centre`, acoustic evidence `quantile`, contin
 |  | **ours** | 5.7 | 35.0 | 45.7 | 40.3 | 58.3 | 89.0 | 99.7 |
 | UnLoc |   | 9.0 | 44.7 | 49.7 | 49.0 | 53.3 | 83.7 | 100.0 |
 |  | **ours** | 10.0 | 49.7 | 54.7 | 53.7 | 59.7 | 87.7 | 100.0 |
+| DisCo-FLoc RRP |   | 1.3 | 16.7 | 33.0 | 31.0 | 48.7 | 87.0 | 99.3 |
+|  | **ours** | 2.0 | 20.7 | 35.7 | 34.3 | 49.0 | 88.7 | 99.3 |
 
 ## Table 2. Single-frame localization on Replica
 
 | visual backbone | acoustic | 0.1 m | 0.5 m | 1 m | 1 m 30 deg | 2 m | 5 m | median | RMSE | gain @1 m |
 |---|---|---|---|---|---|---|---|---|---|---|
 | F3Loc mono | none | 5.3 | 29.7 | 37.7 | 34.0 | 48.7 | 87.7 | 2.17 | 3.17 |  |
-|  | **ours** | 5.7 | 35.0 | 45.7 | 40.3 | 58.3 | 89.0 | 1.20 | 3.02 | **+8.0** [+3.3, +12.7] |
+|  | **ours** | 5.7 | 35.0 | 45.7 | 40.3 | 58.3 | 89.0 | 1.20 | 3.02 | **+8.0** [+3.3, +13.0] |
 | UnLoc | none | 9.0 | 44.7 | 49.7 | 49.0 | 53.3 | 83.7 | 1.12 | 3.28 |  |
 |  | **ours** | 10.0 | 49.7 | 54.7 | 53.7 | 59.7 | 87.7 | 0.51 | 3.01 | **+5.0** [+0.7, +9.3] |
+| DisCo-FLoc RRP | none | 1.3 | 16.7 | 33.0 | 31.0 | 48.7 | 87.0 | 2.08 | 3.38 |  |
+|  | **ours** | 2.0 | 20.7 | 35.7 | 34.3 | 49.0 | 88.7 | 2.04 | 3.18 | **+2.7** [-1.7, +7.0] |
 
 ## Table 3. Per scene, recall at 1 m
 
@@ -54,19 +59,21 @@ Shared structure: visual evidence `centre`, acoustic evidence `quantile`, contin
 |  | **ours** | 28.0 | 73.0 | 36.0 | 45.7 |
 | UnLoc | none | 24.0 | 76.0 | 49.0 | 49.7 |
 |  | **ours** | 39.0 | 74.0 | 51.0 | 54.7 |
+| DisCo-FLoc RRP | none | 38.0 | 29.0 | 32.0 | 33.0 |
+|  | **ours** | 44.0 | 30.0 | 33.0 | 35.7 |
 
 ## Table 4. Ablation of the fusion rule (UnLoc)
 
 | level | rule | 0.5 m | 1 m | 1 m 30 deg | median | gain @1 m | 95% CI |
 |---|---|---|---|---|---|---|---|
 | \textendash | vision only | 44.7 | 49.7 | 49.0 | 1.12 | +0.0 | [+0.0, +0.0] |
-| cell | acoustic alone | 13.7 | 20.7 | - | 3.02 | -29.0 | [-36.7, -21.3] |
+| cell | acoustic alone | 13.7 | 20.7 | - | 3.02 | -29.0 | [-37.0, -21.3] |
 | cell | rerank vision top-50 | 45.3 | 52.7 | 50.7 | 0.79 | +3.0 | [-3.3, +9.3] |
 | cell | log-rank fusion | 47.0 | 54.3 | 52.7 | 0.70 | +4.7 | [-1.3, +10.7] |
-| hypothesis | rerank, unconditional | 30.0 | 34.0 | 33.0 | 2.61 | -15.7 | [-23.3, -8.0] |
+| hypothesis | rerank, unconditional | 30.0 | 34.0 | 33.0 | 2.61 | -15.7 | [-23.0, -8.3] |
 | hypothesis | relative evidence | 49.3 | 54.3 | 53.3 | 0.52 | +4.7 | [+0.3, +9.0] |
 | hypothesis | gate on visual ambiguity | 40.3 | 45.3 | 44.3 | 1.73 | -4.3 | [-11.0, +2.3] |
-| hypothesis | gate on both confidences | 40.3 | 45.3 | 44.3 | 1.73 | -4.3 | [-10.7, +2.3] |
+| hypothesis | gate on both confidences | 40.3 | 45.3 | 44.3 | 1.73 | -4.3 | [-10.7, +2.0] |
 | hypothesis | continuous gate (ours) | 49.7 | 54.7 | 53.7 | 0.51 | +5.0 | [+0.7, +9.3] |
 | oracle | best of the ten hypotheses | 78.3 | 93.7 | 89.3 | 0.25 | +44.0 | [+38.3, +49.7] |
 
