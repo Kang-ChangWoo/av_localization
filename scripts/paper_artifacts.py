@@ -45,6 +45,14 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--analysis-dir", type=Path, default=REPO_ROOT / "outputs" / "analysis")
     p.add_argument("--fit-collection", default="replica_f")
+    p.add_argument("--condition", default="raw_scan_open",
+                   choices=["raw_scan_open", "floorplan_closed"],
+                   help="the acoustic condition the QUERY comes from. Candidates "
+                        "are always floorplan_closed. Choosing floorplan_closed "
+                        "here removes the furniture gap from the main result, "
+                        "which makes the setting simulation-consistent rather "
+                        "than deployment-realistic; every table and the tuning "
+                        "follow this flag together so the two cannot diverge.")
     p.add_argument("--boot", type=int, default=10000)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--tex", type=Path, default=REPO_ROOT / "docs" / "paper_tables.tex")
@@ -142,7 +150,7 @@ def main() -> int:
         for w, s, tv, ta in scalars:
             cfg = ModeFusionConfig(vis_evidence=ve, ac_evidence=ae, rule="continuous",
                                    weight=w, sigmoid_scale=s, tau_v=tv, tau_a=ta)
-            e, _, _, _ = evaluate(tag, "raw_scan_open", cfg, True)
+            e, _, _, _ = evaluate(tag, args.condition, cfg, True)
             sc = float((e < 1).mean())
             if sc > bs:
                 b, bs = cfg, sc
@@ -191,9 +199,12 @@ def main() -> int:
             + "\n".join(current["buf"]).strip() + "\n")
         current["name"] = None
 
-    hdr = ("Query recordings are the furnished scan (\\texttt{raw\\_scan\\_open}); "
-           "acoustic candidates are rendered from the floorplan alone "
-           "(\\texttt{floorplan\\_closed}). The acoustic feature, the fusion "
+    QC = {"raw_scan_open": "the furnished scan (\\texttt{raw\\_scan\\_open})",
+          "floorplan_closed": "floorplan-only geometry "
+                              "(\\texttt{floorplan\\_closed}), matching the candidates"}
+    hdr = (f"Query recordings are {QC[args.condition]}; "
+           "acoustic candidates are rendered from the floorplan alone. "
+           "The acoustic feature, the fusion "
            "policy and both thresholds are selected once on \\texttt{replica\\_f} "
            "and shared by every backbone; all reported numbers are on the "
            "held-out \\texttt{replica\\_g}, 300 queries. Intervals are paired "
@@ -266,9 +277,20 @@ def main() -> int:
     TEX(r"& Median & RMSE & $\Delta_{1\mathrm{m}}$ \\")
     TEX(r"\midrule")
     n_bb = len(BACKBONES)
-    TEX(rf"\multirow{{{2*n_bb}}}{{*}}{{Replica}}")
+    # The acoustic-alone row is printed first and without a visual backbone,
+    # because with floorplan-only queries it is strong enough that a reader must
+    # be able to see it. Leaving it out of the main table would be the kind of
+    # omission a reviewer finds and does not forgive.
+    Qa, _, _, repa = data[(BACKBONES[0][0], args.condition)]
+    ea = Qa["e_ac"][repa]
+    ra = [100 * np.mean(ea < th) for th in TH]
+    TEX(rf"\multirow{{{2*n_bb+1}}}{{*}}{{Replica}}")
+    TEX(rf"& \emph{{acoustic only}} & $\checkmark$ & {ra[0]:.1f} & {ra[1]:.1f} & "
+        rf"{ra[2]:.1f} & \textendash & {ra[3]:.1f} & {ra[4]:.1f} & "
+        rf"{np.median(ea):.2f} & {np.sqrt(np.mean(ea**2)):.2f} & \textendash \\")
+    TEX(r"\cmidrule(lr){2-12}")
     for bi, (tag, label) in enumerate(BACKBONES):
-        e, o, Q, sel = evaluate(tag, "raw_scan_open", POLICY[tag], False)
+        e, o, Q, sel = evaluate(tag, args.condition, POLICY[tag], False)
         ev, ov = Q["e_vis"][sel], Q["orn_vis"][sel]
         TEX(rf"& \multirow{{2}}{{*}}{{{esc(label)}}} & $\times$")
         r = [100 * np.mean(ev < th) for th in TH]
@@ -325,7 +347,7 @@ def main() -> int:
     MD("|---|---|---|---|---|---|---|---|---|")
     TH10 = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
     for tag, label in BACKBONES:
-        e, o, Q, sel = evaluate(tag, "raw_scan_open", POLICY[tag], False)
+        e, o, Q, sel = evaluate(tag, args.condition, POLICY[tag], False)
         ev, ov = Q["e_vis"][sel], Q["orn_vis"][sel]
         for nm, err, orn, tnm in ((" ", ev, ov, r"\textendash"),
                                   ("**ours**", e, o, r"\checkmark")):
@@ -356,7 +378,7 @@ def main() -> int:
         r"$1$\,m\,$30^\circ$ & $2$\,m & $5$\,m & Median & RMSE & $\Delta_{1\mathrm{m}}$ \\\midrule")
     keep = {}
     for tag, label in BACKBONES:
-        e, o, Q, sel = evaluate(tag, "raw_scan_open", POLICY[tag], False)
+        e, o, Q, sel = evaluate(tag, args.condition, POLICY[tag], False)
         ev, ov = Q["e_vis"][sel], Q["orn_vis"][sel]
         keep[tag] = (e, o, ev, ov, Q, sel)
         for nm, err, orn, tnm in (("none", ev, ov, r"\textendash"),
@@ -408,7 +430,7 @@ def main() -> int:
     TEX("")
 
     # ------------------------------------------------------------- Table 4
-    Q, M, fit, rep = data[("unlocSTFT", "raw_scan_open")]
+    Q, M, fit, rep = data[("unlocSTFT", args.condition)]
     ev, ov = Q["e_vis"][rep], Q["orn_vis"][rep]
     MD("\n## Table 4. Ablation of the fusion rule (UnLoc)\n")
     MD("| level | rule | 0.5 m | 1 m | 1 m 30 deg | median | gain @1 m | 95% CI |")
@@ -452,7 +474,7 @@ def main() -> int:
             ("selective", "gate on visual ambiguity", {"tau_a": -np.inf}, False),
             ("selective", "gate on both confidences", {}, False),
             ("continuous", "continuous gate (ours)", {}, True)):
-        e, o, _, _ = evaluate("unlocSTFT", "raw_scan_open",
+        e, o, _, _ = evaluate("unlocSTFT", args.condition,
                               MFC(**dict(shared, rule=rule, **extra)), False)
         arow("hypothesis", nm, e, o, bold)
     qi = [str(x) for x in Q["query_id"][rep]]

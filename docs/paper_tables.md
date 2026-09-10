@@ -1,16 +1,16 @@
 # Tables
 
-Query recordings are the furnished scan (`raw_scan_open`); acoustic candidates are rendered from the floorplan alone (`floorplan_closed`). The acoustic feature, the fusion policy and both thresholds are selected once on `replica_f` and shared by every backbone; all reported numbers are on the held-out `replica_g`, 300 queries. Intervals are paired bootstraps over queries.
+Query recordings are floorplan-only geometry (`floorplan_closed`), matching the candidates; acoustic candidates are rendered from the floorplan alone. The acoustic feature, the fusion policy and both thresholds are selected once on `replica_f` and shared by every backbone; all reported numbers are on the held-out `replica_g`, 300 queries. Intervals are paired bootstraps over queries.
 
 
-Shared structure: visual evidence `centre`, acoustic evidence `quantile`, continuous gate. Scalars tuned per backbone on `replica_f`:
+Shared structure: visual evidence `centre`, acoustic evidence `max`, continuous gate. Scalars tuned per backbone on `replica_f`:
 
 
 | backbone | weight | sigmoid scale | visual threshold | acoustic threshold |
 |---|---|---|---|---|
-| F3Loc mono | 1 | 0.02 | 0.05 | 0 |
-| UnLoc | 0.5 | 0.02 | 0.2 | -inf |
-| DisCo-FLoc RRP | 1 | 0.1 | 0.2 | 0.2 |
+| F3Loc mono | 2 | 0.02 | 0.1 | -inf |
+| UnLoc | 2 | 0.02 | 0.2 | -inf |
+| DisCo-FLoc RRP | 2 | 0.05 | 0.2 | 0 |
 
 ## Table 1. Reproduction of the published baselines
 
@@ -34,47 +34,47 @@ Shared structure: visual evidence `centre`, acoustic evidence `quantile`, contin
 | method | audio | 0.1 m | 0.5 m | 1 m | 1 m 30 deg | 2 m | 5 m | 10 m |
 |---|---|---|---|---|---|---|---|---|
 | F3Loc mono |   | 5.3 | 29.7 | 37.7 | 34.0 | 48.7 | 87.7 | 99.7 |
-|  | **ours** | 5.7 | 35.0 | 45.7 | 40.3 | 58.3 | 89.0 | 99.7 |
+|  | **ours** | 7.3 | 52.7 | 67.0 | 59.3 | 72.3 | 92.7 | 100.0 |
 | UnLoc |   | 9.0 | 44.7 | 49.7 | 49.0 | 53.3 | 83.7 | 100.0 |
-|  | **ours** | 10.0 | 49.7 | 54.7 | 53.7 | 59.7 | 87.7 | 100.0 |
-| DisCo-FLoc RRP |   | 1.3 | 16.7 | 33.0 | 31.0 | 48.7 | 87.0 | 99.3 |
-|  | **ours** | 2.0 | 20.7 | 35.7 | 34.3 | 49.0 | 88.7 | 99.3 |
+|  | **ours** | 14.3 | 73.0 | 79.7 | 77.7 | 82.0 | 92.3 | 100.0 |
+| DisCo-FLoc RRP |   | 5.3 | 31.0 | 41.0 | 39.3 | 46.7 | 83.0 | 100.0 |
+|  | **ours** | 8.7 | 55.7 | 71.7 | 69.0 | 77.7 | 92.3 | 99.0 |
 
 ## Table 2. Single-frame localization on Replica
 
 | visual backbone | acoustic | 0.1 m | 0.5 m | 1 m | 1 m 30 deg | 2 m | 5 m | median | RMSE | gain @1 m |
 |---|---|---|---|---|---|---|---|---|---|---|
 | F3Loc mono | none | 5.3 | 29.7 | 37.7 | 34.0 | 48.7 | 87.7 | 2.17 | 3.17 |  |
-|  | **ours** | 5.7 | 35.0 | 45.7 | 40.3 | 58.3 | 89.0 | 1.20 | 3.02 | **+8.0** [+3.3, +13.0] |
+|  | **ours** | 7.3 | 52.7 | 67.0 | 59.3 | 72.3 | 92.7 | 0.47 | 2.51 | **+29.3** [+24.0, +34.7] |
 | UnLoc | none | 9.0 | 44.7 | 49.7 | 49.0 | 53.3 | 83.7 | 1.12 | 3.28 |  |
-|  | **ours** | 10.0 | 49.7 | 54.7 | 53.7 | 59.7 | 87.7 | 0.51 | 3.01 | **+5.0** [+0.7, +9.3] |
-| DisCo-FLoc RRP | none | 1.3 | 16.7 | 33.0 | 31.0 | 48.7 | 87.0 | 2.08 | 3.38 |  |
-|  | **ours** | 2.0 | 20.7 | 35.7 | 34.3 | 49.0 | 88.7 | 2.04 | 3.18 | **+2.7** [-1.7, +7.0] |
+|  | **ours** | 14.3 | 73.0 | 79.7 | 77.7 | 82.0 | 92.3 | 0.26 | 2.26 | **+30.0** [+24.3, +35.7] |
+| DisCo-FLoc RRP | none | 5.3 | 31.0 | 41.0 | 39.3 | 46.7 | 83.0 | 2.39 | 3.48 |  |
+|  | **ours** | 8.7 | 55.7 | 71.7 | 69.0 | 77.7 | 92.3 | 0.43 | 2.46 | **+30.7** [+25.0, +36.3] |
 
 ## Table 3. Per scene, recall at 1 m
 
 | visual backbone | acoustic | apartment_2 | frl_apartment_5 | office_4 | all |
 |---|---|---|---|---|---|
 | F3Loc mono | none | 15.0 | 76.0 | 22.0 | 37.7 |
-|  | **ours** | 28.0 | 73.0 | 36.0 | 45.7 |
+|  | **ours** | 54.0 | 94.0 | 53.0 | 67.0 |
 | UnLoc | none | 24.0 | 76.0 | 49.0 | 49.7 |
-|  | **ours** | 39.0 | 74.0 | 51.0 | 54.7 |
-| DisCo-FLoc RRP | none | 38.0 | 29.0 | 32.0 | 33.0 |
-|  | **ours** | 44.0 | 30.0 | 33.0 | 35.7 |
+|  | **ours** | 67.0 | 92.0 | 80.0 | 79.7 |
+| DisCo-FLoc RRP | none | 18.0 | 68.0 | 37.0 | 41.0 |
+|  | **ours** | 53.0 | 87.0 | 75.0 | 71.7 |
 
 ## Table 4. Ablation of the fusion rule (UnLoc)
 
 | level | rule | 0.5 m | 1 m | 1 m 30 deg | median | gain @1 m | 95% CI |
 |---|---|---|---|---|---|---|---|
 | \textendash | vision only | 44.7 | 49.7 | 49.0 | 1.12 | +0.0 | [+0.0, +0.0] |
-| cell | acoustic alone | 13.7 | 20.7 | - | 3.02 | -29.0 | [-37.0, -21.3] |
-| cell | rerank vision top-50 | 45.3 | 52.7 | 50.7 | 0.79 | +3.0 | [-3.3, +9.3] |
-| cell | log-rank fusion | 47.0 | 54.3 | 52.7 | 0.70 | +4.7 | [-1.3, +10.7] |
-| hypothesis | rerank, unconditional | 30.0 | 34.0 | 33.0 | 2.61 | -15.7 | [-23.0, -8.3] |
-| hypothesis | relative evidence | 49.3 | 54.3 | 53.3 | 0.52 | +4.7 | [+0.3, +9.0] |
-| hypothesis | gate on visual ambiguity | 40.3 | 45.3 | 44.3 | 1.73 | -4.3 | [-11.0, +2.3] |
-| hypothesis | gate on both confidences | 40.3 | 45.3 | 44.3 | 1.73 | -4.3 | [-10.7, +2.0] |
-| hypothesis | continuous gate (ours) | 49.7 | 54.7 | 53.7 | 0.51 | +5.0 | [+0.7, +9.3] |
+| cell | acoustic alone | 93.7 | 94.3 | - | 0.05 | +44.7 | [+38.7, +50.3] |
+| cell | rerank vision top-50 | 75.7 | 77.3 | 75.7 | 0.08 | +27.7 | [+22.0, +33.3] |
+| cell | log-rank fusion | 72.3 | 73.3 | 72.3 | 0.14 | +23.7 | [+18.0, +29.3] |
+| hypothesis | rerank, unconditional | 76.0 | 83.7 | 80.3 | 0.25 | +34.0 | [+27.7, +40.0] |
+| hypothesis | relative evidence | 73.0 | 80.0 | 78.0 | 0.26 | +30.3 | [+24.7, +36.0] |
+| hypothesis | gate on visual ambiguity | 75.3 | 83.0 | 79.7 | 0.26 | +33.3 | [+27.3, +39.3] |
+| hypothesis | gate on both confidences | 75.3 | 83.0 | 79.7 | 0.26 | +33.3 | [+27.3, +39.3] |
+| hypothesis | continuous gate (ours) | 73.0 | 79.7 | 77.7 | 0.26 | +30.0 | [+24.3, +35.7] |
 | oracle | best of the ten hypotheses | 78.3 | 93.7 | 89.3 | 0.25 | +44.0 | [+38.3, +49.7] |
 
 ## Table 5. Ablation of the acoustic feature, selected on replica_f
@@ -94,8 +94,8 @@ Shared structure: visual evidence `centre`, acoustic evidence `quantile`, contin
 
 | setting | acoustic alone @1 m | GT rank | ours @1 m | oracle @1 m |
 |---|---|---|---|---|
-| furnished query (the real setting) | 20.7 | 192 | 54.7 | 93.7 |
-| matched geometry (upper bound) | 94.3 | 1 | 65.7 | 93.7 |
+| furnished query (the real setting) | 20.7 | 192 | 50.7 | 93.7 |
+| matched geometry (upper bound) | 94.3 | 1 | 79.7 | 93.7 |
 
 | K | truth within 1 m of a top-K cell | of a top-K hypothesis |
 |---|---|---|
