@@ -53,7 +53,12 @@ Since our contribution is measured as a delta on top of existing methods, a
 mis-reproduced baseline would invalidate every number. Tab.~\ref{tab:repro}
 reproduces the published tables of three prior methods from released weights
 under the authors' own protocols. F3Loc's three rows and UnLoc's seven
-thresholds match to within $0.1$ point; DisCo-FLoc matches to within $1.0$.
+thresholds match to within $0.1$ point. DisCo-FLoc is looser: its full model
+matches to within $0.70$ under the repository's default sampling, but its
+RRP-only ablation row is $1.02$ low, and the published value falls between the
+two sampling settings the code exposes ($49.58$ and $52.02$ against a published
+$50.6$), so a third setting is presumably intended. We therefore use DisCo-FLoc
+only as a reproduced reference point and not as a backbone we extend.
 
 One detail is worth recording because it silently changes conclusions. F3Loc's
 evaluation leaves its monocular and multi-view networks in training mode, so
@@ -69,11 +74,13 @@ every metrics file.
 \input{tables/tab_main}
 \input{tables/tab_scenes}
 
-Tab.~\ref{tab:unloc_style} presents the result in the layout of \cite{unloc}
+Tab.~\ref{tab:unloc_style} presents the result in the layout of \cite{unloc},
 for direct comparison with that work; Tab.~\ref{tab:main} is the same result
-with median error, RMSE and confidence intervals added. Adding the acoustic term, with the visual
-weights untouched, improves recall at $1$\,m by $8.0$ points
-$[3.3, 12.7]$ on F3Loc and $5.0$ points $[0.7, 9.3]$ on UnLoc. Median error
+with median error, RMSE and confidence intervals added.
+
+Adding the acoustic term, with the visual weights untouched, improves recall at
+$1$\,m by $8.0$ points $[3.3, 12.7]$ on F3Loc and $5.0$ points $[0.7, 9.3]$ on
+UnLoc. Median error
 roughly halves on both, $2.17 \to 1.20$\,m and $1.12 \to 0.51$\,m, and RMSE over
 all queries falls, so the improvement is a reduction in large failures rather
 than a sharpening of successes.
