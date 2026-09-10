@@ -28,6 +28,15 @@ Shared structure: visual evidence `centre`, acoustic evidence `quantile`, contin
 | DisCo-FLoc (full) | Gibson-f | 13.1 | 50.9 | 56.7 | 55.4 | published |
 | | | 13.8 | 50.2 | 56.5 | 55.6 | ours |
 
+## Table 2b. UnLoc-style layout
+
+| method | audio | 0.1 m | 0.5 m | 1 m | 1 m 30 deg | 2 m | 5 m | 10 m |
+|---|---|---|---|---|---|---|---|---|
+| F3Loc mono |   | 5.3 | 29.7 | 37.7 | 34.0 | 48.7 | 87.7 | 99.7 |
+|  | **ours** | 5.7 | 35.0 | 45.7 | 40.3 | 58.3 | 89.0 | 99.7 |
+| UnLoc |   | 9.0 | 44.7 | 49.7 | 49.0 | 53.3 | 83.7 | 100.0 |
+|  | **ours** | 10.0 | 49.7 | 54.7 | 53.7 | 59.7 | 87.7 | 100.0 |
+
 ## Table 2. Single-frame localization on Replica
 
 | visual backbone | acoustic | 0.1 m | 0.5 m | 1 m | 1 m 30 deg | 2 m | 5 m | median | RMSE | gain @1 m |

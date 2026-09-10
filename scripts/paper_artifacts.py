@@ -233,6 +233,45 @@ def main() -> int:
     TEX(r"\bottomrule\end{tabular}\end{table}")
     TEX("")
 
+    # -------------------------------------------------- Table 2, UnLoc layout
+    # UnLoc reports single-frame results as recall at 0.1, 0.5, 1, 1m/30deg, 2,
+    # 5 and 10 m, in that order, with a GT-depth row as the upper bound of what
+    # ray matching can do. We keep that layout so the two papers can be read
+    # side by side, and add the acoustic rows underneath each backbone.
+    begin_table("tab_unloc_style")
+    TEX(r"\begin{table*}[t]\centering\small")
+    TEX(r"\caption{Single-frame localization on Replica, in the layout of "
+        r"\cite{unloc}. Recall (\%). Queries are furnished recordings, acoustic "
+        r"candidates are rendered from the floorplan alone. Structure and "
+        r"acoustic feature are shared across backbones; the four scalars are "
+        r"tuned per backbone on \texttt{replica\_f}. All numbers on the "
+        r"held-out \texttt{replica\_g}, 300 queries.}")
+    TEX(r"\label{tab:unloc_style}")
+    TEX(r"\begin{tabular}{llccccccc}\toprule")
+    TEX(r"Method & Audio & $0.1$\,m & $0.5$\,m & $1$\,m & $1$\,m\,$30^\circ$ & "
+        r"$2$\,m & $5$\,m & $10$\,m \\\midrule")
+    MD("\n## Table 2b. UnLoc-style layout\n")
+    MD("| method | audio | 0.1 m | 0.5 m | 1 m | 1 m 30 deg | 2 m | 5 m | 10 m |")
+    MD("|---|---|---|---|---|---|---|---|---|")
+    TH10 = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
+    for tag, label in BACKBONES:
+        e, o, Q, sel = evaluate(tag, "raw_scan_open", POLICY[tag], False)
+        ev, ov = Q["e_vis"][sel], Q["orn_vis"][sel]
+        for nm, err, orn, tnm in ((" ", ev, ov, r"\textendash"),
+                                  ("**ours**", e, o, r"\checkmark")):
+            r = [100 * np.mean(err < th) for th in TH10]
+            j = 100 * np.mean((err < 1) & (orn < 30))
+            cells = [r[0], r[1], r[2], j, r[3], r[4], r[5]]
+            MD(f"| {label if nm==' ' else ''} | {nm} | "
+               + " | ".join(f"{c:.1f}" for c in cells) + " |")
+            b = (lambda x: rf"\textbf{{{x}}}") if nm != " " else (lambda x: x)
+            first = rf"\multirow{{2}}{{*}}{{{esc(label)}}}" if nm == " " else ""
+            TEX(rf"{first} & {tnm} & "
+                + " & ".join(b(f"{c:.1f}") for c in cells) + r" \\")
+        TEX(r"\midrule" if tag != BACKBONES[-1][0] else "")
+    TEX(r"\bottomrule\end{tabular}\end{table*}")
+    TEX("")
+
     # ------------------------------------------------------------- Table 2
     MD("\n## Table 2. Single-frame localization on Replica\n")
     MD("| visual backbone | acoustic | 0.1 m | 0.5 m | 1 m | 1 m 30 deg | 2 m | 5 m | "
