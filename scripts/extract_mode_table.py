@@ -61,7 +61,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--condition", default="raw_scan_open",
                    choices=["raw_scan_open", "floorplan_closed"])
     p.add_argument("--grid-dir", default="outputs/acoustic_grid_v2")
-    p.add_argument("--backbone", default="unloc", choices=["unloc", "f3loc_mono"])
+    p.add_argument("--backbone", default="unloc",
+                   choices=["unloc", "f3loc_mono", "disco_rrp"])
     p.add_argument("--checkpoint", default=None,
                    help="visual weights; defaults per backbone")
     p.add_argument("--window-ms", type=float, default=2.0)
@@ -151,6 +152,34 @@ def main() -> int:
                 orn_slice=args.orn_slice)
             return (np.asarray(pd_.cpu(), dtype=np.float64),
                     np.asarray(orn.cpu()))
+    elif args.backbone == "disco_rrp":
+        # DisCo's ray regression predictor only. Its second, contrastive stage
+        # loses 5.4 points when transferred to Replica zero-shot, so extending
+        # the stage that does transfer is the comparison that means anything.
+        sys.path.insert(0, str(DISCO_ROOT))
+        sys.path.insert(0, str(DISCO_ROOT / "eval"))
+        import torchvision.transforms as T
+        cwd = os.getcwd()
+        os.chdir(DISCO_ROOT)
+        from utils.localization_utils import get_ray_from_depth, localize
+        from training.RRP_lightning_module import RRPLightningModule
+        ck = args.checkpoint or str(DISCO_ROOT / "checkpoints" / "RRP_gibson_f_best.ckpt")
+        rrp = RRPLightningModule.load_from_checkpoint(ck, map_location=device).to(device).eval()
+        os.chdir(cwd)
+        F_W = 1 / (2 * np.tan(np.deg2rad(106.2602) / 2))
+        tf = T.Compose([T.ToTensor(), T.Resize((256, 256), antialias=True),
+                        T.Normalize(mean=(0.485, 0.456, 0.406),
+                                    std=(0.229, 0.224, 0.225))])
+
+        def posterior(img_bgr, desdf_t):
+            rgb = img_bgr[:, :, ::-1].copy()
+            with torch.no_grad():
+                ft = rrp("encode", obs_img=tf(rgb).unsqueeze(0).to(device))
+                pred = rrp("decoder_inference", depth_cond=ft).squeeze(0).cpu().numpy()
+            rays = torch.tensor(get_ray_from_depth(pred, V=11, F_W=F_W),
+                                device=device, dtype=torch.float32)
+            _, pd_, orn, _ = localize(desdf_t, rays, return_np=False)
+            return np.asarray(pd_.cpu(), dtype=np.float64), np.asarray(orn.cpu())
     else:
         # the vendored F3Loc tree keeps upstream's absolute imports, so its root
         # has to be on the path before `utils` resolves

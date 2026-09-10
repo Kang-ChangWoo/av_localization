@@ -33,7 +33,12 @@ import sys
 sys.path.insert(0, str(REPO_ROOT))
 
 TH = [0.1, 0.5, 1.0, 2.0, 5.0]
-BACKBONES = [("f3STFT", "F3Loc mono"), ("unlocSTFT", "UnLoc")]
+# DisCo-FLoc contributes its ray predictor only: its contrastive stage loses
+# 5.4 points when transferred to Replica zero-shot, so the stage that does
+# transfer is the one worth extending. It is also the only backbone here still
+# using Gibson weights, which is why its interval behaves differently.
+BACKBONES = [("f3STFT", "F3Loc mono"), ("unlocSTFT", "UnLoc"),
+             ("discoID", "DisCo-FLoc RRP")]
 
 
 def parse_args() -> argparse.Namespace:
@@ -231,6 +236,71 @@ def main() -> int:
         TEX(rf"{esc(name)} & {ds} & {pub[0]} & {pub[1]} & {pub[2]} & {pub[3]} \\")
         TEX(rf"\quad\emph{{reproduced}} & & {ours[0]} & {ours[1]} & {ours[2]} & {ours[3]} \\")
     TEX(r"\bottomrule\end{tabular}\end{table}")
+    TEX("")
+
+    # ------------------------------------- Table 2, multi-dataset skeleton
+    # The layout has a row block per dataset because that is what the paper
+    # should eventually contain. Only Replica is filled: Gibson, Structured3D
+    # and Matterport3D have no impulse responses, for the queries or for the
+    # candidate grid, so their cells are dashes rather than numbers borrowed
+    # from a visual-only run. Filling them requires rendering acoustics for
+    # those scenes, which is a data-collection job and not an evaluation one.
+    begin_table("tab_main_multi")
+    TEX(r"\begin{table*}[t]")
+    TEX(r"\centering\small")
+    TEX(r"\caption{Single-frame localization. Recall in \%. $\checkmark$ denotes "
+        r"our acoustic verification. Only Replica carries impulse responses; the "
+        r"remaining datasets have no acoustic data and their rows are left "
+        r"empty rather than filled from a visual-only run.}")
+    TEX(r"\label{tab:main_multi}")
+    TEX(r"\setlength{\tabcolsep}{5.2pt}")
+    TEX(r"\renewcommand{\arraystretch}{1.12}")
+    TEX(r"\begin{tabular}{lllccccccccc}")
+    TEX(r"\toprule")
+    TEX(r"& & & \multicolumn{6}{c}{\textbf{Recall (\%)}} & "
+        r"\multicolumn{2}{c}{\textbf{Error (m)}} & "
+        r"\multicolumn{1}{c}{\textbf{Gain}} \\")
+    TEX(r"\cmidrule(lr){4-9}\cmidrule(lr){10-11}\cmidrule(lr){12-12}")
+    TEX(r"\textbf{Dataset} & \textbf{Visual backbone} & \textbf{Acoustic}")
+    TEX(r"& $0.1$\,m & $0.5$\,m & $1$\,m & $1$\,m\,$30^\circ$ & $2$\,m & $5$\,m")
+    TEX(r"& Median & RMSE & $\Delta_{1\mathrm{m}}$ \\")
+    TEX(r"\midrule")
+    n_bb = len(BACKBONES)
+    TEX(rf"\multirow{{{2*n_bb}}}{{*}}{{Replica}}")
+    for bi, (tag, label) in enumerate(BACKBONES):
+        e, o, Q, sel = evaluate(tag, "raw_scan_open", POLICY[tag], False)
+        ev, ov = Q["e_vis"][sel], Q["orn_vis"][sel]
+        TEX(rf"& \multirow{{2}}{{*}}{{{esc(label)}}} & $\times$")
+        r = [100 * np.mean(ev < th) for th in TH]
+        j = 100 * np.mean((ev < 1) & (ov < 30))
+        TEX(rf"& {r[0]:.1f} & {r[1]:.1f} & {r[2]:.1f} & {j:.1f} & {r[3]:.1f} & "
+            rf"{r[4]:.1f} & {np.median(ev):.2f} & {np.sqrt(np.mean(ev**2)):.2f} & -- \\")
+        r = [100 * np.mean(e < th) for th in TH]
+        j = 100 * np.mean((e < 1) & (o < 30))
+        m, lo, hi = boot((ev < 1).astype(float), (e < 1).astype(float))
+        # an interval that spans zero must not be set in bold: the table would
+        # be claiming a result the statistics do not support
+        sig = lo > 0
+        bb = (lambda x: rf"\textbf{{{x}}}") if sig else (lambda x: x)
+        TEX(r"& & $\checkmark$")
+        TEX(rf"& {bb(f'{r[0]:.1f}')} & {bb(f'{r[1]:.1f}')} & {bb(f'{r[2]:.1f}')} & "
+            rf"{bb(f'{j:.1f}')} & {bb(f'{r[3]:.1f}')} & {bb(f'{r[4]:.1f}')} & "
+            rf"{bb(f'{np.median(e):.2f}')} & {bb(f'{np.sqrt(np.mean(e**2)):.2f}')} & "
+            rf"{bb(f'{100*m:+.1f}')}\,{{\scriptsize[{100*lo:+.1f},{100*hi:+.1f}]}} \\")
+        if bi < n_bb - 1:
+            TEX(r"\cmidrule(lr){2-12}")
+    for ds in ("Gibson", "Structured3D", "Matterport3D"):
+        TEX(r"\midrule")
+        TEX(rf"\multirow{{{2*n_bb}}}{{*}}{{{ds}}}")
+        for bi, (_, label) in enumerate(BACKBONES):
+            TEX(rf"& \multirow{{2}}{{*}}{{{esc(label)}}} & $\times$ & "
+                + " & ".join(["--"] * 9) + r" \\")
+            TEX(r"& & $\checkmark$ & " + " & ".join(["--"] * 9) + r" \\")
+            if bi < n_bb - 1:
+                TEX(r"\cmidrule(lr){2-12}")
+    TEX(r"\bottomrule")
+    TEX(r"\end{tabular}")
+    TEX(r"\end{table*}")
     TEX("")
 
     # -------------------------------------------------- Table 2, UnLoc layout
