@@ -83,6 +83,29 @@ def orn_err_deg(pred_rad: float, gt_rad: float) -> float:
     return min(d, 2 * np.pi - d) / np.pi * 180.0
 
 
+def held_out(rows: list[dict], weights, gate_q: float, fit_coll: str):
+    """Fit the fusion weight and the gate threshold on one collection, report on the other.
+
+    Both knobs are otherwise chosen by maximising the very number being
+    reported, which makes every gain optimistic by an unknown amount. The two
+    collections are different pose sets over the same rooms, so this holds out
+    the protocol rather than the room, but it is the honest version of the
+    knobs and it is what decides whether the effect is real.
+    """
+    fit = [r for r in rows if r["coll"] == fit_coll]
+    rep = [r for r in rows if r["coll"] != fit_coll]
+    if not fit or not rep:
+        return None
+    w = max(weights, key=lambda w: np.mean([r[f"w{w}_err"] < 1 for r in fit]))
+    tau = float(np.quantile([r["margin"] for r in fit], gate_q))
+    for r in rep:
+        on = r["margin"] < tau
+        r["ho_err"] = r[f"w{w}_err"] if on else r["vision_err"]
+        r["ho_orn"] = r[f"w{w}_orn"] if on else r["vision_orn"]
+        r["hof_err"], r["hof_orn"] = r[f"w{w}_err"], r[f"w{w}_orn"]
+    return rep, w, tau
+
+
 def recalls(rows: list[dict], key: str) -> dict:
     """The four upstream numbers, plus the median error the papers omit."""
     e = np.array([r[f"{key}_err"] for r in rows])
@@ -270,6 +293,18 @@ def main() -> int:
                       "shortlist_coverage": cov, "overall": table,
                       "by_weight": {str(w): 100 * float(np.mean([r[f"w{w}_err"] < 1 for r in rs]))
                                     for w in args.weights}}
+
+        ho = held_out(rs, args.weights, args.gate_quantile, args.collections[0])
+        if ho is not None:
+            rep, w_ho, tau_ho = ho
+            t = {"vision only": recalls(rep, "vision"),
+                 f"fused (w={w_ho:g})": recalls(rep, "hof"),
+                 "gated fusion": recalls(rep, "ho")}
+            print_table(f"{vname} HELD OUT: weight and gate fitted on "
+                        f"{args.collections[0]}, reported on the rest "
+                        f"({len(rep)} poses, w={w_ho:g}, tau={tau_ho:.3f})", t)
+            out[vname]["held_out"] = {"fit_on": args.collections[0], "weight": w_ho,
+                                      "tau": tau_ho, "n": len(rep), "table": t}
 
         if args.per_scene:
             out[vname]["per_scene"] = {}
