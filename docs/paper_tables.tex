@@ -22,65 +22,69 @@ DisCo-FLoc (full) & Gibson-f & 13.1 & 50.9 & 56.7 & 55.4 \\
 
 \begin{table*}[t]
 \centering\small
-\caption{Single-frame localization. Recall in \%. $\checkmark$ denotes our acoustic verification. Only Replica carries impulse responses; the remaining datasets have no acoustic data and their rows are left empty rather than filled from a visual-only run.}
+\caption{Single-frame localization. Recall in \%. $\checkmark$ denotes our acoustic verification. Acoustic candidates are always rendered from the floorplan; the \emph{query acoustics} column gives the geometry the observation itself was rendered on. Replica offers a furnished scan, so its query carries the furniture the floorplan does not model, which is the gap this method addresses. Structured3D ships no furnished mesh, so its query can only come from the same floorplan proxy as the candidates, which removes that gap and makes the acoustic side substantially easier; its rows are not comparable to Replica's on equal terms. Datasets without impulse responses are left empty rather than filled from a visual-only run.}
 \label{tab:main_multi}
 \setlength{\tabcolsep}{5.2pt}
 \renewcommand{\arraystretch}{1.12}
-\begin{tabular}{lllccccccccc}
+\begin{tabular}{llllccccccccc}
 \toprule
-& & & \multicolumn{6}{c}{\textbf{Recall (\%)}} & \multicolumn{2}{c}{\textbf{Error (m)}} & \multicolumn{1}{c}{\textbf{Gain}} \\
-\cmidrule(lr){4-9}\cmidrule(lr){10-11}\cmidrule(lr){12-12}
-\textbf{Dataset} & \textbf{Visual backbone} & \textbf{Acoustic}
+& & & & \multicolumn{6}{c}{\textbf{Recall (\%)}} & \multicolumn{2}{c}{\textbf{Error (m)}} & \multicolumn{1}{c}{\textbf{Gain}} \\
+\cmidrule(lr){5-10}\cmidrule(lr){11-12}\cmidrule(lr){13-13}
+\textbf{Dataset} & \textbf{Query acoustics} & \textbf{Visual backbone} & \textbf{Acoustic}
 & $0.1$\,m & $0.5$\,m & $1$\,m & $1$\,m\,$30^\circ$ & $2$\,m & $5$\,m
 & Median & RMSE & $\Delta_{1\mathrm{m}}$ \\
 \midrule
 \multirow{7}{*}{Replica}
+& \multirow{7}{*}{furnished scan}
 & \emph{acoustic only} & $\checkmark$ & 4.3 & 13.7 & 20.7 & \textendash & 32.3 & 77.7 & 3.02 & 3.92 & \textendash \\
-\cmidrule(lr){2-12}
-& \multirow{2}{*}{F3Loc mono} & $\times$
+\cmidrule(lr){3-13}
+& & \multirow{2}{*}{F3Loc mono} & $\times$
 & 5.3 & 29.7 & 37.7 & 34.0 & 48.7 & 87.7 & 2.17 & 3.17 & -- \\
-& & $\checkmark$
+& & & $\checkmark$
 & \textbf{5.7} & \textbf{35.0} & \textbf{45.7} & \textbf{40.3} & \textbf{58.3} & \textbf{89.0} & \textbf{1.20} & \textbf{3.02} & \textbf{+8.0}\,{\scriptsize[+3.3,+12.7]} \\
-\cmidrule(lr){2-12}
-& \multirow{2}{*}{UnLoc} & $\times$
+\cmidrule(lr){3-13}
+& & \multirow{2}{*}{UnLoc} & $\times$
 & 9.0 & 44.7 & 49.7 & 49.0 & 53.3 & 83.7 & 1.12 & 3.28 & -- \\
-& & $\checkmark$
+& & & $\checkmark$
 & \textbf{10.0} & \textbf{49.7} & \textbf{54.7} & \textbf{53.7} & \textbf{59.7} & \textbf{87.7} & \textbf{0.51} & \textbf{3.01} & \textbf{+5.0}\,{\scriptsize[+0.7,+9.3]} \\
-\cmidrule(lr){2-12}
-& \multirow{2}{*}{DisCo-FLoc RRP} & $\times$
+\cmidrule(lr){3-13}
+& & \multirow{2}{*}{DisCo-FLoc RRP} & $\times$
 & 5.3 & 31.0 & 41.0 & 39.3 & 46.7 & 83.0 & 2.39 & 3.48 & -- \\
-& & $\checkmark$
+& & & $\checkmark$
 & \textbf{6.3} & \textbf{34.3} & \textbf{46.3} & \textbf{44.3} & \textbf{53.3} & \textbf{84.0} & \textbf{1.45} & \textbf{3.33} & \textbf{+5.3}\,{\scriptsize[+1.0,+10.0]} \\
 \midrule
 \multirow{6}{*}{Gibson}
+& \multirow{6}{*}{\textendash}
 & \multirow{2}{*}{F3Loc mono} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-\cmidrule(lr){2-12}
-& \multirow{2}{*}{UnLoc} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-\cmidrule(lr){2-12}
-& \multirow{2}{*}{DisCo-FLoc RRP} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& & & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\cmidrule(lr){3-13}
+& & \multirow{2}{*}{UnLoc} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& & & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\cmidrule(lr){3-13}
+& & \multirow{2}{*}{DisCo-FLoc RRP} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& & & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
 \midrule
 \multirow{6}{*}{Structured3D}
+& \multirow{6}{*}{floorplan proxy}
 & \multirow{2}{*}{F3Loc mono} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-\cmidrule(lr){2-12}
-& \multirow{2}{*}{UnLoc} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-\cmidrule(lr){2-12}
-& \multirow{2}{*}{DisCo-FLoc RRP} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& & & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\cmidrule(lr){3-13}
+& & \multirow{2}{*}{UnLoc} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& & & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\cmidrule(lr){3-13}
+& & \multirow{2}{*}{DisCo-FLoc RRP} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& & & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
 \midrule
 \multirow{6}{*}{Matterport3D}
+& \multirow{6}{*}{\textendash}
 & \multirow{2}{*}{F3Loc mono} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-\cmidrule(lr){2-12}
-& \multirow{2}{*}{UnLoc} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-\cmidrule(lr){2-12}
-& \multirow{2}{*}{DisCo-FLoc RRP} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-& & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& & & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\cmidrule(lr){3-13}
+& & \multirow{2}{*}{UnLoc} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& & & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\cmidrule(lr){3-13}
+& & \multirow{2}{*}{DisCo-FLoc RRP} & $\times$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+& & & $\checkmark$ & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
 \bottomrule
 \end{tabular}
 \end{table*}

@@ -269,29 +269,45 @@ def main() -> int:
     TEX("")
 
     # ------------------------------------- Table 2, multi-dataset skeleton
-    # The layout has a row block per dataset because that is what the paper
-    # should eventually contain. Only Replica is filled: Gibson, Structured3D
-    # and Matterport3D have no impulse responses, for the queries or for the
-    # candidate grid, so their cells are dashes rather than numbers borrowed
-    # from a visual-only run. Filling them requires rendering acoustics for
-    # those scenes, which is a data-collection job and not an evaluation one.
+    # A row block per dataset, with a column naming the geometry the *query*
+    # acoustics were rendered on. That column is not decoration. Replica offers
+    # a furnished scan, so its query is what a microphone in the real room would
+    # hear and the candidates it is matched against are a floorplan, which is
+    # the gap the method exists to bridge. Structured3D ships no furnished mesh
+    # at all, so its query can only come from the same floorplan proxy as the
+    # candidates; that removes the gap and makes the acoustic side far easier,
+    # and a reader comparing the two rows has to be able to see why. Without
+    # this column the Structured3D numbers would look like a stronger result
+    # rather than an easier problem.
+    QUERY_GEOM = {"Replica": r"furnished scan",
+                  "Gibson": r"\textendash",
+                  "Structured3D": r"floorplan proxy",
+                  "Matterport3D": r"\textendash"}
     begin_table("tab_main_multi")
     TEX(r"\begin{table*}[t]")
     TEX(r"\centering\small")
     TEX(r"\caption{Single-frame localization. Recall in \%. $\checkmark$ denotes "
-        r"our acoustic verification. Only Replica carries impulse responses; the "
-        r"remaining datasets have no acoustic data and their rows are left "
+        r"our acoustic verification. Acoustic candidates are always rendered "
+        r"from the floorplan; the \emph{query acoustics} column gives the "
+        r"geometry the observation itself was rendered on. Replica offers a "
+        r"furnished scan, so its query carries the furniture the floorplan does "
+        r"not model, which is the gap this method addresses. Structured3D ships "
+        r"no furnished mesh, so its query can only come from the same floorplan "
+        r"proxy as the candidates, which removes that gap and makes the "
+        r"acoustic side substantially easier; its rows are not comparable to "
+        r"Replica's on equal terms. Datasets without impulse responses are left "
         r"empty rather than filled from a visual-only run.}")
     TEX(r"\label{tab:main_multi}")
     TEX(r"\setlength{\tabcolsep}{5.2pt}")
     TEX(r"\renewcommand{\arraystretch}{1.12}")
-    TEX(r"\begin{tabular}{lllccccccccc}")
+    TEX(r"\begin{tabular}{llllccccccccc}")
     TEX(r"\toprule")
-    TEX(r"& & & \multicolumn{6}{c}{\textbf{Recall (\%)}} & "
+    TEX(r"& & & & \multicolumn{6}{c}{\textbf{Recall (\%)}} & "
         r"\multicolumn{2}{c}{\textbf{Error (m)}} & "
         r"\multicolumn{1}{c}{\textbf{Gain}} \\")
-    TEX(r"\cmidrule(lr){4-9}\cmidrule(lr){10-11}\cmidrule(lr){12-12}")
-    TEX(r"\textbf{Dataset} & \textbf{Visual backbone} & \textbf{Acoustic}")
+    TEX(r"\cmidrule(lr){5-10}\cmidrule(lr){11-12}\cmidrule(lr){13-13}")
+    TEX(r"\textbf{Dataset} & \textbf{Query acoustics} & "
+        r"\textbf{Visual backbone} & \textbf{Acoustic}")
     TEX(r"& $0.1$\,m & $0.5$\,m & $1$\,m & $1$\,m\,$30^\circ$ & $2$\,m & $5$\,m")
     TEX(r"& Median & RMSE & $\Delta_{1\mathrm{m}}$ \\")
     TEX(r"\midrule")
@@ -304,14 +320,15 @@ def main() -> int:
     ea = Qa["e_ac"][repa]
     ra = [100 * np.mean(ea < th) for th in TH]
     TEX(rf"\multirow{{{2*n_bb+1}}}{{*}}{{Replica}}")
+    TEX(rf"& \multirow{{{2*n_bb+1}}}{{*}}{{{QUERY_GEOM['Replica']}}}")
     TEX(rf"& \emph{{acoustic only}} & $\checkmark$ & {ra[0]:.1f} & {ra[1]:.1f} & "
         rf"{ra[2]:.1f} & \textendash & {ra[3]:.1f} & {ra[4]:.1f} & "
         rf"{np.median(ea):.2f} & {np.sqrt(np.mean(ea**2)):.2f} & \textendash \\")
-    TEX(r"\cmidrule(lr){2-12}")
+    TEX(r"\cmidrule(lr){3-13}")
     for bi, (tag, label) in enumerate(BACKBONES):
         e, o, Q, sel = evaluate(tag, args.condition, POLICY[tag], False)
         ev, ov = Q["e_vis"][sel], Q["orn_vis"][sel]
-        TEX(rf"& \multirow{{2}}{{*}}{{{esc(label)}}} & $\times$")
+        TEX(rf"& & \multirow{{2}}{{*}}{{{esc(label)}}} & $\times$")
         r = [100 * np.mean(ev < th) for th in TH]
         j = 100 * np.mean((ev < 1) & (ov < 30))
         TEX(rf"& {r[0]:.1f} & {r[1]:.1f} & {r[2]:.1f} & {j:.1f} & {r[3]:.1f} & "
@@ -323,22 +340,27 @@ def main() -> int:
         # be claiming a result the statistics do not support
         sig = lo > 0
         bb = (lambda x: rf"\textbf{{{x}}}") if sig else (lambda x: x)
-        TEX(r"& & $\checkmark$")
+        TEX(r"& & & $\checkmark$")
         TEX(rf"& {bb(f'{r[0]:.1f}')} & {bb(f'{r[1]:.1f}')} & {bb(f'{r[2]:.1f}')} & "
             rf"{bb(f'{j:.1f}')} & {bb(f'{r[3]:.1f}')} & {bb(f'{r[4]:.1f}')} & "
             rf"{bb(f'{np.median(e):.2f}')} & {bb(f'{np.sqrt(np.mean(e**2)):.2f}')} & "
             rf"{bb(f'{100*m:+.1f}')}\,{{\scriptsize[{100*lo:+.1f},{100*hi:+.1f}]}} \\")
         if bi < n_bb - 1:
-            TEX(r"\cmidrule(lr){2-12}")
+            TEX(r"\cmidrule(lr){3-13}")
     for ds in ("Gibson", "Structured3D", "Matterport3D"):
         TEX(r"\midrule")
         TEX(rf"\multirow{{{2*n_bb}}}{{*}}{{{ds}}}")
+        TEX(rf"& \multirow{{{2*n_bb}}}{{*}}{{{QUERY_GEOM[ds]}}}")
         for bi, (_, label) in enumerate(BACKBONES):
-            TEX(rf"& \multirow{{2}}{{*}}{{{esc(label)}}} & $\times$ & "
+            # the dataset and query-geometry columns are spanned by \multirow
+            # from the first row of the block, so every later row must skip
+            # them explicitly or the row is one cell short
+            skip = "& " if bi == 0 else "& & "
+            TEX(rf"{skip}\multirow{{2}}{{*}}{{{esc(label)}}} & $\times$ & "
                 + " & ".join(["--"] * 9) + r" \\")
-            TEX(r"& & $\checkmark$ & " + " & ".join(["--"] * 9) + r" \\")
+            TEX(r"& & & $\checkmark$ & " + " & ".join(["--"] * 9) + r" \\")
             if bi < n_bb - 1:
-                TEX(r"\cmidrule(lr){2-12}")
+                TEX(r"\cmidrule(lr){3-13}")
     TEX(r"\bottomrule")
     TEX(r"\end{tabular}")
     TEX(r"\end{table*}")

@@ -143,7 +143,16 @@ class MonoFrameDataset(Dataset):
         )
         img = cv2.imread(image_path, cv2.IMREAD_COLOR)
         if img is None:
-            raise FileNotFoundError(image_path)
+            # A collection built with L=0 has one frame per chunk and no view to
+            # disambiguate, so it names files `00000.png` rather than
+            # `00000-0.png`. Structured3D is such a collection. Falling back is
+            # safe because the suffixed name is tried first and only a dataset
+            # that has no such file reaches here.
+            flat = os.path.join(self.dataset_dir, scene, "rgb", f"{chunk:05d}.png")
+            img = cv2.imread(flat, cv2.IMREAD_COLOR)
+            if img is None:
+                raise FileNotFoundError(f"{image_path} (also tried {flat})")
+            image_path = flat
         img = img.astype(np.float32)
 
         data = {}
