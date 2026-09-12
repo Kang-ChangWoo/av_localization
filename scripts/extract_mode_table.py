@@ -80,6 +80,18 @@ def parse_args() -> argparse.Namespace:
                         "recorded so the new rules can be compared against it")
     p.add_argument("--topk", type=int, default=50)
     p.add_argument("--n-poses", type=int, default=100, help="per scene and collection")
+    p.add_argument("--n-rays", type=int, default=11,
+                   help="rays in the matched fan, spaced 10 degrees apart, so "
+                        "V rays span (V-1)*10 degrees. The fan must fit inside "
+                        "the camera's horizontal field of view: outside it the "
+                        "ray interpolation returns NaN and localisation "
+                        "collapses. 11 rays span 100 degrees and fit Replica's "
+                        "106; Structured3D's 80 degrees needs 7.")
+    p.add_argument("--f-w", type=float, default=None,
+                   help="focal length over image width, which fixes the ray fan. "
+                        "Defaults to the 106.26 deg horizontal field of view of "
+                        "Replica and Matterport3D; Structured3D renders at 80 deg "
+                        "and needs 0.5959, matching its training config.")
     p.add_argument("--orn-slice", type=int, default=36)
     p.add_argument("--out-dir", type=Path, default=REPO_ROOT / "outputs" / "analysis")
     p.add_argument("--gpu", default="0")
@@ -118,6 +130,8 @@ def main() -> int:
 
     mcfg = ModeConfig(nms_radius_m=args.nms_radius_m, n_modes=args.n_modes,
                       local_radius_m=args.local_radius_m)
+    F_W = (args.f_w if args.f_w is not None
+           else 1 / (2 * np.tan(np.deg2rad(106.2602) / 2)))
 
     # ---- visual backbone -------------------------------------------------
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -145,7 +159,8 @@ def main() -> int:
             with torch.no_grad():
                 loc, sc = net.encoder(x, None)[:2]
             pr, ps = get_ray_from_depth_uncertainty(
-                loc.squeeze(0).cpu().numpy(), sc.squeeze(0).cpu().numpy())
+                loc.squeeze(0).cpu().numpy(), sc.squeeze(0).cpu().numpy(),
+                V=args.n_rays, F_W=F_W)
             _, pd_, orn, _ = localize_uncertainty(
                 desdf_t, torch.tensor(pr, device=device),
                 torch.tensor(ps, device=device), return_np=False,
@@ -166,7 +181,6 @@ def main() -> int:
         ck = args.checkpoint or str(DISCO_ROOT / "checkpoints" / "RRP_gibson_f_best.ckpt")
         rrp = RRPLightningModule.load_from_checkpoint(ck, map_location=device).to(device).eval()
         os.chdir(cwd)
-        F_W = 1 / (2 * np.tan(np.deg2rad(106.2602) / 2))
         tf = T.Compose([T.ToTensor(), T.Resize((256, 256), antialias=True),
                         T.Normalize(mean=(0.485, 0.456, 0.406),
                                     std=(0.229, 0.224, 0.225))])
@@ -176,7 +190,7 @@ def main() -> int:
             with torch.no_grad():
                 ft = rrp("encode", obs_img=tf(rgb).unsqueeze(0).to(device))
                 pred = rrp("decoder_inference", depth_cond=ft).squeeze(0).cpu().numpy()
-            rays = torch.tensor(get_ray_from_depth(pred, V=11, F_W=F_W),
+            rays = torch.tensor(get_ray_from_depth(pred, V=args.n_rays, F_W=F_W),
                                 device=device, dtype=torch.float32)
             _, pd_, orn, _ = localize(desdf_t, rays, return_np=False)
             return np.asarray(pd_.cpu(), dtype=np.float64), np.asarray(orn.cpu())
@@ -189,7 +203,6 @@ def main() -> int:
         from track1_core.models import MonoDepthModule
         ck = args.checkpoint or str(REPO_ROOT / "outputs/echoloc_mono_fg/mono.ckpt")
         net = MonoDepthModule.load_from_checkpoint(ck).to(device).eval()
-        F_W = 1 / (2 * np.tan(np.deg2rad(106.2602) / 2))
 
         def posterior(img_bgr, desdf_t):
             x = img_bgr[:, :, ::-1].astype(np.float64) / 255.0
@@ -198,7 +211,7 @@ def main() -> int:
                              dtype=torch.float32, device=device)
             with torch.no_grad():
                 pred = net.encoder(x, None)[0].squeeze(0).float().cpu().numpy()
-            rays = torch.tensor(get_ray_from_depth(pred, V=11, F_W=F_W),
+            rays = torch.tensor(get_ray_from_depth(pred, V=args.n_rays, F_W=F_W),
                                 device=device, dtype=torch.float32)
             _, pd_, orn, _ = localize(desdf_t, rays, return_np=False)
             return (np.asarray(pd_.cpu(), dtype=np.float64), np.asarray(orn.cpu()))
@@ -262,7 +275,14 @@ def main() -> int:
                 dname = ds_dirs[int(k)]
                 i = int(dname.split("_")[1])
                 f = rd / dname / "rir.npy"
-                img_p = root / coll / scene / "rgb" / f"{i // 4:05d}-{i % 4}.png"
+                # Replica and Matterport3D store four views per pose as
+                # "<pose>-<view>.png"; Structured3D collections are rendered with
+                # L=0, one image per pose, and name them flat. Try the strided
+                # name first and fall back, which is what the loaders do.
+                rgb = root / coll / scene / "rgb"
+                img_p = rgb / f"{i // 4:05d}-{i % 4}.png"
+                if not img_p.exists():
+                    img_p = rgb / f"{i:05d}.png"
                 if not f.exists() or not img_p.exists() or i >= len(poses):
                     continue
                 qid = f"{coll}/{scene}/{i:05d}"
@@ -417,6 +437,13 @@ def main() -> int:
             nms_radius_m=args.nms_radius_m, n_modes=args.n_modes,
             local_radius_m=args.local_radius_m, window_ms=args.window_ms,
             feature=args.feature, nfft=args.nfft, hop=args.hop,
+            # load-bearing and dataset-specific: the fan must fit the camera's
+            # field of view, and F_W has to be the one the depth targets were
+            # generated with. Getting either wrong silently collapses recall
+            # rather than raising, so both are recorded with every table.
+            n_rays=args.n_rays, f_w=float(F_W), n_poses=args.n_poses,
+            collections=list(args.collections), scenes=list(args.scenes),
+            grid_dir=str(args.grid_dir), dataset_root=str(args.dataset_root),
             time_ranges=[list(t) for t in TIME_RANGES])), indent=2))
     print(f"{len(q_rows)} queries")
     return 0

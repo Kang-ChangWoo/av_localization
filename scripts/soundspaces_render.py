@@ -60,6 +60,14 @@ def parse_args() -> argparse.Namespace:
                    help="ring orientations to render; 1 is enough while the "
                         "likelihood is empirically flat in yaw")
     p.add_argument("--ring-radius-m", type=float, default=0.05)
+    p.add_argument("--layout", default="ring", choices=["ring", "binaural"],
+                   help="'ring' reproduces the shipped candidate grids: six "
+                        "omnidirectional receivers moved around a 5 cm circle, "
+                        "which carries no directivity and therefore no heading. "
+                        "'binaural' renders the engine's HRTF pair at the "
+                        "head orientations given by --yaw-bins, which does. The "
+                        "ring costs six engine calls per cell and binaural one, "
+                        "so four head orientations are cheaper than one ring.")
     p.add_argument("--source-height-m", type=float, default=None,
                    help="receiver height in habitat y; default: read it from the "
                         "scene's shipped rir_metadata.json so candidates and "
@@ -81,6 +89,16 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
+def quat_from_yaw(yaw: float):
+    """Agent rotation for a yaw about habitat's up axis.
+
+    Habitat's y is up and its yaw runs opposite to the floorplan's, which is the
+    same convention the pose conversion elsewhere in this file uses.
+    """
+    import quaternion
+    return quaternion.from_rotation_vector(np.array([0.0, -yaw, 0.0]))
+
+
 def build_simulator(glb: str, args):
     import habitat_sim
     from habitat_sim.sensor import RLRAudioPropagationChannelLayoutType as LT
@@ -94,8 +112,12 @@ def build_simulator(glb: str, args):
     spec = habitat_sim.AudioSensorSpec()
     spec.uuid = "audio_sensor"
     spec.position = np.array([0.0, 0.0, 0.0])   # cancel habitat's 1.5 m sensor offset
-    spec.channelLayout.channelType = LT.Mono
-    spec.channelLayout.channelCount = 1
+    if args.layout == "binaural":
+        spec.channelLayout.channelType = LT.Binaural
+        spec.channelLayout.channelCount = 2
+    else:
+        spec.channelLayout.channelType = LT.Mono
+        spec.channelLayout.channelCount = 1
     ac = spec.acousticsConfig
     ac.sampleRate = args.sample_rate
     ac.indirectRayCount = args.indirect_rays
@@ -175,18 +197,30 @@ def main() -> int:
         # the proxy's own frame: habitat = f3loc + mesh centre, z flipped
         src = np.array([mx + centre[0], height, -my + centre[2]], dtype=np.float32)
         for yb, yaw in enumerate(yaws):
-            angles = RING_ANGLES_RAD + yaw
-            channels = []
-            for a in angles:
-                off = np.array([args.ring_radius_m * np.cos(a), 0.0,
-                                -args.ring_radius_m * np.sin(a)], dtype=np.float32)
+            if args.layout == "binaural":
+                # One head, two ears, rotated to the yaw bin. The HRTF is what
+                # makes the two channels differ with heading, which the
+                # omnidirectional ring cannot do at any radius.
                 st = agent.get_state()
-                st.position = src + off
+                st.position = src
+                st.rotation = quat_from_yaw(yaw)
                 agent.set_state(st)
                 audio.setAudioSourceTransform(src)
-                channels.append(np.asarray(sim.get_sensor_observations()["audio_sensor"])[0])
-            n = min(len(c) for c in channels)
-            rirs.append(np.stack([c[:n] for c in channels]).astype(np.float32))
+                obs = np.asarray(sim.get_sensor_observations()["audio_sensor"])
+                rirs.append(obs[:2].astype(np.float32))
+            else:
+                angles = RING_ANGLES_RAD + yaw
+                channels = []
+                for a in angles:
+                    off = np.array([args.ring_radius_m * np.cos(a), 0.0,
+                                    -args.ring_radius_m * np.sin(a)], dtype=np.float32)
+                    st = agent.get_state()
+                    st.position = src + off
+                    agent.set_state(st)
+                    audio.setAudioSourceTransform(src)
+                    channels.append(np.asarray(sim.get_sensor_observations()["audio_sensor"])[0])
+                n = min(len(c) for c in channels)
+                rirs.append(np.stack([c[:n] for c in channels]).astype(np.float32))
             index.append((int(rows[i]), int(cols[i]), yb))
         if (i + 1) % args.progress_every == 0:
             done = i + 1

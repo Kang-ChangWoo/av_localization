@@ -72,11 +72,19 @@ def main() -> int:
                   f"({1000*spread/cfgs[0]['sample_rate']:.0f} ms), truncating to {n}")
         rir = np.concatenate([r[..., :n] for r in rirs], axis=0)
         index = np.concatenate(idxs, axis=0)
-        keys = index[:, 0].astype(np.int64) * 100000 + index[:, 1].astype(np.int64)
+        # A row of `index` is (row, col, yaw_bin). The ring grids carry one yaw
+        # bin per cell, so (row, col) identified an entry uniquely and the check
+        # was written on that pair. A binaural grid carries one entry per
+        # (cell, heading), thirty-six of them, and every cell then looks like a
+        # duplicate: the merge refused to write a correctly rendered 86 GB grid.
+        # The identity of an entry is all three columns.
+        keys = ((index[:, 0].astype(np.int64) * 100000 + index[:, 1].astype(np.int64))
+                * 1000 + index[:, 2].astype(np.int64))
         if len(np.unique(keys)) != len(keys):
-            print(f"[merge] {scene}: {len(keys) - len(np.unique(keys))} duplicate cells, refusing")
+            print(f"[merge] {scene}: {len(keys) - len(np.unique(keys))} duplicate "
+                  f"(cell, heading) entries, refusing")
             continue
-        order = np.lexsort((index[:, 1], index[:, 0]))
+        order = np.lexsort((index[:, 2], index[:, 1], index[:, 0]))
         rir, index = rir[order], index[order]
 
         out = args.out_dir / f"{scene}.npz"

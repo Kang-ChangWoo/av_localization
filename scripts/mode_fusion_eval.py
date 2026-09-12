@@ -46,6 +46,21 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--analysis-dir", type=Path, default=REPO_ROOT / "outputs" / "analysis")
     p.add_argument("--backbone", default="unloc")
     p.add_argument("--fit-collection", default="replica_f")
+    p.add_argument("--split-by", default="collection", choices=["collection", "scene"],
+                   help="what separates the fitting queries from the reported "
+                        "ones. Replica ships two independent pose collections "
+                        "over the same rooms, so `collection` holds out the "
+                        "protocol. Structured3D and Matterport3D ship one "
+                        "collection over many rooms, so `scene` holds out the "
+                        "room, which is the stronger of the two.")
+    p.add_argument("--primary-condition", default="raw_scan_open",
+                   choices=["raw_scan_open", "floorplan_closed"],
+                   help="the acoustic condition the reported numbers come from. "
+                        "Replica queries are furnished recordings, the "
+                        "deployment case. Structured3D ships no furnished mesh, "
+                        "so its only condition is floorplan_closed and its "
+                        "numbers are the matched-geometry case, not comparable "
+                        "to Replica's.")
     p.add_argument("--boot", type=int, default=10000)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--out", type=Path, default=REPO_ROOT / "outputs" / "analysis" / "fusion_comparison.md")
@@ -103,14 +118,21 @@ def main() -> int:
     )
     from track1_core.provenance import stamp
 
+    # The reported condition, and the control it is compared against. On Replica
+    # the primary is the furnished query and the control is matched geometry. On
+    # a dataset that ships no furnished mesh the primary *is* the matched
+    # geometry and there is no control, which the C2 section then says.
+    PRIMARY = args.primary_condition
+    CONTROL = ("floorplan_closed" if PRIMARY == "raw_scan_open" else "raw_scan_open")
+
     d = args.analysis_dir
     tables = {}
-    for cond in ("raw_scan_open", "floorplan_closed"):
+    for cond in (PRIMARY, CONTROL):
         qp = d / f"queries_{cond}_{args.backbone}.csv"
         mp = d / f"modes_{cond}_{args.backbone}.csv"
         if qp.exists() and mp.exists():
             tables[cond] = (read_csv(qp), group_modes(read_csv(mp)))
-    if "raw_scan_open" not in tables:
+    if PRIMARY not in tables:
         print("run extract_mode_table.py first")
         return 1
 
@@ -131,21 +153,39 @@ def main() -> int:
         err, orn = np.asarray(err), np.asarray(orn)
         return err, orn, np.asarray(used)
 
-    def ids(cond: str, coll: str | None):
+    def ids(cond: str, mask) -> list:
         Q, _ = tables[cond]
-        keep = np.ones(len(Q["query_id"]), bool) if coll is None else (Q["collection"] == coll)
-        return [str(x) for x in Q["query_id"][keep]]
+        return [str(x) for x in Q["query_id"][mask]]
 
-    fit_ids = ids("raw_scan_open", args.fit_collection)
-    Q, _ = tables["raw_scan_open"]
-    rep_coll = [c for c in np.unique(Q["collection"]) if c != args.fit_collection]
-    rep_ids = ids("raw_scan_open", rep_coll[0]) if rep_coll else fit_ids
+    Q, _ = tables[PRIMARY]
+    if args.split_by == "collection":
+        fit_m = Q["collection"] == args.fit_collection
+        rep_c = [c for c in np.unique(Q["collection"]) if c != args.fit_collection]
+        rep_m = (Q["collection"] == rep_c[0]) if rep_c else fit_m
+        fit_name, rep_name = args.fit_collection, (rep_c[0] if rep_c else args.fit_collection)
+    else:
+        # Alternate scenes in sorted order. Deterministic, splits roughly by
+        # count rather than by size, and every reported query comes from a room
+        # no threshold ever saw.
+        sc = sorted({str(x) for x in Q["scene"]})
+        fit_s = set(sc[::2])
+        fit_m = np.array([str(x) in fit_s for x in Q["scene"]])
+        rep_m = ~fit_m
+        fit_name = f"{len(fit_s)} scenes"
+        rep_name = f"the other {len(sc) - len(fit_s)} scenes"
+    fit_ids, rep_ids = ids(PRIMARY, fit_m), ids(PRIMARY, rep_m)
     W(f"# Mode-level fusion, {args.backbone}\n")
-    W(f"Thresholds fitted on {args.fit_collection} ({len(fit_ids)} queries), "
-      f"reported on {rep_coll[0] if rep_coll else args.fit_collection} "
-      f"({len(rep_ids)} queries). Position and yaw always come from the chosen "
-      f"hypothesis's own visual centre, so sound never moves the answer off a "
-      f"place vision proposed and never touches yaw.\n")
+    W(f"Queries are `{PRIMARY}`. Thresholds fitted on {fit_name} "
+      f"({len(fit_ids)} queries), reported on {rep_name} ({len(rep_ids)} "
+      f"queries), held out by {args.split_by}. Position and yaw always come from "
+      f"the chosen hypothesis's own visual centre, so sound never moves the "
+      f"answer off a place vision proposed and never touches yaw.\n")
+    if PRIMARY == "floorplan_closed":
+        W("\n**This is the matched-geometry condition**: the query recording and "
+          "the candidate grid come from the same wall-only mesh. It is not the "
+          "deployment condition, where the query is a furnished room and only "
+          "the floorplan is known, and its numbers are not comparable to a "
+          "furnished-query result.\n")
 
     # ---------------------------------------------------------------- B1
     W("\n## B1/B2. Which evidence summarises a hypothesis best\n")
@@ -159,7 +199,7 @@ def main() -> int:
                                     ("centre", "max", "quantile", "lse")):
         c = ModeFusionConfig(vis_evidence=ve, ac_evidence=ae, rule="selective",
                              tau_v=0.05, tau_a=0.3)
-        e, _, _ = evaluate("raw_scan_open", c, fit_ids)
+        e, _, _ = evaluate(PRIMARY, c, fit_ids)
         s = float((e < 1).mean())
         W(f"| {ve} | {ae} | {100*s:.1f}% |")
         if s > best_score:
@@ -175,7 +215,7 @@ def main() -> int:
     for tv, ta in itertools.product(tv_grid, ta_grid):
         c = ModeFusionConfig(vis_evidence=ve, ac_evidence=ae, rule="selective",
                              tau_v=tv, tau_a=ta)
-        e, _, _ = evaluate("raw_scan_open", c, fit_ids)
+        e, _, _ = evaluate(PRIMARY, c, fit_ids)
         s = float((e < 1).mean())
         if s > best_s:
             best, best_s = (tv, ta), s
@@ -189,7 +229,7 @@ def main() -> int:
     for ta in ta_grid:
         c = ModeFusionConfig(vis_evidence=ve, ac_evidence=ae, rule="selective",
                              tau_v=best[0], tau_a=ta)
-        e, _, u = evaluate("raw_scan_open", c, fit_ids)
+        e, _, u = evaluate(PRIMARY, c, fit_ids)
         W(f"| {ta:g} | {100*(e<1).mean():.1f}% | {100*u.mean():.0f}% |")
 
     # continuous variant, two parameters only
@@ -197,21 +237,21 @@ def main() -> int:
     for w, sc in itertools.product((0.25, 0.5, 1.0, 2.0), (0.02, 0.05, 0.1, 0.3)):
         c = ModeFusionConfig(vis_evidence=ve, ac_evidence=ae, rule="continuous",
                              weight=w, tau_v=best[0], tau_a=best[1], sigmoid_scale=sc)
-        e, _, _ = evaluate("raw_scan_open", c, fit_ids)
+        e, _, _ = evaluate(PRIMARY, c, fit_ids)
         s = float((e < 1).mean())
         if s > cbest_s:
             cbest, cbest_s = (w, sc), s
     rbest, rbest_s = None, -1.0
     for w in (0.1, 0.25, 0.5, 1.0, 2.0):
         c = ModeFusionConfig(vis_evidence=ve, ac_evidence=ae, rule="relative", weight=w)
-        e, _, _ = evaluate("raw_scan_open", c, fit_ids)
+        e, _, _ = evaluate(PRIMARY, c, fit_ids)
         s = float((e < 1).mean())
         if s > rbest_s:
             rbest, rbest_s = w, s
     lbest, lbest_s = None, -1.0
     for lam in (0.1, 0.25, 0.5, 1.0, 2.0, 4.0):
         c = ModeFusionConfig(vis_evidence=ve, ac_evidence=ae, rule="contradiction", lam=lam)
-        e, _, _ = evaluate("raw_scan_open", c, fit_ids)
+        e, _, _ = evaluate(PRIMARY, c, fit_ids)
         s = float((e < 1).mean())
         if s > lbest_s:
             lbest, lbest_s = lam, s
@@ -270,10 +310,10 @@ def main() -> int:
         results[f"cell/{name}"] = row("cell", name, e, o)
     degen = 0
     for name, cfg in rules.items():
-        e, o, u = evaluate("raw_scan_open", cfg, rep_ids)
+        e, o, u = evaluate(PRIMARY, cfg, rep_ids)
         results[f"mode/{name}"] = row("mode", name, e, o)
         results[f"mode/{name}"]["audio_used"] = float(u.mean())
-    _, MMd = tables["raw_scan_open"]
+    _, MMd = tables[PRIMARY]
     vcd, acd = evidence_columns(rules["vision alone"])
     degen = float(np.mean([contradiction_is_degenerate(MMd[q][acd]) for q in rep_ids]))
     W(f"\nThe contradiction variant is algebraically the relative-evidence rule "
@@ -284,7 +324,7 @@ def main() -> int:
 
     # ---------------------------------------------------------------- C1
     W("\n## C1. Oracle over the same hypotheses\n")
-    _, MM = tables["raw_scan_open"]
+    _, MM = tables[PRIMARY]
     oe = np.array([MM[q]["dist_gt_m"].min() for q in rep_ids])
     oo = np.array([MM[q]["yaw_err_deg"][int(MM[q]["dist_gt_m"].argmin())] for q in rep_ids])
     results["oracle/mode"] = row("oracle", "pick the hypothesis nearest truth", oe, oo)
@@ -293,14 +333,14 @@ def main() -> int:
       "acoustic discrimination could still buy.\n")
 
     # ---------------------------------------------------------------- C2
-    if "floorplan_closed" in tables:
+    if CONTROL in tables:
         W("\n## C2. The same rules with matched-geometry acoustics\n")
         W("Query and candidate rendered on the same wall-only mesh, so the "
           "furniture gap is removed and nothing else changes. The visual side is "
           "identical.\n")
         W("| level | rule | 0.1 m | 0.5 m | 1 m | 1m/30deg | median | gain @1m | 95% CI |")
         W("|---|---|---|---|---|---|---|---|---|")
-        Qm, _ = tables["floorplan_closed"]
+        Qm, _ = tables[CONTROL]
         Qmr = {str(k): i for i, k in enumerate(Qm["query_id"])}
         mrep = [q for q in rep_ids if q in Qmr]
         midx = np.array([Qmr[q] for q in mrep])
@@ -314,13 +354,18 @@ def main() -> int:
             o = Qm[ocol][midx] if ocol else np.full(len(e), np.nan)
             results[f"matched/cell/{name}"] = row("cell", name, e, o)
         for name, cfg in rules.items():
-            e, o, u = evaluate("floorplan_closed", cfg, mrep)
+            e, o, u = evaluate(CONTROL, cfg, mrep)
             results[f"matched/mode/{name}"] = row("mode", name, e, o)
-        _, MMm = tables["floorplan_closed"]
+        _, MMm = tables[CONTROL]
         oe2 = np.array([MMm[q]["dist_gt_m"].min() for q in mrep])
         oo2 = np.array([MMm[q]["yaw_err_deg"][int(MMm[q]["dist_gt_m"].argmin())] for q in mrep])
         results["matched/oracle/mode"] = row("oracle", "hypothesis nearest truth", oe2, oo2)
         base_ok = saved
+    elif PRIMARY == "floorplan_closed":
+        W("\n## C2. The furniture domain gap\n")
+        W("Not measurable on this dataset. It ships no furnished mesh, so the "
+          "matched-geometry condition above is the only one that exists and "
+          "there is no furnished query to compare it against.\n")
     else:
         W("\n## C2. Matched-geometry acoustics\n\nNot available yet.\n")
 

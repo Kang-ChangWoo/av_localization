@@ -29,6 +29,16 @@ Shared by every backbone: the formula, both gates, visual evidence `centre` and 
 | DisCo-FLoc (full) | Gibson-f | 13.1 | 50.9 | 56.7 | 55.4 | published |
 | | | 13.8 | 50.2 | 56.5 | 55.6 | ours |
 
+## Table 2a. Datasets beyond Replica
+
+Each row is tuned and reported on disjoint halves of its own dataset. The query-acoustics column is the one that decides comparability: a floorplan-proxy query is recorded on the same geometry as the candidates, so the furniture gap that the method exists to bridge is absent and the acoustic side is much easier.
+
+| dataset | backbone | query acoustics | held out | queries | vision @1m | ours @1m | gain |
+|---|---|---|---|---|---|---|---|
+| Structured3D | F3Loc mono | floorplan_closed | scene | 250 | 22.4% | 47.2% | +24.8 [+18.4, +31.2] |
+| Structured3D | DisCo-FLoc RRP | floorplan_closed | scene | 288 | 20.1% | 46.9% | +26.7 [+21.2, +32.6] |
+| Matterport3D | F3Loc mono | raw_scan_open | scene | 72 | 40.3% | 45.8% | +5.6 [+1.4, +11.1] |
+
 ## Table 2b. UnLoc-style layout
 
 | method | audio | 0.1 m | 0.5 m | 1 m | 1 m 30 deg | 2 m | 5 m | 10 m |
@@ -45,11 +55,11 @@ Shared by every backbone: the formula, both gates, visual evidence `centre` and 
 | visual backbone | acoustic | 0.1 m | 0.5 m | 1 m | 1 m 30 deg | 2 m | 5 m | median | RMSE | gain @1 m |
 |---|---|---|---|---|---|---|---|---|---|---|
 | F3Loc mono | none | 5.3 | 29.7 | 37.7 | 34.0 | 48.7 | 87.7 | 2.17 | 3.17 |  |
-|  | **ours** | 5.7 | 35.0 | 45.7 | 40.3 | 58.3 | 89.0 | 1.20 | 3.02 | **+8.0** [+3.3, +13.0] |
+|  | **ours** | 5.7 | 35.0 | 45.7 | 40.3 | 58.3 | 89.0 | 1.20 | 3.02 | **+8.0** [+3.3, +12.7] |
 | UnLoc | none | 9.0 | 44.7 | 49.7 | 49.0 | 53.3 | 83.7 | 1.12 | 3.28 |  |
 |  | **ours** | 10.0 | 49.7 | 54.7 | 53.7 | 59.7 | 87.7 | 0.51 | 3.01 | **+5.0** [+0.7, +9.3] |
 | DisCo-FLoc RRP | none | 5.3 | 31.0 | 41.0 | 39.3 | 46.7 | 83.0 | 2.39 | 3.48 |  |
-|  | **ours** | 6.3 | 34.3 | 46.3 | 44.3 | 53.3 | 84.0 | 1.45 | 3.33 | **+5.3** [+1.0, +9.7] |
+|  | **ours** | 6.3 | 34.3 | 46.3 | 44.3 | 53.3 | 84.0 | 1.45 | 3.33 | **+5.3** [+1.0, +10.0] |
 
 ## Table 3. Per scene, recall at 1 m
 
@@ -67,12 +77,12 @@ Shared by every backbone: the formula, both gates, visual evidence `centre` and 
 | level | rule | 0.5 m | 1 m | 1 m 30 deg | median | gain @1 m | 95% CI |
 |---|---|---|---|---|---|---|---|
 | \textendash | vision only | 44.7 | 49.7 | 49.0 | 1.12 | +0.0 | [+0.0, +0.0] |
-| cell | acoustic alone | 13.7 | 20.7 | - | 3.02 | -29.0 | [-37.0, -21.3] |
+| cell | acoustic alone | 13.7 | 20.7 | - | 3.02 | -29.0 | [-36.3, -21.0] |
 | cell | rerank vision top-50 | 45.3 | 52.7 | 50.7 | 0.79 | +3.0 | [-3.3, +9.3] |
 | cell | log-rank fusion | 47.0 | 54.3 | 52.7 | 0.70 | +4.7 | [-1.3, +10.7] |
-| hypothesis | rerank, unconditional | 30.0 | 34.0 | 33.0 | 2.61 | -15.7 | [-23.0, -8.3] |
+| hypothesis | rerank, unconditional | 30.0 | 34.0 | 33.0 | 2.61 | -15.7 | [-23.3, -8.3] |
 | hypothesis | relative evidence | 49.3 | 54.3 | 53.3 | 0.52 | +4.7 | [+0.3, +9.0] |
-| hypothesis | gate on visual ambiguity | 40.3 | 45.3 | 44.3 | 1.73 | -4.3 | [-11.0, +2.3] |
+| hypothesis | gate on visual ambiguity | 40.3 | 45.3 | 44.3 | 1.73 | -4.3 | [-11.0, +2.0] |
 | hypothesis | gate on both confidences | 40.3 | 45.3 | 44.3 | 1.73 | -4.3 | [-10.7, +2.0] |
 | hypothesis | continuous gate (ours) | 49.7 | 54.7 | 53.7 | 0.51 | +5.0 | [+0.7, +9.3] |
 | oracle | best of the ten hypotheses | 78.3 | 93.7 | 89.3 | 0.25 | +44.0 | [+38.3, +49.7] |

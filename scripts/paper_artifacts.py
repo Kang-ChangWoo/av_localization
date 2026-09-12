@@ -35,10 +35,50 @@ sys.path.insert(0, str(REPO_ROOT))
 TH = [0.1, 0.5, 1.0, 2.0, 5.0]
 # DisCo-FLoc contributes its ray predictor only: its contrastive stage loses
 # 5.4 points when transferred to Replica zero-shot, so the stage that does
-# transfer is the one worth extending. It is also the only backbone here still
-# using Gibson weights, which is why its interval behaves differently.
+# transfer is the one worth extending. All three backbones are trained on the
+# Replica training split; the `discoID` tag is the in-domain run, and the
+# checkpoint each table was built from is recorded beside its mode table in
+# outputs/analysis/provenance_*.json.
 BACKBONES = [("f3STFT", "F3Loc mono"), ("unlocSTFT", "UnLoc"),
              ("discoID", "DisCo-FLoc RRP")]
+
+# Datasets beyond Replica for which both a trained visual backbone and a
+# rendered acoustic candidate grid exist. Entries are filled in as the grids
+# finish rendering; a dataset listed here whose tables are not on disk falls
+# back to the dashed skeleton rather than to a number.
+#
+# `condition` is the geometry the QUERY was rendered on, and it is the thing a
+# reader has to see. Replica ships a furnished scan, so its query is what a
+# microphone in the real room would hear and the floorplan candidates it is
+# matched against are missing the furniture: that gap is the problem. A dataset
+# with no furnished mesh can only render its query on the same floorplan proxy
+# as the candidates, which removes the gap and makes the acoustic side far
+# easier. Those numbers are not comparable to Replica's.
+#
+# `split` says what is held out. Replica has two pose collections over the same
+# rooms, so it holds out the protocol. A dataset with one collection over many
+# rooms holds out the room instead, which is stricter.
+EXTRA = {
+    "Structured3D": dict(
+        condition="floorplan_closed", split="scene",
+        backbones=[("f3loc_mono_s3d", "F3Loc mono"),
+                   ("disco_rrp_s3d", "DisCo-FLoc RRP"),
+                   # UnLoc is absent until its Structured3D run finishes. Its
+                   # first one was trained against misaligned labels: the loader
+                   # pairs the image of window w with the depth of frame 4w+3,
+                   # which is the same frame only when a collection stores four
+                   # views per name prefix. Structured3D stores one.
+                   ("unloc_s3d", "UnLoc")]),
+    # Matterport3D ships a furnished scan, so its query is the deployment case
+    # exactly as Replica's is, and its rows are the ones comparable to Replica's.
+    # It is held out by room rather than by motion collection: `_f` and `_g` are
+    # forward and general motion over the same rooms and are not spatially
+    # separated, so the two collections are pooled and whole rooms are held out.
+    "Matterport3D": dict(
+        condition="raw_scan_open", split="scene",
+        backbones=[("f3loc_mono_mp3d9", "F3Loc mono"),
+                   ("f3loc_mono_mp3dpre", "F3Loc mono")]),
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -104,14 +144,30 @@ def main() -> int:
     d = args.analysis_dir
 
     data = {}
+
+    def load(tag: str, cond: str, split: str) -> bool:
+        qp = d / f"queries_{cond}_{tag}.csv"
+        if not qp.exists():
+            return False
+        Q = read(qp)
+        M = group(read(d / f"modes_{cond}_{tag}.csv"))
+        if split == "collection":
+            fit = Q["collection"] == args.fit_collection
+        else:
+            # alternate rooms in sorted order: deterministic, roughly balanced by
+            # count, and every reported query comes from a room no threshold saw
+            sc = sorted({str(x) for x in Q["scene"]})
+            keep = set(sc[::2])
+            fit = np.array([str(x) in keep for x in Q["scene"]])
+        data[(tag, cond)] = (Q, M, fit, ~fit)
+        return True
+
     for tag, _ in BACKBONES:
         for cond in ("raw_scan_open", "floorplan_closed"):
-            qp = d / f"queries_{cond}_{tag}.csv"
-            if qp.exists():
-                Q = read(qp)
-                M = group(read(d / f"modes_{cond}_{tag}.csv"))
-                fit = Q["collection"] == args.fit_collection
-                data[(tag, cond)] = (Q, M, fit, ~fit)
+            load(tag, cond, "collection")
+    for spec in EXTRA.values():
+        for tag, _ in spec["backbones"]:
+            load(tag, spec["condition"], spec["split"])
 
     def evaluate(tag, cond, cfg, use_fit):
         Q, M, fit, rep = data[(tag, cond)]
@@ -163,12 +219,12 @@ def main() -> int:
                                      (0.005, 0.02, 0.05, 0.1, 0.2),      # tau_v
                                      (-2.0, 0.0, 0.2, 0.4)))             # tau_a
 
-    def tune(tag, ve, ae):
+    def tune(tag, ve, ae, cond=None):
         b, bs = None, -1.0
         for w, s, tv, ta in scalars:
             cfg = ModeFusionConfig(vis_evidence=ve, ac_evidence=ae, rule="continuous",
                                    weight=w, sigmoid_scale=s, tau_v=tv, tau_a=ta)
-            e, _, _, _ = evaluate(tag, args.condition, cfg, True)
+            e, _, _, _ = evaluate(tag, cond or args.condition, cfg, True)
             sc = float((e < 1).mean())
             if sc > bs:
                 b, bs = cfg, sc
@@ -279,10 +335,16 @@ def main() -> int:
     # and a reader comparing the two rows has to be able to see why. Without
     # this column the Structured3D numbers would look like a stronger result
     # rather than an easier problem.
-    QUERY_GEOM = {"Replica": r"furnished scan",
-                  "Gibson": r"\textendash",
-                  "Structured3D": r"floorplan proxy",
-                  "Matterport3D": r"\textendash"}
+    # What the QUERY was rendered on. Candidates are always the floorplan proxy.
+    # A dataset whose query is also the floorplan proxy has no furniture gap and
+    # is a different, easier problem; the column exists so that is visible.
+    GEOM_OF = {"raw_scan_open": r"furnished scan",
+               "floorplan_closed": r"floorplan proxy"}
+    QUERY_GEOM = {"Replica": GEOM_OF[args.condition], "Gibson": r"\textendash"}
+    for ds, spec in EXTRA.items():
+        QUERY_GEOM[ds] = GEOM_OF[spec["condition"]]
+    QUERY_GEOM.setdefault("Structured3D", r"\textendash")
+    QUERY_GEOM.setdefault("Matterport3D", r"\textendash")
     begin_table("tab_main_multi")
     TEX(r"\begin{table*}[t]")
     TEX(r"\centering\small")
@@ -347,24 +409,73 @@ def main() -> int:
             rf"{bb(f'{100*m:+.1f}')}\,{{\scriptsize[{100*lo:+.1f},{100*hi:+.1f}]}} \\")
         if bi < n_bb - 1:
             TEX(r"\cmidrule(lr){3-13}")
+    extra_notes: list[str] = []
     for ds in ("Gibson", "Structured3D", "Matterport3D"):
+        spec = EXTRA.get(ds)
+        # A dataset may list several tags for the same backbone, newest first,
+        # so that a larger extraction supersedes a smaller one as soon as it
+        # lands without the table growing a duplicate row.
+        have = []
+        if spec:
+            seen = set()
+            for tag, label in spec["backbones"]:
+                if (tag, spec["condition"]) in data and label not in seen:
+                    have.append((tag, label)); seen.add(label)
         TEX(r"\midrule")
-        TEX(rf"\multirow{{{2*n_bb}}}{{*}}{{{ds}}}")
-        TEX(rf"& \multirow{{{2*n_bb}}}{{*}}{{{QUERY_GEOM[ds]}}}")
-        for bi, (_, label) in enumerate(BACKBONES):
+        n = len(have) if have else n_bb
+        TEX(rf"\multirow{{{2*n}}}{{*}}{{{ds}}}")
+        TEX(rf"& \multirow{{{2*n}}}{{*}}{{{QUERY_GEOM[ds]}}}")
+        for bi, (tag, label) in enumerate(have or BACKBONES):
             # the dataset and query-geometry columns are spanned by \multirow
             # from the first row of the block, so every later row must skip
             # them explicitly or the row is one cell short
             skip = "& " if bi == 0 else "& & "
-            TEX(rf"{skip}\multirow{{2}}{{*}}{{{esc(label)}}} & $\times$ & "
-                + " & ".join(["--"] * 9) + r" \\")
-            TEX(r"& & & $\checkmark$ & " + " & ".join(["--"] * 9) + r" \\")
-            if bi < n_bb - 1:
+            if not have:
+                TEX(rf"{skip}\multirow{{2}}{{*}}{{{esc(label)}}} & $\times$ & "
+                    + " & ".join(["--"] * 9) + r" \\")
+                TEX(r"& & & $\checkmark$ & " + " & ".join(["--"] * 9) + r" \\")
+            else:
+                cond = spec["condition"]
+                cfg, fit_s = tune(tag, struct[0], struct[1], cond)
+                e, o, Q, sel = evaluate(tag, cond, cfg, False)
+                ev, ov = Q["e_vis"][sel], Q["orn_vis"][sel]
+                r = [100 * np.mean(ev < th) for th in TH]
+                j = 100 * np.mean((ev < 1) & (ov < 30))
+                TEX(rf"{skip}\multirow{{2}}{{*}}{{{esc(label)}}} & $\times$")
+                TEX(rf"& {r[0]:.1f} & {r[1]:.1f} & {r[2]:.1f} & {j:.1f} & {r[3]:.1f} & "
+                    rf"{r[4]:.1f} & {np.median(ev):.2f} & "
+                    rf"{np.sqrt(np.mean(ev**2)):.2f} & -- \\")
+                r = [100 * np.mean(e < th) for th in TH]
+                j = 100 * np.mean((e < 1) & (o < 30))
+                m, lo, hi = boot((ev < 1).astype(float), (e < 1).astype(float))
+                bb = (lambda x: rf"\textbf{{{x}}}") if lo > 0 else (lambda x: x)
+                TEX(r"& & & $\checkmark$")
+                TEX(rf"& {bb(f'{r[0]:.1f}')} & {bb(f'{r[1]:.1f}')} & {bb(f'{r[2]:.1f}')} & "
+                    rf"{bb(f'{j:.1f}')} & {bb(f'{r[3]:.1f}')} & {bb(f'{r[4]:.1f}')} & "
+                    rf"{bb(f'{np.median(e):.2f}')} & {bb(f'{np.sqrt(np.mean(e**2)):.2f}')} & "
+                    rf"{bb(f'{100*m:+.1f}')}\,{{\scriptsize[{100*lo:+.1f},{100*hi:+.1f}]}} \\")
+                extra_notes.append(
+                    f"| {ds} | {label} | {cond} | {spec['split']} | {int(sel.sum())} | "
+                    f"{100*np.mean(ev<1):.1f}% | {100*np.mean(e<1):.1f}% | "
+                    f"{100*m:+.1f} [{100*lo:+.1f}, {100*hi:+.1f}] |")
+            if bi < (n - 1):
                 TEX(r"\cmidrule(lr){3-13}")
     TEX(r"\bottomrule")
     TEX(r"\end{tabular}")
     TEX(r"\end{table*}")
     TEX("")
+    if extra_notes:
+        MD("\n## Table 2a. Datasets beyond Replica\n")
+        MD("Each row is tuned and reported on disjoint halves of its own "
+           "dataset. The query-acoustics column is the one that decides "
+           "comparability: a floorplan-proxy query is recorded on the same "
+           "geometry as the candidates, so the furniture gap that the method "
+           "exists to bridge is absent and the acoustic side is much easier.\n")
+        MD("| dataset | backbone | query acoustics | held out | queries | "
+           "vision @1m | ours @1m | gain |")
+        MD("|---|---|---|---|---|---|---|---|")
+        for ln in extra_notes:
+            MD(ln)
 
     # -------------------------------------------------- Table 2, UnLoc layout
     # UnLoc reports single-frame results as recall at 0.1, 0.5, 1, 1m/30deg, 2,
