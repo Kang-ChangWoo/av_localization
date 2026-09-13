@@ -315,9 +315,11 @@ in the paper.
 
 Ranked by how likely each is to be raised, not by how easy it is to run:
 
-1. **Additive noise on the query.** Already measured: recall moves from 22.0%
-   to 20.0% between clean and 0 dB SNR, because the feature integrates over
-   128 ms and three bands. Report it and move on.
+1. **Additive noise on the query.** Measured on three rooms, 360 queries:
+   acoustic-alone recall is unchanged at 20 dB SNR (22.2% to 22.8%) and falls
+   to 13.6% at 0 dB. An earlier one-room figure of "no effect at 0 dB" was
+   noise. The feature tolerates ordinary sensor noise and not a signal buried
+   in it, which is the expected shape and should be reported as such.
 2. **Microphone and source gain mismatch.** Removed by the per-response energy
    normalisation, which should be stated rather than tested at length.
 3. **Receiver height error, ±10 and ±20 cm.** Needs a re-render and is the
@@ -392,7 +394,8 @@ paper nothing and removes a reviewer's easiest attack.
 |---|---|---|
 | 1 | A real room; B mismatch curve; C global vs verification; D classical baseline; E multi-view; F room holdout; H controls; I pairwise | each removes a named rejection risk |
 | 2 | L receiver height; M missing walls; O causal beyond-FoV | strengthen, do not rescue |
-| 3 | binaural receiver; grid resolution; compute cost | supplementary interest |
+| 3 | binaural receiver; compute cost | supplementary interest |
+| — | grid resolution | done: a 0.5 m lattice keeps recall (22.5% vs 22.2%) at 4% of the cells, so it is a cost result, not an accuracy one |
 | 4 | a learned acoustic network; more datasets; more fusion rules | adds complexity, answers nobody |
 
 Tier-1 cost, in the labels requested:

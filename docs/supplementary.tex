@@ -164,3 +164,20 @@ direction of arrival for a head-related transfer function to resolve. A
 heading-aware acoustic term would need a source somewhere other than the
 listener's own position, which is a different sensing assumption from the one
 this paper makes.
+
+\subsection{What a deployment can give up}
+\label{sec:supp-deploy}
+
+\input{tables/tab_deploy}
+
+Two knobs a deployment turns, measured on the acoustic score alone over three
+Replica rooms and $360$ furnished queries so the visual term does not dilute
+the effect (Tab.~\ref{tab:deploy}). Additive white noise on the query leaves
+recall unchanged at $20$\,dB and halves it at $0$\,dB; the feature integrates
+$128$\,ms into three bands and tolerates sensor noise, not a buried signal.
+Thinning the candidate lattice from $0.1$ to $0.5$\,m keeps recall within a
+point while rendering four percent of the cells, so the offline cost in
+Sec.~\ref{sec:limits} can be cut by a factor of twenty-five at no accuracy
+cost. A single-room run had suggested thinning \emph{improves} recall; on three
+rooms it does not, and we report the flat curve.
+
