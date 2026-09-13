@@ -1,0 +1,57 @@
+{
+  "results": {
+    "raw_scan_open": {
+      "none": {
+        "n": 360,
+        "r1": 0.2222222222222222,
+        "r2": 0.325,
+        "median_rank": 161.5,
+        "mean_rank": 542.3027777777778
+      },
+      "gt_yaw": {
+        "n": 360,
+        "r1": 0.225,
+        "r2": 0.35555555555555557,
+        "median_rank": 151.0,
+        "mean_rank": 528.3777777777777
+      }
+    },
+    "floorplan_closed": {
+      "none": {
+        "n": 360,
+        "r1": 0.9416666666666667,
+        "r2": 0.9444444444444444,
+        "median_rank": 0.0,
+        "mean_rank": 1.4694444444444446
+      },
+      "gt_yaw": {
+        "n": 360,
+        "r1": 0.975,
+        "r2": 0.9833333333333333,
+        "median_rank": 0.0,
+        "mean_rank": 1.3777777777777778
+      }
+    }
+  },
+  "provenance": {
+    "utc": "2026-09-13T19:37:31Z",
+    "argv": [
+      "feasible/run_yaw_alignment.py"
+    ],
+    "git": {
+      "commit": "395cc54c8682",
+      "dirty": false,
+      "diff_sha1": null,
+      "diff_lines": 0
+    },
+    "env": {
+      "python": "3.8.20",
+      "platform": "Linux-6.8.0-84-generic-x86_64-with-glibc2.17",
+      "numpy": "1.24.3",
+      "torch": "2.4.1",
+      "cv2": "5.0.0",
+      "scipy": "1.10.1"
+    },
+    "inputs": []
+  }
+}

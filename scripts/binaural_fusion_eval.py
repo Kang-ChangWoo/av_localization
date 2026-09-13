@@ -200,6 +200,9 @@ def main() -> int:
     if not rec:
         print("nothing measured")
         return 1
+    args.json_out.parent.mkdir(parents=True, exist_ok=True)
+    (args.json_out.parent / "binaural_fusion_records.json").write_text(
+        json.dumps(rec, default=str))
 
     # ------------------------------------------------------- fuse and report
     from track1_core.likelihood.mode_fusion import ModeFusionConfig, choose
@@ -230,7 +233,7 @@ def main() -> int:
     # wins on recall and loses by a factor of thirty-six on the offline render
     # is not obviously the better choice, and a reader cannot see that if the
     # two numbers are in different tables.
-    COST = {"ring": (1, "ring6"), "bin_best": (n_yaw, "binaural"),
+    COST = {"ring": (1, "ring"), "bin_best": (n_yaw, "binaural"),
             "bin_soft": (n_yaw, "binaural")}
     gb = {}
     for name, d in (("ring", args.ring_grid), ("binaural", args.bin_grid)):
