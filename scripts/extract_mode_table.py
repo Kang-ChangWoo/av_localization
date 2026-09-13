@@ -62,7 +62,12 @@ def parse_args() -> argparse.Namespace:
                    choices=["raw_scan_open", "floorplan_closed"])
     p.add_argument("--grid-dir", default="outputs/acoustic_grid_v2")
     p.add_argument("--backbone", default="unloc",
-                   choices=["unloc", "f3loc_mono", "disco_rrp"])
+                   choices=["unloc", "f3loc_mono", "disco_rrp",
+                            "f3loc_mv", "f3loc_comp"])
+    p.add_argument("--mono-ckpt", default=None,
+                   help="the complementary net selects between a frozen mono "
+                        "and a frozen mv net, so it needs both")
+    p.add_argument("--mv-ckpt", default=None)
     p.add_argument("--checkpoint", default=None,
                    help="visual weights; defaults per backbone")
     p.add_argument("--window-ms", type=float, default=2.0)
@@ -92,10 +97,53 @@ def parse_args() -> argparse.Namespace:
                         "Defaults to the 106.26 deg horizontal field of view of "
                         "Replica and Matterport3D; Structured3D renders at 80 deg "
                         "and needs 0.5959, matching its training config.")
+    p.add_argument("--degrade", default="none",
+                   help="corrupt the query image before the visual backbone, as "
+                        "`kind:level`. The acoustic side is untouched, so this "
+                        "asks directly whether the acoustic term does more work "
+                        "as the camera does less. kinds: blur:<sigma px>, "
+                        "dark:<gain 0..1>, noise:<sigma 0..255>, occlude:<fraction>, "
+                        "downscale:<factor>")
+    p.add_argument("--degrade-seed", type=int, default=0)
     p.add_argument("--orn-slice", type=int, default=36)
     p.add_argument("--out-dir", type=Path, default=REPO_ROOT / "outputs" / "analysis")
     p.add_argument("--gpu", default="0")
     return p.parse_args()
+
+
+def degrade_image(img: np.ndarray, spec: str, rng: np.random.Generator) -> np.ndarray:
+    """Apply one named corruption to a BGR uint8 image. Deterministic per call."""
+    if spec == "none":
+        return img
+    import cv2
+    kind, lvl = spec.split(":")
+    lvl = float(lvl)
+    out = img.astype(np.float32)
+    if kind == "blur":
+        k = int(2 * round(3 * lvl) + 1)
+        out = cv2.GaussianBlur(out, (k, k), lvl)
+    elif kind == "dark":
+        # a dim room plus the sensor noise that comes with gaining it back up:
+        # gain alone would be undone by the backbone's own normalisation
+        out = out * lvl + rng.normal(0, 8.0 * (1 - lvl), out.shape)
+    elif kind == "noise":
+        out = out + rng.normal(0, lvl, out.shape)
+    elif kind == "occlude":
+        h, w = out.shape[:2]
+        area = lvl * h * w
+        bw = int(np.sqrt(area * rng.uniform(0.5, 2.0)))
+        bh = int(area / max(bw, 1))
+        bw, bh = min(bw, w), min(bh, h)
+        y0 = rng.integers(0, h - bh + 1); x0 = rng.integers(0, w - bw + 1)
+        out[y0:y0 + bh, x0:x0 + bw] = out.mean()
+    elif kind == "downscale":
+        h, w = out.shape[:2]
+        small = cv2.resize(out, (max(int(w / lvl), 8), max(int(h / lvl), 8)),
+                           interpolation=cv2.INTER_AREA)
+        out = cv2.resize(small, (w, h), interpolation=cv2.INTER_LINEAR)
+    else:
+        raise ValueError(f"unknown degradation {kind!r}")
+    return np.clip(out, 0, 255).astype(np.uint8)
 
 
 def rank_norm(x: np.ndarray) -> np.ndarray:
@@ -130,6 +178,9 @@ def main() -> int:
 
     mcfg = ModeConfig(nms_radius_m=args.nms_radius_m, n_modes=args.n_modes,
                       local_radius_m=args.local_radius_m)
+    deg_rng = np.random.default_rng(args.degrade_seed)
+    posterior = None          # set by every single-image branch below
+    posterior_chunk = None    # set by the multi-view branches instead
     F_W = (args.f_w if args.f_w is not None
            else 1 / (2 * np.tan(np.deg2rad(106.2602) / 2)))
 
@@ -194,6 +245,47 @@ def main() -> int:
                                 device=device, dtype=torch.float32)
             _, pd_, orn, _ = localize(desdf_t, rays, return_np=False)
             return np.asarray(pd_.cpu(), dtype=np.float64), np.asarray(orn.cpu())
+    elif args.backbone in ("f3loc_mv", "f3loc_comp"):
+        # Multi-view and complementary take a four-frame chunk rather than one
+        # image, so the observation is built by the upstream dataset and indexed
+        # by (scene, chunk). This is the experiment that asks whether the
+        # acoustic gain survives a stronger visual posterior, which is the first
+        # thing a vision reviewer asks.
+        from track1_core._vendor import ensure_on_path
+        ensure_on_path()
+        from utils.localization_utils import get_ray_from_depth, localize
+        from utils.data_utils import GridSeqDataset
+        from track1_core.models import CompDepthModule, MVDepthModule
+        if args.backbone == "f3loc_mv":
+            ck = args.checkpoint
+            net = MVDepthModule.load_from_checkpoint(ck).to(device).eval()
+            run = lambda batch: net.net(batch)["d"]
+        else:
+            ck = args.checkpoint
+            net = CompDepthModule.load_from_checkpoint(
+                ck, mono_ckpt=args.mono_ckpt, mv_ckpt=args.mv_ckpt).to(device).eval()
+            run = lambda batch: net.comp_d_net(batch)["d_comp"]
+        CHUNK = {}
+
+        def chunk_dataset(root_dir, scene):
+            if scene not in CHUNK:
+                CHUNK[scene] = GridSeqDataset(str(root_dir), [scene], L=3)
+            return CHUNK[scene]
+
+        def posterior_chunk(ds, j, desdf_t):
+            d = ds[j]
+            b = {}
+            for k in ("ref_img", "src_img", "ref_pose", "src_pose"):
+                b[k] = torch.tensor(d[k], dtype=torch.float32, device=device)[None]
+            b["ref_mask"] = None
+            b["src_mask"] = None
+            with torch.no_grad():
+                pred = run(b).squeeze(0).float().cpu().numpy()
+            rays = torch.tensor(get_ray_from_depth(pred, V=args.n_rays, F_W=F_W),
+                                device=device, dtype=torch.float32)
+            _, pd_, orn, _ = localize(desdf_t, rays, return_np=False)
+            return (np.asarray(pd_.cpu(), dtype=np.float64), np.asarray(orn.cpu()))
+        posterior = None
     else:
         # the vendored F3Loc tree keeps upstream's absolute imports, so its root
         # has to be on the path before `utils` resolves
@@ -286,8 +378,18 @@ def main() -> int:
                 if not f.exists() or not img_p.exists() or i >= len(poses):
                     continue
                 qid = f"{coll}/{scene}/{i:05d}"
-                img = cv2.imread(str(img_p), cv2.IMREAD_COLOR)
-                pdist, orns = posterior(img, dt)
+                if posterior is None:
+                    # mv and comp consume the whole four-frame chunk that this
+                    # reference view belongs to, indexed within the scene
+                    ds = chunk_dataset(root / coll, scene)
+                    j = i // 4
+                    if j >= len(ds):
+                        continue
+                    pdist, orns = posterior_chunk(ds, j, dt)
+                else:
+                    img = cv2.imread(str(img_p), cv2.IMREAD_COLOR)
+                    img = degrade_image(img, args.degrade, deg_rng)
+                    pdist, orns = posterior(img, dt)
                 vis = pdist[rows, cols]
                 yaw = pg.bin_to_yaw(orns[rows, cols])
 
@@ -442,6 +544,7 @@ def main() -> int:
             # generated with. Getting either wrong silently collapses recall
             # rather than raising, so both are recorded with every table.
             n_rays=args.n_rays, f_w=float(F_W), n_poses=args.n_poses,
+            degrade=args.degrade, degrade_seed=args.degrade_seed,
             collections=list(args.collections), scenes=list(args.scenes),
             grid_dir=str(args.grid_dir), dataset_root=str(args.dataset_root),
             time_ranges=[list(t) for t in TIME_RANGES])), indent=2))

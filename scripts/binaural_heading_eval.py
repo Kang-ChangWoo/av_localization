@@ -99,8 +99,11 @@ def main() -> int:
         print(f"[grid] {scene}: {len(index)} entries, {n_yaw} headings, "
               f"{len(np.unique(index[:, :2], axis=0))} cells")
 
-        # featurise once; the array is (entries, C*B, T)
-        F = np.stack([featurise(band_energy(r, cfg), cfg) for r in blob["rir"]])
+        # The test only ever scores the 36 headings of the cells that hold a
+        # ground-truth pose, a few thousand entries out of a hundred thousand,
+        # so featurising the whole 20 GB grid wasted half an hour per condition.
+        # The needed cells are collected first and only those are featurised.
+        rir = blob["rir"]
         del blob
         key = index[:, 0].astype(np.int64) * 100000 + index[:, 1].astype(np.int64)
         cells, inv = np.unique(key, return_inverse=True)
@@ -116,6 +119,8 @@ def main() -> int:
         pg = PoseGrid.from_desdf(desdf, occ.shape)
         res = pg.grid_resolution_m
 
+        # pass one: which (query, cell) pairs the test will actually score
+        todo = []
         for coll in args.collections:
             poses = np.array([[float(v) for v in l.split()]
                               for l in open(args.dataset_root / coll / scene / "poses.txt")
@@ -131,22 +136,31 @@ def main() -> int:
                 f = rd / dn / "rir_binaural.npy"
                 if not f.exists() or i >= len(poses):
                     continue
-                obs = featurise(band_energy(np.load(f), cfg, observation_rate(f)), cfg)
-                gx, gy, gth = pg.pose_metric_to_grid(poses[i, :3])
+                gx, gy, _ = pg.pose_metric_to_grid(poses[i, :3])
                 d = np.hypot(cell_rc[:, 1] - gx, cell_rc[:, 0] - gy) * res
                 c_gt = int(d.argmin())
-                if d[c_gt] > 0.5:
+                if d[c_gt] > 0.5 or (slot[c_gt] >= 0).sum() < n_yaw // 2:
                     continue
-                ok = slot[c_gt] >= 0
-                if ok.sum() < n_yaw // 2:
-                    continue
-                s = score(F[slot[c_gt][ok]], obs, np.ones(int(ok.sum()), bool), cfg)
-                b = np.nonzero(ok)[0][int(s.argmax())]
-                pred_yaw = pg.bin_to_yaw(b) if hasattr(pg, "bin_to_yaw") else b / n_yaw * 2 * np.pi
-                rows_all.append(dict(scene=scene, collection=coll, pose=i,
-                                     err_deg=yaw_err_deg(pred_yaw, poses[i, 2]),
-                                     gt_dist=float(d[c_gt])))
-        del F
+                todo.append((coll, i, f, c_gt, float(d[c_gt]), float(poses[i, 2])))
+
+        need = sorted({int(e) for _, _, _, c, _, _ in todo for e in slot[c] if e >= 0})
+        pos = {e: j for j, e in enumerate(need)}
+        print(f"[feat] {scene}: {len(todo)} queries, featurising {len(need)} of "
+              f"{len(index)} entries")
+        F = np.stack([featurise(band_energy(rir[e], cfg), cfg) for e in need]) \
+            if need else np.zeros((0, 1, 1), np.float32)
+
+        for coll, i, f, c_gt, gtd, gt_yaw in todo:
+            obs = featurise(band_energy(np.load(f), cfg, observation_rate(f)), cfg)
+            ok = slot[c_gt] >= 0
+            ent = np.array([pos[int(e)] for e in slot[c_gt][ok]])
+            s = score(F[ent], obs, np.ones(len(ent), bool), cfg)
+            b = int(np.nonzero(ok)[0][int(s.argmax())])
+            rows_all.append(dict(scene=scene, collection=coll, pose=i,
+                                 err_deg=yaw_err_deg(pg.bin_to_yaw(b), gt_yaw),
+                                 pred_bin=b, gt_yaw_deg=float(np.degrees(gt_yaw) % 360),
+                                 gt_dist=gtd, condition=args.condition))
+        del F, rir
 
     if not rows_all:
         W("\nNo binaural grid merged yet, so nothing was measured.\n")

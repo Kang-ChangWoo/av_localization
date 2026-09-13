@@ -61,6 +61,7 @@ BACKBONES = [("f3STFT", "F3Loc mono"), ("unlocSTFT", "UnLoc"),
 EXTRA = {
     "Structured3D": dict(
         condition="floorplan_closed", split="scene",
+        grid_dir="acoustic_grid_s3d",
         backbones=[("f3loc_mono_s3d", "F3Loc mono"),
                    ("disco_rrp_s3d", "DisCo-FLoc RRP"),
                    # UnLoc is absent until its Structured3D run finishes. Its
@@ -76,8 +77,17 @@ EXTRA = {
     # separated, so the two collections are pooled and whole rooms are held out.
     "Matterport3D": dict(
         condition="raw_scan_open", split="scene",
-        backbones=[("f3loc_mono_mp3d9", "F3Loc mono"),
-                   ("f3loc_mono_mp3dpre", "F3Loc mono")]),
+        grid_dir="acoustic_grid_mp3d",
+        # newest first: the 12-scene extraction supersedes the 10-scene one,
+        # which supersedes the first pass over the six smallest scenes. That
+        # first pass is kept only as a fallback and its size selection was a
+        # bias: a smaller room has fewer candidate cells, so acoustic ranking
+        # there is easier than on the split as a whole.
+        backbones=[("f3loc_mono_mp3d12", "F3Loc mono"),
+                   ("f3loc_mono_mp3d9", "F3Loc mono"),
+                   ("f3loc_mono_mp3dpre", "F3Loc mono"),
+                   ("unloc_mp3d12", "UnLoc"),
+                   ("disco_rrp_mp3d12", "DisCo-FLoc RRP")]),
 }
 
 
@@ -129,6 +139,22 @@ def group(M: dict[str, np.ndarray]) -> dict[str, dict[str, np.ndarray]]:
         o = np.argsort(np.asarray(d["mode"], dtype=int))
         g[q] = {c: np.asarray(v, dtype=float)[o] for c, v in d.items()}
     return g
+
+
+# A number that will be revised is marked rather than quietly shipped. Two
+# things trigger it: a block with no extracted table at all, and a block built
+# from fewer rooms than the dataset has rendered grids for, which happens while
+# a render is still draining. Both mean "this will move", and a reader of a
+# draft has to be able to tell which numbers are settled.
+TBD_TEX = r"\emph{tbd}"
+TBD_MD = "(tbd)"
+
+
+def rendered_scenes(grid_dir: Path) -> int:
+    """Merged candidate grids on disk, which is the room count a table could use."""
+    if not grid_dir.is_dir():
+        return 0
+    return len([p for p in grid_dir.glob("*.npz") if "shard" not in p.name])
 
 
 def esc(s: str) -> str:
@@ -410,6 +436,7 @@ def main() -> int:
         if bi < n_bb - 1:
             TEX(r"\cmidrule(lr){3-13}")
     extra_notes: list[str] = []
+    provisional: list[tuple] = []
     for ds in ("Gibson", "Structured3D", "Matterport3D"):
         spec = EXTRA.get(ds)
         # A dataset may list several tags for the same backbone, newest first,
@@ -432,16 +459,24 @@ def main() -> int:
             skip = "& " if bi == 0 else "& & "
             if not have:
                 TEX(rf"{skip}\multirow{{2}}{{*}}{{{esc(label)}}} & $\times$ & "
-                    + " & ".join(["--"] * 9) + r" \\")
-                TEX(r"& & & $\checkmark$ & " + " & ".join(["--"] * 9) + r" \\")
+                    + " & ".join([TBD_TEX] * 9) + r" \\")
+                TEX(r"& & & $\checkmark$ & " + " & ".join([TBD_TEX] * 9) + r" \\")
             else:
                 cond = spec["condition"]
                 cfg, fit_s = tune(tag, struct[0], struct[1], cond)
                 e, o, Q, sel = evaluate(tag, cond, cfg, False)
                 ev, ov = Q["e_vis"][sel], Q["orn_vis"][sel]
+                # a table built from fewer rooms than the dataset has grids for
+                # is still moving, and the marker says so on the row itself
+                used = len({str(x) for x in Q["scene"]})
+                avail = rendered_scenes(REPO_ROOT / "outputs" / spec["grid_dir"])
+                prov = used < avail
+                mark = (rf"\,$\ast$" if prov else "")
+                if prov:
+                    provisional.append((ds, label, used, avail))
                 r = [100 * np.mean(ev < th) for th in TH]
                 j = 100 * np.mean((ev < 1) & (ov < 30))
-                TEX(rf"{skip}\multirow{{2}}{{*}}{{{esc(label)}}} & $\times$")
+                TEX(rf"{skip}\multirow{{2}}{{*}}{{{esc(label)}{mark}}} & $\times$")
                 TEX(rf"& {r[0]:.1f} & {r[1]:.1f} & {r[2]:.1f} & {j:.1f} & {r[3]:.1f} & "
                     rf"{r[4]:.1f} & {np.median(ev):.2f} & "
                     rf"{np.sqrt(np.mean(ev**2)):.2f} & -- \\")
@@ -455,15 +490,28 @@ def main() -> int:
                     rf"{bb(f'{np.median(e):.2f}')} & {bb(f'{np.sqrt(np.mean(e**2)):.2f}')} & "
                     rf"{bb(f'{100*m:+.1f}')}\,{{\scriptsize[{100*lo:+.1f},{100*hi:+.1f}]}} \\")
                 extra_notes.append(
-                    f"| {ds} | {label} | {cond} | {spec['split']} | {int(sel.sum())} | "
+                    f"| {ds} | {label}{' ' + TBD_MD if prov else ''} | {cond} | "
+                    f"{spec['split']} | {int(sel.sum())} | "
                     f"{100*np.mean(ev<1):.1f}% | {100*np.mean(e<1):.1f}% | "
                     f"{100*m:+.1f} [{100*lo:+.1f}, {100*hi:+.1f}] |")
             if bi < (n - 1):
                 TEX(r"\cmidrule(lr){3-13}")
     TEX(r"\bottomrule")
     TEX(r"\end{tabular}")
+    if provisional:
+        who = "; ".join(f"{ds} {esc(lb)} uses {u} of {a} rendered rooms"
+                        for ds, lb, u, a in provisional)
+        # plain text inside the float, after the tabular has been closed:
+        # a `\\` here would be a row break with no table to break
+        TEX(r"\par\smallskip\footnotesize $\ast$ provisional, the render is "
+            r"still draining: " + who + r".")
     TEX(r"\end{table*}")
     TEX("")
+    if provisional:
+        MD("\n**Provisional rows.** " + "; ".join(
+            f"{ds} {lb} is computed from {u} of the {a} rooms whose candidate "
+            f"grids are rendered" for ds, lb, u, a in provisional)
+           + ". These will move.\n")
     if extra_notes:
         MD("\n## Table 2a. Datasets beyond Replica\n")
         MD("Each row is tuned and reported on disjoint halves of its own "

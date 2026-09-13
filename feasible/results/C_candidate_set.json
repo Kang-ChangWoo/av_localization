@@ -1,0 +1,165 @@
+{
+  "condition": "raw_scan_open",
+  "results": {
+    "F3Loc mono": {
+      "vision": 38.333333333333336,
+      "hypotheses, K=1": {
+        "size": 1,
+        "acoustic_choice": 0.38333333333333336,
+        "gated": 0.38333333333333336,
+        "oracle": 0.38333333333333336
+      },
+      "hypotheses, K=2": {
+        "size": 2,
+        "acoustic_choice": 0.35833333333333334,
+        "gated": 0.40166666666666667,
+        "oracle": 0.5216666666666666
+      },
+      "hypotheses, K=3": {
+        "size": 3,
+        "acoustic_choice": 0.3416666666666667,
+        "gated": 0.43666666666666665,
+        "oracle": 0.6283333333333333
+      },
+      "hypotheses, K=5": {
+        "size": 5,
+        "acoustic_choice": 0.31833333333333336,
+        "gated": 0.45,
+        "oracle": 0.7333333333333333
+      },
+      "hypotheses, K=10": {
+        "size": 10,
+        "acoustic_choice": 0.2633333333333333,
+        "gated": 0.4683333333333333,
+        "oracle": 0.8616666666666667
+      },
+      "visual top-50 cells": {
+        "size": 50,
+        "acoustic_choice": 0.46,
+        "gated": null,
+        "oracle": null
+      },
+      "all cells, acoustic only": {
+        "size": 5344,
+        "acoustic_choice": 0.20833333333333334,
+        "gated": null,
+        "oracle": null
+      }
+    },
+    "UnLoc": {
+      "vision": 50.66666666666667,
+      "hypotheses, K=1": {
+        "size": 1,
+        "acoustic_choice": 0.5066666666666667,
+        "gated": 0.5066666666666667,
+        "oracle": 0.5066666666666667
+      },
+      "hypotheses, K=2": {
+        "size": 2,
+        "acoustic_choice": 0.475,
+        "gated": 0.51,
+        "oracle": 0.6533333333333333
+      },
+      "hypotheses, K=3": {
+        "size": 3,
+        "acoustic_choice": 0.46,
+        "gated": 0.5316666666666666,
+        "oracle": 0.7633333333333333
+      },
+      "hypotheses, K=5": {
+        "size": 5,
+        "acoustic_choice": 0.41333333333333333,
+        "gated": 0.5466666666666666,
+        "oracle": 0.855
+      },
+      "hypotheses, K=10": {
+        "size": 10,
+        "acoustic_choice": 0.35333333333333333,
+        "gated": 0.5833333333333334,
+        "oracle": 0.9283333333333333
+      },
+      "visual top-50 cells": {
+        "size": 50,
+        "acoustic_choice": 0.5216666666666666,
+        "gated": null,
+        "oracle": null
+      },
+      "all cells, acoustic only": {
+        "size": 5344,
+        "acoustic_choice": 0.20833333333333334,
+        "gated": null,
+        "oracle": null
+      }
+    },
+    "DisCo-FLoc RRP": {
+      "vision": 40.5,
+      "hypotheses, K=1": {
+        "size": 1,
+        "acoustic_choice": 0.405,
+        "gated": 0.405,
+        "oracle": 0.405
+      },
+      "hypotheses, K=2": {
+        "size": 2,
+        "acoustic_choice": 0.36666666666666664,
+        "gated": 0.39666666666666667,
+        "oracle": 0.5366666666666666
+      },
+      "hypotheses, K=3": {
+        "size": 3,
+        "acoustic_choice": 0.3516666666666667,
+        "gated": 0.4216666666666667,
+        "oracle": 0.6666666666666666
+      },
+      "hypotheses, K=5": {
+        "size": 5,
+        "acoustic_choice": 0.33,
+        "gated": 0.435,
+        "oracle": 0.7316666666666667
+      },
+      "hypotheses, K=10": {
+        "size": 10,
+        "acoustic_choice": 0.30833333333333335,
+        "gated": 0.465,
+        "oracle": 0.845
+      },
+      "visual top-50 cells": {
+        "size": 50,
+        "acoustic_choice": 0.4583333333333333,
+        "gated": null,
+        "oracle": null
+      },
+      "all cells, acoustic only": {
+        "size": 5344,
+        "acoustic_choice": 0.20833333333333334,
+        "gated": null,
+        "oracle": null
+      }
+    }
+  },
+  "provenance": {
+    "utc": "2026-09-13T05:36:03Z",
+    "argv": [
+      "feasible/run_candidate_set.py",
+      "--backbones",
+      "f3STFT",
+      "unlocSTFT",
+      "discoID"
+    ],
+    "git": {
+      "commit": "ce5a4876583d",
+      "dirty": true,
+      "diff_sha1": "caf9254f9d88",
+      "diff_lines": 568
+    },
+    "env": {
+      "python": "3.8.20",
+      "platform": "Linux-6.8.0-84-generic-x86_64-with-glibc2.17",
+      "numpy": "1.24.3",
+      "torch": "2.4.1",
+      "cv2": "5.0.0",
+      "scipy": "1.10.1"
+    },
+    "inputs": []
+  }
+}

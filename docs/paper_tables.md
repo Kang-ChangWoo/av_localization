@@ -35,9 +35,11 @@ Each row is tuned and reported on disjoint halves of its own dataset. The query-
 
 | dataset | backbone | query acoustics | held out | queries | vision @1m | ours @1m | gain |
 |---|---|---|---|---|---|---|---|
-| Structured3D | F3Loc mono | floorplan_closed | scene | 250 | 22.4% | 47.2% | +24.8 [+18.4, +31.2] |
+| Structured3D | F3Loc mono | floorplan_closed | scene | 288 | 24.0% | 47.6% | +23.6 [+17.7, +29.5] |
 | Structured3D | DisCo-FLoc RRP | floorplan_closed | scene | 288 | 20.1% | 46.9% | +26.7 [+21.2, +32.6] |
-| Matterport3D | F3Loc mono | raw_scan_open | scene | 72 | 40.3% | 45.8% | +5.6 [+1.4, +11.1] |
+| Matterport3D | F3Loc mono | raw_scan_open | scene | 480 | 33.3% | 35.6% | +2.3 [-0.6, +5.2] |
+| Matterport3D | UnLoc | raw_scan_open | scene | 480 | 45.4% | 48.8% | +3.3 [+0.8, +5.8] |
+| Matterport3D | DisCo-FLoc RRP | raw_scan_open | scene | 480 | 26.0% | 28.3% | +2.3 [-0.8, +5.4] |
 
 ## Table 2b. UnLoc-style layout
 
@@ -59,7 +61,7 @@ Each row is tuned and reported on disjoint halves of its own dataset. The query-
 | UnLoc | none | 9.0 | 44.7 | 49.7 | 49.0 | 53.3 | 83.7 | 1.12 | 3.28 |  |
 |  | **ours** | 10.0 | 49.7 | 54.7 | 53.7 | 59.7 | 87.7 | 0.51 | 3.01 | **+5.0** [+0.7, +9.3] |
 | DisCo-FLoc RRP | none | 5.3 | 31.0 | 41.0 | 39.3 | 46.7 | 83.0 | 2.39 | 3.48 |  |
-|  | **ours** | 6.3 | 34.3 | 46.3 | 44.3 | 53.3 | 84.0 | 1.45 | 3.33 | **+5.3** [+1.0, +10.0] |
+|  | **ours** | 6.3 | 34.3 | 46.3 | 44.3 | 53.3 | 84.0 | 1.45 | 3.33 | **+5.3** [+1.0, +9.7] |
 
 ## Table 3. Per scene, recall at 1 m
 
@@ -77,15 +79,15 @@ Each row is tuned and reported on disjoint halves of its own dataset. The query-
 | level | rule | 0.5 m | 1 m | 1 m 30 deg | median | gain @1 m | 95% CI |
 |---|---|---|---|---|---|---|---|
 | \textendash | vision only | 44.7 | 49.7 | 49.0 | 1.12 | +0.0 | [+0.0, +0.0] |
-| cell | acoustic alone | 13.7 | 20.7 | - | 3.02 | -29.0 | [-36.3, -21.0] |
-| cell | rerank vision top-50 | 45.3 | 52.7 | 50.7 | 0.79 | +3.0 | [-3.3, +9.3] |
+| cell | acoustic alone | 13.7 | 20.7 | - | 3.02 | -29.0 | [-36.7, -21.0] |
+| cell | rerank vision top-50 | 45.3 | 52.7 | 50.7 | 0.79 | +3.0 | [-3.3, +9.0] |
 | cell | log-rank fusion | 47.0 | 54.3 | 52.7 | 0.70 | +4.7 | [-1.3, +10.7] |
-| hypothesis | rerank, unconditional | 30.0 | 34.0 | 33.0 | 2.61 | -15.7 | [-23.3, -8.3] |
+| hypothesis | rerank, unconditional | 30.0 | 34.0 | 33.0 | 2.61 | -15.7 | [-23.0, -8.3] |
 | hypothesis | relative evidence | 49.3 | 54.3 | 53.3 | 0.52 | +4.7 | [+0.3, +9.0] |
 | hypothesis | gate on visual ambiguity | 40.3 | 45.3 | 44.3 | 1.73 | -4.3 | [-11.0, +2.0] |
 | hypothesis | gate on both confidences | 40.3 | 45.3 | 44.3 | 1.73 | -4.3 | [-10.7, +2.0] |
 | hypothesis | continuous gate (ours) | 49.7 | 54.7 | 53.7 | 0.51 | +5.0 | [+0.7, +9.3] |
-| oracle | best of the ten hypotheses | 78.3 | 93.7 | 89.3 | 0.25 | +44.0 | [+38.3, +49.7] |
+| oracle | best of the ten hypotheses | 78.3 | 93.7 | 89.3 | 0.25 | +44.0 | [+38.3, +49.3] |
 
 ## Table 5. Ablation of the acoustic feature, selected on replica_f
 

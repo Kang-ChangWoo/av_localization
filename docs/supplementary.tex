@@ -136,17 +136,31 @@ Tab.~\ref{tab:ringrot} shows that the disagreement costs nothing: rotating a
 query's channels by any amount leaves the true cell first among $600$
 candidates.
 
-That is a convenience and a limitation at once. A $5$\,cm ring at $48$\,kHz gives
-inter-microphone delays of about seven samples with a co-located source, so the
-six channels are close to one channel repeated. It is the reason the acoustic
-score is flat across the $36$ yaw bins and every reported orientation comes from
-the visual backbone.
+The channels are not redundant, but they are interchangeable. Scoring with one
+channel of the six reaches $66.7\%$ at $1$\,m on matched geometry, two opposed
+channels $73.3\%$, three $83.3\%$, and all six $83.3\%$: the count saturates at
+three. A $5$\,cm ring of omnidirectional receivers with a co-located source has
+inter-microphone delays of about seven samples at $48$\,kHz, so each channel sees
+nearly the same field and the extra ones reduce the variance of the estimate
+rather than adding a direction. That is why rotating the assignment costs
+nothing and why more microphones at this aperture would not help; what limits
+the ring is its aperture, not its channel count.
 
-Making the acoustic term contribute to heading requires receivers that are
-directional, such as a binaural pair with a head-related transfer function, and
-a candidate grid rendered once per (cell, heading) rather than once per cell.
-That is a factor of six more engine calls per cell at $36$ headings and, for the
-three Replica test scenes, $86$\,GB of impulse responses. We report the
-measurement rather than adopt the cost, since $88\%$ of the poses our method
-places within $1$\,m are already within $30^\circ$, leaving little for a
-heading-aware acoustic term to recover.
+Making the acoustic term contribute to heading therefore needs a receiver that
+is directional rather than more of the same. We rendered the obvious candidate:
+a binaural pair driven by the engine's head-related transfer function, with the
+candidate grid rendered once per (cell, heading) at $36$ headings, which is six
+times the engine calls per cell and $86$\,GB for the three Replica test scenes.
+
+It recovers no heading. Choosing the best of the $36$ headings at the true cell
+lands within $30^\circ$ of the true camera yaw for $17.5\%$ of queries against a
+$16.7\%$ chance rate, with a median error of $92.8^\circ$; the unsigned error
+distribution is flat, so this is not a convention mismatch. Rendering the query
+on the same geometry as the candidates does not help, $19.2\%$ and $99.3^\circ$,
+which rules out the furniture gap as the cause. The setup is the cause: the
+source is co-located with the listener, so the direct sound reaches both ears
+symmetrically and the reflections return from every wall at once. There is no
+direction of arrival for a head-related transfer function to resolve. A
+heading-aware acoustic term would need a source somewhere other than the
+listener's own position, which is a different sensing assumption from the one
+this paper makes.
