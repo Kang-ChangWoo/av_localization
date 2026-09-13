@@ -64,8 +64,8 @@ DisCo-FLoc (full) & Gibson-f & 13.1 & 50.9 & 56.7 & 55.4 \\
 & & \multirow{2}{*}{DisCo-FLoc RRP} & $\times$ & \emph{tbd} & \emph{tbd} & \emph{tbd} & \emph{tbd} & \emph{tbd} & \emph{tbd} & \emph{tbd} & \emph{tbd} & \emph{tbd} \\
 & & & $\checkmark$ & \emph{tbd} & \emph{tbd} & \emph{tbd} & \emph{tbd} & \emph{tbd} & \emph{tbd} & \emph{tbd} & \emph{tbd} & \emph{tbd} \\
 \midrule
-\multirow{4}{*}{Structured3D}
-& \multirow{4}{*}{floorplan proxy}
+\multirow{6}{*}{Structured3D}
+& \multirow{6}{*}{floorplan proxy}
 & \multirow{2}{*}{F3Loc mono} & $\times$
 & 0.7 & 14.9 & 24.0 & 22.2 & 34.0 & 64.9 & 3.86 & 5.07 & -- \\
 & & & $\checkmark$
@@ -75,6 +75,11 @@ DisCo-FLoc (full) & Gibson-f & 13.1 & 50.9 & 56.7 & 55.4 \\
 & 2.1 & 12.8 & 20.1 & 19.8 & 29.5 & 60.8 & 4.32 & 5.26 & -- \\
 & & & $\checkmark$
 & \textbf{2.4} & \textbf{31.6} & \textbf{46.9} & \textbf{42.0} & \textbf{61.1} & \textbf{79.9} & \textbf{1.13} & \textbf{4.00} & \textbf{+26.7}\,{\scriptsize[+21.2,+32.6]} \\
+\cmidrule(lr){3-13}
+& & \multirow{2}{*}{UnLoc} & $\times$
+& 1.7 & 23.6 & 29.9 & 28.8 & 35.8 & 64.9 & 3.61 & 5.08 & -- \\
+& & & $\checkmark$
+& \textbf{6.2} & \textbf{48.3} & \textbf{61.1} & \textbf{56.9} & \textbf{69.4} & \textbf{87.8} & \textbf{0.51} & \textbf{3.25} & \textbf{+31.2}\,{\scriptsize[+25.3,+37.2]} \\
 \midrule
 \multirow{6}{*}{Matterport3D}
 & \multirow{6}{*}{furnished scan}
@@ -124,7 +129,7 @@ Visual backbone & Acoustic & $0.1$\,m & $0.5$\,m & $1$\,m & $1$\,m\,$30^\circ$ &
  & \textbf{ours} & \textbf{10.0} & \textbf{49.7} & \textbf{54.7} & \textbf{53.7} & \textbf{59.7} & \textbf{87.7} & \textbf{0.51} & \textbf{3.01} & \textbf{+5.0}\,\tiny[+0.7,+9.3] \\
 \midrule
 \multirow{2}{*}{DisCo-FLoc RRP} & \textendash & 5.3 & 31.0 & 41.0 & 39.3 & 46.7 & 83.0 & 2.39 & 3.48 &  \\
- & \textbf{ours} & \textbf{6.3} & \textbf{34.3} & \textbf{46.3} & \textbf{44.3} & \textbf{53.3} & \textbf{84.0} & \textbf{1.45} & \textbf{3.33} & \textbf{+5.3}\,\tiny[+1.0,+9.7] \\
+ & \textbf{ours} & \textbf{6.3} & \textbf{34.3} & \textbf{46.3} & \textbf{44.3} & \textbf{53.3} & \textbf{84.0} & \textbf{1.45} & \textbf{3.33} & \textbf{+5.3}\,\tiny[+1.0,+10.0] \\
 
 \bottomrule\end{tabular}\end{table*}
 
@@ -151,14 +156,14 @@ Backbone & Acoustic & apartment\_2 & frl\_apartment\_5 & office\_4 & All \\\midr
 Level & Rule & $0.5$\,m & $1$\,m & $1$\,m\,$30^\circ$ & Median & $\Delta_{1\mathrm{m}}$ \\\midrule
 \textendash & vision only & 44.7 & 49.7 & 49.0 & 1.12 & +0.0\,\tiny[+0.0,+0.0] \\
 cell & acoustic alone & 13.7 & 20.7 & - & 3.02 & -29.0\,\tiny[-36.7,-21.0] \\
-cell & rerank vision top-50 & 45.3 & 52.7 & 50.7 & 0.79 & +3.0\,\tiny[-3.3,+9.0] \\
+cell & rerank vision top-50 & 45.3 & 52.7 & 50.7 & 0.79 & +3.0\,\tiny[-3.3,+9.3] \\
 cell & log-rank fusion & 47.0 & 54.3 & 52.7 & 0.70 & +4.7\,\tiny[-1.3,+10.7] \\
 hypothesis & rerank, unconditional & 30.0 & 34.0 & 33.0 & 2.61 & -15.7\,\tiny[-23.0,-8.3] \\
 hypothesis & relative evidence & 49.3 & 54.3 & 53.3 & 0.52 & +4.7\,\tiny[+0.3,+9.0] \\
-hypothesis & gate on visual ambiguity & 40.3 & 45.3 & 44.3 & 1.73 & -4.3\,\tiny[-11.0,+2.0] \\
+hypothesis & gate on visual ambiguity & 40.3 & 45.3 & 44.3 & 1.73 & -4.3\,\tiny[-10.7,+2.0] \\
 hypothesis & gate on both confidences & 40.3 & 45.3 & 44.3 & 1.73 & -4.3\,\tiny[-10.7,+2.0] \\
 hypothesis & \textbf{continuous gate (ours)} & \textbf{49.7} & \textbf{54.7} & \textbf{53.7} & \textbf{0.51} & \textbf{+5.0}\,\tiny[+0.7,+9.3] \\
-oracle & best of the ten hypotheses & 78.3 & 93.7 & 89.3 & 0.25 & +44.0\,\tiny[+38.3,+49.3] \\
+oracle & best of the ten hypotheses & 78.3 & 93.7 & 89.3 & 0.25 & +44.0\,\tiny[+38.7,+49.7] \\
 \bottomrule\end{tabular}\end{table}
 
 \begin{table}[t]\centering\small
