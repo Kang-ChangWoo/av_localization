@@ -268,9 +268,15 @@ def main() -> int:
         CHUNK = {}
 
         def chunk_dataset(root_dir, scene):
-            if scene not in CHUNK:
-                CHUNK[scene] = GridSeqDataset(str(root_dir), [scene], L=3)
-            return CHUNK[scene]
+            # keyed on the collection as well as the scene: the two motion
+            # collections share scene names but not images or poses, and a
+            # cache keyed on the scene alone served replica_f's frames for
+            # replica_g's queries, halving multi-view recall for no visible
+            # reason
+            key = (str(root_dir), scene)
+            if key not in CHUNK:
+                CHUNK[key] = GridSeqDataset(str(root_dir), [scene], L=3)
+            return CHUNK[key]
 
         def posterior_chunk(ds, j, desdf_t):
             d = ds[j]
