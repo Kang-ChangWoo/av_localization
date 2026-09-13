@@ -154,17 +154,35 @@ $5.3$ and $9.7$ points on the three backbones; in the confident stratum vision
 wins. That crossover is the empirical justification for gating on visual
 ambiguity rather than on anything acoustic.
 
-\paragraph{The gain grows as the camera degrades.} If the mechanism is that
-acoustics intervenes where vision is unsure, then corrupting the query image
-should lower vision, leave the acoustic side untouched, and widen the gap. It
-does. With a Gaussian blur of $\sigma{=}2$\,px, mild enough to be hard to see,
-F3Loc's recall at $1$\,m falls from $38.3\%$ to $5.5\%$ and the acoustic gain
-rises from $+5.0$ $[1.7, 8.3]$ to $+7.3$ $[4.5, 10.2]$; at $\sigma{=}4$ vision
-is at $3.5\%$ and the gain is $+8.7$ $[6.0, 11.3]$, with the gate now opening on
-every query. Two things follow. The acoustic term is a fallback that engages by
-itself when the camera fails, which is the behaviour a deployment wants. And a
-backbone trained only on clean renders is brittle to a degree the paper should
-not hide; the acoustic gain is the smaller of the two facts.
+\begin{figure}[t]\centering
+\includegraphics[width=\linewidth]{figs/V_visual_degradation}
+\caption{Recall at $1$\,m as the query image is corrupted before the frozen
+F3Loc backbone, Replica with rooms held out, scalars refit per level. The
+acoustic side is untouched. The gain widens as vision fails, and the gate opens
+on every query; but the fusion stays below the acoustic score alone once the
+visual shortlist it verifies is itself ruined.}
+\label{fig:degrade}
+\end{figure}
+
+\paragraph{The gain grows as the camera degrades, up to a ceiling.} If the
+mechanism is that acoustics intervenes where vision is unsure, then corrupting
+the query image should lower vision, leave the acoustic side untouched, and
+widen the gap. Fig.~\ref{fig:degrade} shows that it does. A Gaussian blur of
+$\sigma{=}2$\,px, mild enough to be hard to see, drops F3Loc's recall at $1$\,m
+from $38.3\%$ to $5.5\%$ and raises the acoustic gain from $+5.0$ $[1.7, 8.3]$
+to $+7.3$ $[4.5, 10.2]$; dimming the image to a quarter of its intensity drops
+vision to $5.3\%$ and raises the gain to $+11.7$ $[8.7, 14.7]$, with the gate
+now opening on every query. The acoustic term engages by itself when the camera
+fails, which is the behaviour a deployment wants.
+
+Two caveats belong beside that. First, a backbone trained only on clean renders
+is brittle to a degree the paper should not hide, and the acoustic gain is the
+smaller of the two facts. Second, the fusion under heavy degradation, at
+$12$--$17\%$, sits \emph{below} the acoustic score alone over the whole grid at
+$20.8\%$. The method verifies a visual shortlist; when the shortlist itself no
+longer contains the answer, verifying it cannot recover what a global acoustic
+search would, and a deployment that can detect a dead camera should fall back
+to that search rather than to this fusion.
 
 \subsection{Ablations}
 \label{sec:ablation}

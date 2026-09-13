@@ -1,0 +1,131 @@
+{
+  "rows": [
+    {
+      "tag": "f3STFT",
+      "family": "clean",
+      "level": 0,
+      "label": "clean",
+      "n": 600,
+      "vision": 0.38333333333333336,
+      "acoustic": 0.20833333333333334,
+      "ours": 0.43333333333333335,
+      "gain": 0.05,
+      "lo": 0.016666666666666666,
+      "hi": 0.08333333333333333,
+      "audio_used": 0.975,
+      "median_ambiguity": 0.010447646015118384
+    },
+    {
+      "tag": "f3loc_mono_deg_blur2",
+      "family": "blur",
+      "level": 2,
+      "label": "blur \u03c3=2",
+      "n": 600,
+      "vision": 0.055,
+      "acoustic": 0.20833333333333334,
+      "ours": 0.12833333333333333,
+      "gain": 0.07333333333333333,
+      "lo": 0.045,
+      "hi": 0.10166666666666667,
+      "audio_used": 1.0,
+      "median_ambiguity": 0.0009114159154894885
+    },
+    {
+      "tag": "f3loc_mono_deg_blur4",
+      "family": "blur",
+      "level": 4,
+      "label": "blur \u03c3=4",
+      "n": 600,
+      "vision": 0.035,
+      "acoustic": 0.20833333333333334,
+      "ours": 0.12166666666666667,
+      "gain": 0.08666666666666667,
+      "lo": 0.06,
+      "hi": 0.11333333333333333,
+      "audio_used": 1.0,
+      "median_ambiguity": -0.0013441359620873783
+    },
+    {
+      "tag": "f3loc_mono_deg_blur8",
+      "family": "blur",
+      "level": 8,
+      "label": "blur \u03c3=8",
+      "n": 600,
+      "vision": 0.05,
+      "acoustic": 0.20833333333333334,
+      "ours": 0.11833333333333333,
+      "gain": 0.06833333333333333,
+      "lo": 0.04,
+      "hi": 0.09666666666666666,
+      "audio_used": 1.0,
+      "median_ambiguity": -0.0002078980361024385
+    },
+    {
+      "tag": "f3loc_mono_deg_dark50",
+      "family": "dark",
+      "level": 0.5,
+      "label": "dark \u00d70.5",
+      "n": 600,
+      "vision": 0.09166666666666666,
+      "acoustic": 0.20833333333333334,
+      "ours": 0.165,
+      "gain": 0.07333333333333333,
+      "lo": 0.041666666666666664,
+      "hi": 0.10333333333333333,
+      "audio_used": 0.885,
+      "median_ambiguity": 0.004663737532553114
+    },
+    {
+      "tag": "f3loc_mono_deg_dark25",
+      "family": "dark",
+      "level": 0.25,
+      "label": "dark \u00d70.25",
+      "n": 600,
+      "vision": 0.05333333333333334,
+      "acoustic": 0.20833333333333334,
+      "ours": 0.17,
+      "gain": 0.11666666666666667,
+      "lo": 0.08666666666666667,
+      "hi": 0.14666666666666667,
+      "audio_used": 1.0,
+      "median_ambiguity": 0.00045708668226929206
+    },
+    {
+      "tag": "f3loc_mono_deg_dark10",
+      "family": "dark",
+      "level": 0.1,
+      "label": "dark \u00d70.1",
+      "n": 600,
+      "vision": 0.03166666666666667,
+      "acoustic": 0.20833333333333334,
+      "ours": 0.14666666666666667,
+      "gain": 0.115,
+      "lo": 0.085,
+      "hi": 0.145,
+      "audio_used": 1.0,
+      "median_ambiguity": -0.009399953058176092
+    }
+  ],
+  "provenance": {
+    "utc": "2026-09-13T19:19:49Z",
+    "argv": [
+      "feasible/run_visual_degradation.py",
+      "--plot-only"
+    ],
+    "git": {
+      "commit": "d6d9dbec1b17",
+      "dirty": true,
+      "diff_sha1": "cfdf551991f2",
+      "diff_lines": 44
+    },
+    "env": {
+      "python": "3.8.20",
+      "platform": "Linux-6.8.0-84-generic-x86_64-with-glibc2.17",
+      "numpy": "1.24.3",
+      "torch": "2.4.1",
+      "cv2": "5.0.0",
+      "scipy": "1.10.1"
+    },
+    "inputs": []
+  }
+}

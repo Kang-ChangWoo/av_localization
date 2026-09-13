@@ -51,6 +51,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--out", type=Path, default=HERE / "results" / "V_visual_degradation.md")
     p.add_argument("--fig", type=Path, default=HERE / "figs" / "V_visual_degradation.png")
+    p.add_argument("--plot-only", action="store_true",
+                   help="redraw the figure from the saved JSON without re-evaluating")
     return p.parse_args()
 
 
@@ -101,7 +103,9 @@ def main() -> int:
     print(f"[structure] visual={VE} acoustic={AE} (from unified_policy.json)")
 
     rows_out, js = [], {}
-    for tag, fam, lvl, label in LEVELS:
+    if args.plot_only:
+        rows_out = json.loads((args.out.parent / "V_visual_degradation.json").read_text())["rows"]
+    for tag, fam, lvl, label in ([] if args.plot_only else LEVELS):
         qp = args.analysis_dir / f"queries_{args.condition}_{tag}.csv"
         mp = args.analysis_dir / f"modes_{args.condition}_{tag}.csv"
         if not (qp.exists() and mp.exists()):
@@ -175,6 +179,9 @@ def main() -> int:
         vis = [100 * r["vision"] for r in sub]; ours = [100 * r["ours"] for r in sub]
         lo = [100 * (r["ours"] - r["vision"] - r["lo"]) for r in sub]
         hi = [100 * (r["hi"] - (r["ours"] - r["vision"])) for r in sub]
+        ac_alone = 100 * float(np.median([r["acoustic"] for r in sub]))
+        ax.axhline(ac_alone, color="#111827", ls=":", lw=1.2,
+                   label=f"acoustic alone, whole grid ({ac_alone:.1f})")
         ax.plot(xs, vis, "o-", color="#9ca3af", lw=1.6, label="vision alone")
         ax.plot(xs, ours, "o-", color="#1d4ed8", lw=2.0, label="vision + acoustics")
         ax.fill_between(xs, np.array(ours) - np.array(lo), np.array(ours) + np.array(hi),
@@ -185,7 +192,8 @@ def main() -> int:
         ax.grid(alpha=0.25, lw=0.5); ax.legend(fontsize=8, frameon=False)
         ax.set_title(f"{fam}: acoustic gain "
                      + ", ".join(f"{100*r['gain']:+.1f}" for r in sub), fontsize=9)
-    fig.suptitle("Vision degrades, acoustics does not, and the gap is the method", fontsize=10.5)
+    fig.suptitle("As the camera degrades the acoustic gain grows, but a ruined shortlist "
+                 "caps the fusion below acoustics alone", fontsize=10)
     fig.tight_layout(rect=[0, 0, 1, 0.93])
     args.fig.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(args.fig, dpi=170, facecolor="white")
