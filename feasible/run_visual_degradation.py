@@ -93,9 +93,12 @@ def main() -> int:
     rng = np.random.default_rng(args.seed)
     scalars = list(itertools.product((0.5, 1.0, 2.0), (0.02, 0.05, 0.1),
                                      (0.005, 0.02, 0.05, 0.1, 0.2), (-2.0, 0.0, 0.2, 0.4)))
-    # the structure is held at the paper's shared choice so only the scalars
-    # move with the degradation level
-    VE, AE = "lse", "quantile"
+    # The structure is held at the paper's shared choice, read from the policy
+    # file rather than typed here: a hand-typed "lse" once cost the clean level
+    # 16 points against the same rooms scored with the policy's "centre".
+    pol = json.loads((REPO_ROOT / "outputs" / "metrics" / "unified_policy.json").read_text())
+    VE = pol["policy"]["f3STFT"]["vis_evidence"]; AE = pol["policy"]["f3STFT"]["ac_evidence"]
+    print(f"[structure] visual={VE} acoustic={AE} (from unified_policy.json)")
 
     rows_out, js = [], {}
     for tag, fam, lvl, label in LEVELS:
@@ -134,7 +137,7 @@ def main() -> int:
         lo, hi = np.percentile(m, [2.5, 97.5])
         # how ambiguous the visual posterior is: the log-odds between the two
         # strongest hypotheses, which is what the gate reads
-        amb = np.array([M[q]["vis_lse"][0] - M[q]["vis_lse"][1] if len(M[q]["vis_lse"]) > 1
+        amb = np.array([M[q]["vis_log_lse"][0] - M[q]["vis_log_lse"][1] if len(M[q]["vis_log_lse"]) > 1
                         else np.inf for q in qids])
         rows_out.append(dict(tag=tag, family=fam, level=lvl, label=label, n=len(qids),
                              vision=float((v < 1).mean()), acoustic=float((a < 1).mean()),
