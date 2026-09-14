@@ -33,24 +33,38 @@ REPO_ROOT = HERE.parent
 import sys
 sys.path.insert(0, str(REPO_ROOT))
 
-# (tag, family, level, label)
-LEVELS = [("f3STFT", "clean", 0, "clean"),
-          ("f3loc_mono_deg_blur2", "blur", 2, "blur σ=2"),
-          ("f3loc_mono_deg_blur4", "blur", 4, "blur σ=4"),
-          ("f3loc_mono_deg_blur8", "blur", 8, "blur σ=8"),
-          ("f3loc_mono_deg_dark50", "dark", 0.5, "dark ×0.5"),
-          ("f3loc_mono_deg_dark25", "dark", 0.25, "dark ×0.25"),
-          ("f3loc_mono_deg_dark10", "dark", 0.1, "dark ×0.1")]
+# (tag, family, level, label) per backbone. The clean row must come from the
+# same checkpoint as the degraded rows, which cost one table a four-point
+# confound before it was noticed.
+BACKBONES = {
+    "f3loc": dict(policy="f3STFT", label="F3Loc mono", levels=[
+        ("f3loc_mono_lr3e4clean", "clean", 0, "clean"),
+        ("f3loc_mono_deg_blur2", "blur", 2, "blur σ=2"),
+        ("f3loc_mono_deg_blur4", "blur", 4, "blur σ=4"),
+        ("f3loc_mono_deg_blur8", "blur", 8, "blur σ=8"),
+        ("f3loc_mono_deg_dark50", "dark", 0.5, "dark ×0.5"),
+        ("f3loc_mono_deg_dark25", "dark", 0.25, "dark ×0.25"),
+        ("f3loc_mono_deg_dark10", "dark", 0.1, "dark ×0.1")]),
+    "unloc": dict(policy="unlocSTFT", label="UnLoc", levels=[
+        ("unloc_udeg_clean", "clean", 0, "clean"),
+        ("unloc_udeg_blur_2", "blur", 2, "blur σ=2"),
+        ("unloc_udeg_blur_4", "blur", 4, "blur σ=4"),
+        ("unloc_udeg_blur_8", "blur", 8, "blur σ=8"),
+        ("unloc_udeg_dark_0.5", "dark", 0.5, "dark ×0.5"),
+        ("unloc_udeg_dark_0.25", "dark", 0.25, "dark ×0.25"),
+        ("unloc_udeg_dark_0.1", "dark", 0.1, "dark ×0.1")]),
+}
 
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--analysis-dir", type=Path, default=REPO_ROOT / "outputs" / "analysis")
+    p.add_argument("--backbone", default="f3loc", choices=sorted(BACKBONES))
     p.add_argument("--condition", default="raw_scan_open")
     p.add_argument("--boot", type=int, default=10000)
     p.add_argument("--seed", type=int, default=0)
-    p.add_argument("--out", type=Path, default=HERE / "results" / "V_visual_degradation.md")
-    p.add_argument("--fig", type=Path, default=HERE / "figs" / "V_visual_degradation.png")
+    p.add_argument("--out", type=Path, default=None)
+    p.add_argument("--fig", type=Path, default=None)
     p.add_argument("--plot-only", action="store_true",
                    help="redraw the figure from the saved JSON without re-evaluating")
     return p.parse_args()
@@ -86,6 +100,11 @@ def group(M: dict) -> dict:
 
 def main() -> int:
     args = parse_args()
+    BB = BACKBONES[args.backbone]
+    LEVELS = BB["levels"]
+    suffix = "" if args.backbone == "f3loc" else f"_{args.backbone}"
+    args.out = args.out or HERE / "results" / f"V_visual_degradation{suffix}.md"
+    args.fig = args.fig or HERE / "figs" / f"V_visual_degradation{suffix}.png"
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -99,12 +118,12 @@ def main() -> int:
     # file rather than typed here: a hand-typed "lse" once cost the clean level
     # 16 points against the same rooms scored with the policy's "centre".
     pol = json.loads((REPO_ROOT / "outputs" / "metrics" / "unified_policy.json").read_text())
-    VE = pol["policy"]["f3STFT"]["vis_evidence"]; AE = pol["policy"]["f3STFT"]["ac_evidence"]
+    VE = pol["policy"][BB["policy"]]["vis_evidence"]; AE = pol["policy"][BB["policy"]]["ac_evidence"]
     print(f"[structure] visual={VE} acoustic={AE} (from unified_policy.json)")
 
     rows_out, js = [], {}
     if args.plot_only:
-        rows_out = json.loads((args.out.parent / "V_visual_degradation.json").read_text())["rows"]
+        rows_out = json.loads(args.out.with_suffix(".json").read_text())["rows"]
     for tag, fam, lvl, label in ([] if args.plot_only else LEVELS):
         qp = args.analysis_dir / f"queries_{args.condition}_{tag}.csv"
         mp = args.analysis_dir / f"modes_{args.condition}_{tag}.csv"
@@ -192,8 +211,8 @@ def main() -> int:
         ax.grid(alpha=0.25, lw=0.5); ax.legend(fontsize=8, frameon=False)
         ax.set_title(f"{fam}: acoustic gain "
                      + ", ".join(f"{100*r['gain']:+.1f}" for r in sub), fontsize=9)
-    fig.suptitle("As the camera degrades the acoustic gain grows, but a ruined shortlist "
-                 "caps the fusion below acoustics alone", fontsize=10)
+    fig.suptitle(f"{BB['label']}: as the camera degrades the acoustic gain grows, but a "
+                 "ruined shortlist caps the fusion below acoustics alone", fontsize=10)
     fig.tight_layout(rect=[0, 0, 1, 0.93])
     args.fig.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(args.fig, dpi=170, facecolor="white")
@@ -201,7 +220,7 @@ def main() -> int:
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text("\n".join(out) + "\n")
-    (args.out.parent / "V_visual_degradation.json").write_text(
+    args.out.with_suffix(".json").write_text(
         json.dumps(dict(rows=rows_out, provenance=stamp()), indent=2, default=str))
     print("\n".join(out))
     print(f"\nwrote {args.out} and {args.fig}")
