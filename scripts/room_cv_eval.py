@@ -60,6 +60,11 @@ def parse_args() -> argparse.Namespace:
                    help="restrict to one motion collection, e.g. mp3d_f, so a "
                         "backbone that collapses on in-place rotation can be "
                         "judged on the motion it was built for")
+    p.add_argument("--fix-structure", nargs=2, metavar=("VIS", "AC"), default=None,
+                   help="hold the structure at one (visual, acoustic) summary and refit "
+                        "only the four scalars per fold. With three rooms a per-fold "
+                        "structure search overfits two rooms and can pick a summary that "
+                        "fails on the third; the paper's shared structure is centre quantile")
     p.add_argument("--boot", type=int, default=10000)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--out", type=Path, default=REPO_ROOT / "docs" / "room_cv.md")
@@ -105,8 +110,9 @@ def main() -> int:
     scalars = list(itertools.product((0.5, 1.0, 2.0), (0.02, 0.05, 0.1),
                                      (0.005, 0.02, 0.05, 0.1, 0.2),
                                      (-2.0, 0.0, 0.2, 0.4)))
-    structures = list(itertools.product(("centre", "max", "lse"),
-                                        ("centre", "max", "quantile", "lse")))
+    structures = ([tuple(args.fix_structure)] if args.fix_structure else
+                  list(itertools.product(("centre", "max", "lse"),
+                                         ("centre", "max", "quantile", "lse"))))
 
     out: list[str] = []
     W = out.append

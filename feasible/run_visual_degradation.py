@@ -75,6 +75,25 @@ BACKBONES = {
         ("unloc_udeg_downscale_2", "downscale", 2, "downscale 2×"),
         ("unloc_udeg_downscale_4", "downscale", 4, "downscale 4×"),
         ("unloc_udeg_downscale_8", "downscale", 8, "downscale 8×")]),
+    "f3loc_fg": dict(policy="f3STFT", label="F3Loc mono (headline checkpoint)", levels=[
+        ("f3loc_mono_fgdeg_clean", "clean", 0, "clean"),
+        ("f3loc_mono_fgdeg_blur_1", "blur", 1, "blur σ=1"),
+        ("f3loc_mono_fgdeg_blur_2", "blur", 2, "blur σ=2"),
+        ("f3loc_mono_fgdeg_blur_4", "blur", 4, "blur σ=4"),
+        ("f3loc_mono_fgdeg_blur_8", "blur", 8, "blur σ=8"),
+        ("f3loc_mono_fgdeg_dark_0.75", "dark", 0.75, "dark ×0.75"),
+        ("f3loc_mono_fgdeg_dark_0.5", "dark", 0.5, "dark ×0.5"),
+        ("f3loc_mono_fgdeg_dark_0.25", "dark", 0.25, "dark ×0.25"),
+        ("f3loc_mono_fgdeg_dark_0.1", "dark", 0.1, "dark ×0.1"),
+        ("f3loc_mono_fgdeg_noise_10", "noise", 10, "noise σ=10"),
+        ("f3loc_mono_fgdeg_noise_25", "noise", 25, "noise σ=25"),
+        ("f3loc_mono_fgdeg_noise_50", "noise", 50, "noise σ=50"),
+        ("f3loc_mono_fgdeg_occlude_0.1", "occlude", 0.1, "occlude 10%"),
+        ("f3loc_mono_fgdeg_occlude_0.3", "occlude", 0.3, "occlude 30%"),
+        ("f3loc_mono_fgdeg_occlude_0.5", "occlude", 0.5, "occlude 50%"),
+        ("f3loc_mono_fgdeg_downscale_2", "downscale", 2, "downscale 2×"),
+        ("f3loc_mono_fgdeg_downscale_4", "downscale", 4, "downscale 4×"),
+        ("f3loc_mono_fgdeg_downscale_8", "downscale", 8, "downscale 8×")]),
 }
 
 
