@@ -44,7 +44,18 @@ BACKBONES = {
         ("f3loc_mono_deg_blur8", "blur", 8, "blur σ=8"),
         ("f3loc_mono_deg_dark50", "dark", 0.5, "dark ×0.5"),
         ("f3loc_mono_deg_dark25", "dark", 0.25, "dark ×0.25"),
-        ("f3loc_mono_deg_dark10", "dark", 0.1, "dark ×0.1")]),
+        ("f3loc_mono_deg_dark10", "dark", 0.1, "dark ×0.1"),
+        ("f3loc_mono_f3deg_blur_1", "blur", 1, "blur σ=1"),
+        ("f3loc_mono_f3deg_dark_0.75", "dark", 0.75, "dark ×0.75"),
+        ("f3loc_mono_f3deg_noise_10", "noise", 10, "noise σ=10"),
+        ("f3loc_mono_f3deg_noise_25", "noise", 25, "noise σ=25"),
+        ("f3loc_mono_f3deg_noise_50", "noise", 50, "noise σ=50"),
+        ("f3loc_mono_f3deg_occlude_0.1", "occlude", 0.1, "occlude 10%"),
+        ("f3loc_mono_f3deg_occlude_0.3", "occlude", 0.3, "occlude 30%"),
+        ("f3loc_mono_f3deg_occlude_0.5", "occlude", 0.5, "occlude 50%"),
+        ("f3loc_mono_f3deg_downscale_2", "downscale", 2, "downscale 2×"),
+        ("f3loc_mono_f3deg_downscale_4", "downscale", 4, "downscale 4×"),
+        ("f3loc_mono_f3deg_downscale_8", "downscale", 8, "downscale 8×")]),
     "unloc": dict(policy="unlocSTFT", label="UnLoc", levels=[
         ("unloc_udeg_clean", "clean", 0, "clean"),
         ("unloc_udeg_blur_2", "blur", 2, "blur σ=2"),
@@ -52,7 +63,18 @@ BACKBONES = {
         ("unloc_udeg_blur_8", "blur", 8, "blur σ=8"),
         ("unloc_udeg_dark_0.5", "dark", 0.5, "dark ×0.5"),
         ("unloc_udeg_dark_0.25", "dark", 0.25, "dark ×0.25"),
-        ("unloc_udeg_dark_0.1", "dark", 0.1, "dark ×0.1")]),
+        ("unloc_udeg_dark_0.1", "dark", 0.1, "dark ×0.1"),
+        ("unloc_udeg_blur_1", "blur", 1, "blur σ=1"),
+        ("unloc_udeg_dark_0.75", "dark", 0.75, "dark ×0.75"),
+        ("unloc_udeg_noise_10", "noise", 10, "noise σ=10"),
+        ("unloc_udeg_noise_25", "noise", 25, "noise σ=25"),
+        ("unloc_udeg_noise_50", "noise", 50, "noise σ=50"),
+        ("unloc_udeg_occlude_0.1", "occlude", 0.1, "occlude 10%"),
+        ("unloc_udeg_occlude_0.3", "occlude", 0.3, "occlude 30%"),
+        ("unloc_udeg_occlude_0.5", "occlude", 0.5, "occlude 50%"),
+        ("unloc_udeg_downscale_2", "downscale", 2, "downscale 2×"),
+        ("unloc_udeg_downscale_4", "downscale", 4, "downscale 4×"),
+        ("unloc_udeg_downscale_8", "downscale", 8, "downscale 8×")]),
 }
 
 
@@ -186,15 +208,23 @@ def main() -> int:
           f"{100*r['audio_used']:.0f}% | {r['median_ambiguity']:.2f} |")
 
     # ---------------------------------------------------------------- figure
-    fig, axes = plt.subplots(1, 2, figsize=(9.6, 3.8), facecolor="white")
-    for ax, fam, xl in zip(axes, ("blur", "dark"), ("Gaussian blur σ (px)", "illumination gain")):
+    FAMS = [("blur", "Gaussian blur σ (px)"), ("dark", "illumination gain"),
+            ("noise", "additive noise σ (0-255)"), ("occlude", "occluded fraction"),
+            ("downscale", "downscale factor")]
+    FAMS = [(f, x) for f, x in FAMS if any(r["family"] == f for r in rows_out)]
+    fig, axes = plt.subplots(1, len(FAMS), figsize=(4.6 * len(FAMS), 3.8), facecolor="white",
+                             squeeze=False)
+    for ax, (fam, xl) in zip(axes[0], FAMS):
         sub = [r for r in rows_out if r["family"] in (fam, "clean")]
         if fam == "dark":
             sub = sorted(sub, key=lambda r: -(r["level"] if r["family"] == "dark" else 1.0))
             xs = [r["level"] if r["family"] == "dark" else 1.0 for r in sub]
         else:
-            sub = sorted(sub, key=lambda r: r["level"])
-            xs = [r["level"] for r in sub]
+            # the clean row is level 0 for blur/noise/occlude and factor 1 for downscale
+            sub = sorted(sub, key=lambda r: (r["level"] if r["family"] == fam
+                                             else (1.0 if fam == "downscale" else 0.0)))
+            xs = [r["level"] if r["family"] == fam else (1.0 if fam == "downscale" else 0.0)
+                  for r in sub]
         vis = [100 * r["vision"] for r in sub]; ours = [100 * r["ours"] for r in sub]
         lo = [100 * (r["ours"] - r["vision"] - r["lo"]) for r in sub]
         hi = [100 * (r["hi"] - (r["ours"] - r["vision"])) for r in sub]
