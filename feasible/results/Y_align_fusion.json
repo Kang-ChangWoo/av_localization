@@ -1,37 +1,37 @@
 {
   "condition": "raw_scan_open",
   "results": {
-    "f3STFT": {
+    "f3loc_mono_lr3e4clean": {
       "dataset": "Replica",
       "rooms": 3,
       "n": 600,
-      "vision": 0.38333333333333336,
-      "ours": 0.425,
-      "gain": 0.041666666666666664,
+      "vision": 0.345,
+      "ours": 0.22666666666666666,
+      "gain": -0.11833333333333333,
       "ci": [
-        0.008333333333333333,
-        0.075
+        -0.15833333333333333,
+        -0.08
       ],
       "recalls": {
-        "0.1m": 0.051666666666666666,
-        "0.5m": 0.32666666666666666,
-        "1.0m": 0.425,
-        "2.0m": 0.5416666666666666,
-        "5.0m": 0.87
+        "0.1m": 0.02,
+        "0.5m": 0.16,
+        "1.0m": 0.22666666666666666,
+        "2.0m": 0.39166666666666666,
+        "5.0m": 0.8266666666666667
       },
       "vision_recalls": {
-        "0.1m": 0.051666666666666666,
-        "0.5m": 0.3,
-        "1.0m": 0.38333333333333336,
-        "2.0m": 0.48833333333333334,
-        "5.0m": 0.8633333333333333
+        "0.1m": 0.041666666666666664,
+        "0.5m": 0.27666666666666667,
+        "1.0m": 0.345,
+        "2.0m": 0.47,
+        "5.0m": 0.8683333333333333
       },
-      "median": 1.560353999612119,
-      "vision_median": 2.1523528284547413,
+      "median": 2.803034498302871,
+      "vision_median": 2.2664975852153644,
       "structures": {
         "centre/quantile": 1,
-        "max/quantile": 1,
-        "centre/lse": 1
+        "lse/lse": 1,
+        "centre/max": 1
       }
     },
     "f3loc_mono_alignV": {
@@ -68,11 +68,11 @@
     }
   },
   "provenance": {
-    "utc": "2026-09-13T20:30:49Z",
+    "utc": "2026-09-14T16:12:23Z",
     "argv": [
       "scripts/room_cv_eval.py",
       "--backbones",
-      "f3STFT",
+      "f3loc_mono_lr3e4clean",
       "f3loc_mono_alignV",
       "--condition",
       "raw_scan_open",
@@ -82,10 +82,10 @@
       "feasible/results/Y_align_fusion.json"
     ],
     "git": {
-      "commit": "5eb570e1f7de",
-      "dirty": false,
-      "diff_sha1": null,
-      "diff_lines": 0
+      "commit": "d931960151fc",
+      "dirty": true,
+      "diff_sha1": "73b4888f14eb",
+      "diff_lines": 26
     },
     "env": {
       "python": "3.8.20",

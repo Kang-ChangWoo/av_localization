@@ -61,6 +61,11 @@ class ModeFusionConfig:
                    hypothesis exceeds this.
     sigmoid_scale  softness of the continuous gate, in the same units as tau.
     lam            weight of the contradiction penalty.
+    ac_transform   how the acoustic summaries become per-hypothesis evidence:
+                   'relative' scores each against the logsumexp of the others,
+                   'standard' only standardises them. The two order the
+                   hypotheses identically; they differ in scale, which is what
+                   the weight multiplies. 'standard' is the ablation.
     """
 
     vis_evidence: str = "lse"
@@ -71,6 +76,7 @@ class ModeFusionConfig:
     tau_a: float = 0.0
     sigmoid_scale: float = 0.5
     lam: float = 1.0
+    ac_transform: str = "relative"
 
 
 def standardise(x: np.ndarray) -> np.ndarray:
@@ -167,7 +173,8 @@ def choose(vis_ev: np.ndarray, ac_ev: np.ndarray,
     if config.rule == "vision" or vis_ev.size < 2:
         return vb, False
 
-    rel = acoustic_evidence(ac_ev)
+    rel = (acoustic_evidence(ac_ev) if config.ac_transform == "relative"
+           else standardise(ac_ev))
     amb = visual_ambiguity(vis_ev)
     disc = acoustic_discriminativeness(ac_ev)
 

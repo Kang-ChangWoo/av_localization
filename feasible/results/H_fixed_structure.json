@@ -1,0 +1,446 @@
+{
+  "condition": "raw_scan_open",
+  "results": {
+    "f3STFT": {
+      "dataset": "Replica",
+      "rooms": 3,
+      "n": 600,
+      "vision": 0.38333333333333336,
+      "ours": 0.43333333333333335,
+      "gain": 0.05,
+      "ci": [
+        0.016666666666666666,
+        0.085
+      ],
+      "recalls": {
+        "0.1m": 0.05,
+        "0.5m": 0.33166666666666667,
+        "1.0m": 0.43333333333333335,
+        "2.0m": 0.5483333333333333,
+        "5.0m": 0.8716666666666667
+      },
+      "vision_recalls": {
+        "0.1m": 0.051666666666666666,
+        "0.5m": 0.3,
+        "1.0m": 0.38333333333333336,
+        "2.0m": 0.48833333333333334,
+        "5.0m": 0.8633333333333333
+      },
+      "median": 1.4889613303046962,
+      "vision_median": 2.1523528284547413,
+      "structures": {
+        "centre/quantile": 3
+      },
+      "folds": [
+        {
+          "held_out": [
+            "apartment_2"
+          ],
+          "fit_recall": 0.565,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.005,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0
+          }
+        },
+        {
+          "held_out": [
+            "frl_apartment_5"
+          ],
+          "fit_recall": 0.3425,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.05,
+            "tau_a": 0.2,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0
+          }
+        },
+        {
+          "held_out": [
+            "office_4"
+          ],
+          "fit_recall": 0.525,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.005,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0
+          }
+        }
+      ]
+    },
+    "unlocSTFT": {
+      "dataset": "Replica",
+      "rooms": 3,
+      "n": 600,
+      "vision": 0.5066666666666667,
+      "ours": 0.5766666666666667,
+      "gain": 0.07,
+      "ci": [
+        0.03833333333333333,
+        0.10166666666666667
+      ],
+      "recalls": {
+        "0.1m": 0.105,
+        "0.5m": 0.5116666666666667,
+        "1.0m": 0.5766666666666667,
+        "2.0m": 0.62,
+        "5.0m": 0.885
+      },
+      "vision_recalls": {
+        "0.1m": 0.095,
+        "0.5m": 0.45166666666666666,
+        "1.0m": 0.5066666666666667,
+        "2.0m": 0.545,
+        "5.0m": 0.8483333333333334
+      },
+      "median": 0.462467014583701,
+      "vision_median": 0.9012120639444843,
+      "structures": {
+        "centre/quantile": 3
+      },
+      "folds": [
+        {
+          "held_out": [
+            "apartment_2"
+          ],
+          "fit_recall": 0.67,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.005,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0
+          }
+        },
+        {
+          "held_out": [
+            "frl_apartment_5"
+          ],
+          "fit_recall": 0.505,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": 0.2,
+            "sigmoid_scale": 0.1,
+            "lam": 1.0
+          }
+        },
+        {
+          "held_out": [
+            "office_4"
+          ],
+          "fit_recall": 0.6125,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.02,
+            "tau_a": 0.0,
+            "sigmoid_scale": 0.1,
+            "lam": 1.0
+          }
+        }
+      ]
+    },
+    "discoID": {
+      "dataset": "Replica",
+      "rooms": 3,
+      "n": 600,
+      "vision": 0.405,
+      "ours": 0.4116666666666667,
+      "gain": 0.006666666666666667,
+      "ci": [
+        -0.018333333333333333,
+        0.03166666666666667
+      ],
+      "recalls": {
+        "0.1m": 0.04833333333333333,
+        "0.5m": 0.305,
+        "1.0m": 0.4116666666666667,
+        "2.0m": 0.47,
+        "5.0m": 0.8316666666666667
+      },
+      "vision_recalls": {
+        "0.1m": 0.045,
+        "0.5m": 0.3,
+        "1.0m": 0.405,
+        "2.0m": 0.45666666666666667,
+        "5.0m": 0.82
+      },
+      "median": 2.2470484263742163,
+      "vision_median": 2.373206594720601,
+      "structures": {
+        "centre/quantile": 3
+      },
+      "folds": [
+        {
+          "held_out": [
+            "apartment_2"
+          ],
+          "fit_recall": 0.5775,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 0.5,
+            "tau_v": 0.005,
+            "tau_a": 0.2,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0
+          }
+        },
+        {
+          "held_out": [
+            "frl_apartment_5"
+          ],
+          "fit_recall": 0.3875,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.05,
+            "tau_a": 0.2,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0
+          }
+        },
+        {
+          "held_out": [
+            "office_4"
+          ],
+          "fit_recall": 0.4475,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.005,
+            "tau_a": 0.4,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0
+          }
+        }
+      ]
+    },
+    "f3loc_mono_lr3e4clean": {
+      "dataset": "Replica",
+      "rooms": 3,
+      "n": 600,
+      "vision": 0.345,
+      "ours": 0.36,
+      "gain": 0.015,
+      "ci": [
+        -0.025,
+        0.055
+      ],
+      "recalls": {
+        "0.1m": 0.03666666666666667,
+        "0.5m": 0.2816666666666667,
+        "1.0m": 0.36,
+        "2.0m": 0.5016666666666667,
+        "5.0m": 0.8533333333333334
+      },
+      "vision_recalls": {
+        "0.1m": 0.041666666666666664,
+        "0.5m": 0.27666666666666667,
+        "1.0m": 0.345,
+        "2.0m": 0.47,
+        "5.0m": 0.8683333333333333
+      },
+      "median": 1.9926522952808563,
+      "vision_median": 2.2664975852153644,
+      "structures": {
+        "centre/quantile": 3
+      },
+      "folds": [
+        {
+          "held_out": [
+            "apartment_2"
+          ],
+          "fit_recall": 0.545,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.02,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0
+          }
+        },
+        {
+          "held_out": [
+            "frl_apartment_5"
+          ],
+          "fit_recall": 0.315,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0
+          }
+        },
+        {
+          "held_out": [
+            "office_4"
+          ],
+          "fit_recall": 0.4775,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.005,
+            "tau_a": 0.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0
+          }
+        }
+      ]
+    },
+    "f3loc_mono_alignV": {
+      "dataset": "Replica",
+      "rooms": 3,
+      "n": 600,
+      "vision": 0.345,
+      "ours": 0.35833333333333334,
+      "gain": 0.013333333333333334,
+      "ci": [
+        -0.02666666666666667,
+        0.05333333333333334
+      ],
+      "recalls": {
+        "0.1m": 0.03666666666666667,
+        "0.5m": 0.2833333333333333,
+        "1.0m": 0.35833333333333334,
+        "2.0m": 0.49833333333333335,
+        "5.0m": 0.845
+      },
+      "vision_recalls": {
+        "0.1m": 0.041666666666666664,
+        "0.5m": 0.27666666666666667,
+        "1.0m": 0.345,
+        "2.0m": 0.47,
+        "5.0m": 0.8683333333333333
+      },
+      "median": 2.0124947723082323,
+      "vision_median": 2.2664975852153644,
+      "structures": {
+        "centre/quantile": 3
+      },
+      "folds": [
+        {
+          "held_out": [
+            "apartment_2"
+          ],
+          "fit_recall": 0.55,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.02,
+            "tau_a": 0.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0
+          }
+        },
+        {
+          "held_out": [
+            "frl_apartment_5"
+          ],
+          "fit_recall": 0.3325,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0
+          }
+        },
+        {
+          "held_out": [
+            "office_4"
+          ],
+          "fit_recall": 0.48,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.005,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0
+          }
+        }
+      ]
+    }
+  },
+  "provenance": {
+    "utc": "2026-09-14T16:58:42Z",
+    "argv": [
+      "scripts/room_cv_eval.py",
+      "--backbones",
+      "f3STFT",
+      "unlocSTFT",
+      "discoID",
+      "f3loc_mono_lr3e4clean",
+      "f3loc_mono_alignV",
+      "--condition",
+      "raw_scan_open",
+      "--fix-structure",
+      "centre",
+      "quantile",
+      "--out",
+      "feasible/results/H_fixed_structure.md",
+      "--json-out",
+      "feasible/results/H_fixed_structure.json"
+    ],
+    "git": {
+      "commit": "ea168c2233d2",
+      "dirty": true,
+      "diff_sha1": "22a71c0723a3",
+      "diff_lines": 313
+    },
+    "env": {
+      "python": "3.8.20",
+      "platform": "Linux-6.8.0-84-generic-x86_64-with-glibc2.17",
+      "numpy": "1.24.3",
+      "torch": "2.4.1",
+      "cv2": "5.0.0",
+      "scipy": "1.10.1"
+    },
+    "inputs": []
+  }
+}

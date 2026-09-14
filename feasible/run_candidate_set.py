@@ -74,8 +74,14 @@ def main() -> int:
     import matplotlib.pyplot as plt
     from track1_core.provenance import stamp
     from track1_core.likelihood.mode_fusion import ModeFusionConfig, choose, evidence_columns
+    # the gated curve is scored with rooms held out, like the headline table:
+    # each room under the scalars its fold fitted on the other rooms. The
+    # shared policy, which was fitted on the forward collection of these same
+    # rooms, is only the fallback for a backbone the room CV has not covered.
     pol_p = REPO_ROOT / "outputs" / "metrics" / "unified_policy.json"
     POL = json.loads(pol_p.read_text())["policy"] if pol_p.exists() else {}
+    cv_p = REPO_ROOT / "outputs" / "metrics" / "room_cv.json"
+    CV = json.loads(cv_p.read_text())["results"] if cv_p.exists() else {}
     KEYS = ("vis_evidence", "ac_evidence", "rule", "weight", "sigmoid_scale", "tau_v", "tau_a")
 
     rng = np.random.default_rng(args.seed)
@@ -101,6 +107,14 @@ def main() -> int:
         # per query, the hypotheses in visual order
         cfg = (ModeFusionConfig(**{k: (-np.inf if POL[tag][k] is None else POL[tag][k])
                                   for k in KEYS}) if tag in POL else None)
+        if tag in CV and CV[tag].get("folds"):
+            cfg_of = {r: ModeFusionConfig(**f["policy"]) for f in CV[tag]["folds"]
+                      for r in f["held_out"]}
+            cfg = next(iter(cfg_of.values()))       # the structure is shared
+            print(f"[{tag}] gated curve under room-CV scalars from {cv_p.name}")
+        else:
+            cfg_of = None
+            print(f"[{tag}] gated curve under the shared policy (no room CV on disk)")
         vc, acc = evidence_columns(cfg) if cfg else ("vis_lse", "ac_quantile")
         per: dict[str, dict] = {}
         for i, q in enumerate(M["query_id"]):
@@ -114,6 +128,7 @@ def main() -> int:
             per[q] = {k: np.asarray(v, dtype=float)[o] for k, v in d.items() if k != "m"}
 
         qids = [str(x) for x in Q["query_id"]]
+        scene_of = {str(q): str(s) for q, s in zip(Q["query_id"], Q["scene"])}
         e_vis = Q["e_vis"]
         # the extracted table already carries the outcome of acoustic reranking
         # over the whole grid and over the visual top-50, which are the two
@@ -126,7 +141,8 @@ def main() -> int:
             sel = np.array([per[q]["d"][:K][int(np.argmax(per[q]["ac"][:K]))] for q in qids])
             orc = np.array([per[q]["d"][:K].min() for q in qids])
             if cfg is not None:
-                gat = np.array([per[q]["d"][:K][choose(per[q]["v"][:K], per[q]["ac"][:K], cfg)[0]]
+                gat = np.array([per[q]["d"][:K][choose(per[q]["v"][:K], per[q]["ac"][:K],
+                                                       cfg_of[scene_of[q]] if cfg_of else cfg)[0]]
                                 for q in qids])
             else:
                 gat = np.full(len(qids), np.nan)

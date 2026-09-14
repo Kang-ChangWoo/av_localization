@@ -1,0 +1,100 @@
+{
+  "condition": "raw_scan_open",
+  "results": {
+    "f3STFT": {
+      "dataset": "Replica",
+      "rooms": 3,
+      "n": 600,
+      "vision": 0.38333333333333336,
+      "ours": 0.425,
+      "gain": 0.041666666666666664,
+      "ci": [
+        0.008333333333333333,
+        0.075
+      ],
+      "recalls": {
+        "0.1m": 0.051666666666666666,
+        "0.5m": 0.32666666666666666,
+        "1.0m": 0.425,
+        "2.0m": 0.5416666666666666,
+        "5.0m": 0.87
+      },
+      "vision_recalls": {
+        "0.1m": 0.051666666666666666,
+        "0.5m": 0.3,
+        "1.0m": 0.38333333333333336,
+        "2.0m": 0.48833333333333334,
+        "5.0m": 0.8633333333333333
+      },
+      "median": 1.560353999612119,
+      "vision_median": 2.1523528284547413,
+      "structures": {
+        "centre/quantile": 1,
+        "max/quantile": 1,
+        "centre/lse": 1
+      }
+    },
+    "f3loc_mono_proj": {
+      "dataset": "Replica",
+      "rooms": 3,
+      "n": 600,
+      "vision": 0.38333333333333336,
+      "ours": 0.48,
+      "gain": 0.09666666666666666,
+      "ci": [
+        0.06166666666666667,
+        0.13333333333333333
+      ],
+      "recalls": {
+        "0.1m": 0.056666666666666664,
+        "0.5m": 0.37333333333333335,
+        "1.0m": 0.48,
+        "2.0m": 0.5883333333333334,
+        "5.0m": 0.8983333333333333
+      },
+      "vision_recalls": {
+        "0.1m": 0.051666666666666666,
+        "0.5m": 0.3,
+        "1.0m": 0.38333333333333336,
+        "2.0m": 0.48833333333333334,
+        "5.0m": 0.8633333333333333
+      },
+      "median": 1.1012517361241554,
+      "vision_median": 2.1523528284547413,
+      "structures": {
+        "centre/quantile": 2,
+        "centre/max": 1
+      }
+    }
+  },
+  "provenance": {
+    "utc": "2026-09-14T16:38:02Z",
+    "argv": [
+      "scripts/room_cv_eval.py",
+      "--backbones",
+      "f3STFT",
+      "f3loc_mono_proj",
+      "--condition",
+      "raw_scan_open",
+      "--out",
+      "feasible/results/P_projection_fusion.md",
+      "--json-out",
+      "feasible/results/P_projection_fusion.json"
+    ],
+    "git": {
+      "commit": "ea168c2233d2",
+      "dirty": true,
+      "diff_sha1": "c79b31bda6eb",
+      "diff_lines": 177
+    },
+    "env": {
+      "python": "3.8.20",
+      "platform": "Linux-6.8.0-84-generic-x86_64-with-glibc2.17",
+      "numpy": "1.24.3",
+      "torch": "2.4.1",
+      "cv2": "5.0.0",
+      "scipy": "1.10.1"
+    },
+    "inputs": []
+  }
+}

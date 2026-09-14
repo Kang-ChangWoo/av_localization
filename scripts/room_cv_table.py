@@ -26,7 +26,8 @@ tex = [r"\begin{table}[t]\centering\small",
        r"furnished recordings matched against floorplan-rendered candidates. Both "
        r"motion collections are pooled and whole rooms are held out: the four "
        r"scalars are refit on two rooms and reported on the third, rotating, so no "
-       r"reported query comes from a room its scalars saw. Gains carry paired "
+       r"reported query comes from a room its scalars saw; the structure is fixed at "
+       r"the paper's one choice and is not searched. Gains carry paired "
        r"bootstrap intervals over queries; the room-clustered intervals, which are "
        r"wider and span zero at three rooms, are in Tab.~\ref{tab:cluster}.}",
        r"\label{tab:main_roomcv}",

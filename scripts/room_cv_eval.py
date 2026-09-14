@@ -65,6 +65,19 @@ def parse_args() -> argparse.Namespace:
                         "only the four scalars per fold. With three rooms a per-fold "
                         "structure search overfits two rooms and can pick a summary that "
                         "fails on the third; the paper's shared structure is centre quantile")
+    p.add_argument("--grid", choices=["absolute", "quantile"], default="absolute",
+                   help="how the visual gate's threshold and softness are gridded. "
+                        "'absolute' uses one fixed list of log-odds values for every "
+                        "backbone. 'quantile' places them at quantiles of the fitting "
+                        "rooms' own visual ambiguity, so a backbone whose log-odds live "
+                        "an order of magnitude lower (DisCo-FLoc's do) gets a gate that "
+                        "can actually close on its confident queries. Nothing from the "
+                        "held-out room enters either grid")
+    p.add_argument("--simple", action="store_true",
+                   help="the stripped rule: no acoustic gate (tau_a off) and the "
+                        "standardised acoustic summary in place of the relative "
+                        "evidence, so two scalars fewer and one transform fewer. "
+                        "If this matches the full rule, the full rule is decoration")
     p.add_argument("--boot", type=int, default=10000)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--out", type=Path, default=REPO_ROOT / "docs" / "room_cv.md")
@@ -103,13 +116,29 @@ def group(M: dict[str, np.ndarray]) -> dict[str, dict[str, np.ndarray]]:
 
 def main() -> int:
     args = parse_args()
-    from track1_core.likelihood.mode_fusion import ModeFusionConfig, choose, evidence_columns
+    from track1_core.likelihood.mode_fusion import (ModeFusionConfig, choose, evidence_columns,
+                                                    visual_ambiguity)
     from track1_core.provenance import stamp
 
     rng = np.random.default_rng(args.seed)
-    scalars = list(itertools.product((0.5, 1.0, 2.0), (0.02, 0.05, 0.1),
-                                     (0.005, 0.02, 0.05, 0.1, 0.2),
-                                     (-2.0, 0.0, 0.2, 0.4)))
+    WEIGHTS = (0.5, 1.0, 2.0)
+    TAU_A = (-2.0,) if args.simple else (-2.0, 0.0, 0.2, 0.4)
+    AC_TRANSFORM = "standard" if args.simple else "relative"
+    absolute = list(itertools.product(WEIGHTS, (0.02, 0.05, 0.1),
+                                      (0.005, 0.02, 0.05, 0.1, 0.2), TAU_A))
+
+    def quantile_grid(amb_fit: np.ndarray) -> list[tuple]:
+        """The same shape of grid, placed on the fitting rooms' ambiguity scale.
+
+        Five thresholds at the 20th to 90th percentiles of the fitting queries'
+        log-odds and three softnesses as fractions of their interquartile range,
+        so the gate has the same number of settings on every backbone and each
+        of them lands somewhere the backbone's queries actually are.
+        """
+        q = np.quantile(amb_fit, (0.2, 0.4, 0.6, 0.75, 0.9))
+        iqr = float(np.quantile(amb_fit, 0.75) - np.quantile(amb_fit, 0.25)) or 1e-3
+        return list(itertools.product(WEIGHTS, tuple(iqr * f for f in (0.1, 0.25, 0.5)),
+                                      tuple(float(x) for x in q), TAU_A))
     structures = ([tuple(args.fix_structure)] if args.fix_structure else
                   list(itertools.product(("centre", "max", "lse"),
                                          ("centre", "max", "quantile", "lse"))))
@@ -157,20 +186,32 @@ def main() -> int:
             return np.asarray(e), np.asarray(o)
 
         errs, orns, vis, structure_votes = [], [], [], Counter()
+        fold_policies: list[dict] = []
         for held in groups:
             rep = np.array([s in held for s in scene])
             fit = ~rep
             best, bs = None, -1.0
             for ve, ae in structures:
+                if args.grid == "quantile":
+                    vc = evidence_columns(ModeFusionConfig(vis_evidence=ve, ac_evidence=ae))[0]
+                    scalars = quantile_grid(np.array([visual_ambiguity(M[qids[i]][vc])
+                                                      for i in np.nonzero(fit)[0]]))
+                else:
+                    scalars = absolute
                 for w, sg, tv, ta in scalars:
                     c = ModeFusionConfig(vis_evidence=ve, ac_evidence=ae,
                                          rule="continuous", weight=w,
-                                         sigmoid_scale=sg, tau_v=tv, tau_a=ta)
+                                         sigmoid_scale=sg, tau_v=tv, tau_a=ta,
+                                         ac_transform=AC_TRANSFORM)
                     e, _ = run(c, fit)
                     sc = float((e < 1).mean())
                     if sc > bs:
                         best, bs = c, sc
             structure_votes[(best.vis_evidence, best.ac_evidence)] += 1
+            # the scalars a held-out room was scored under, so a qualitative
+            # figure can draw a room with the same rule the table scored it with
+            fold_policies.append(dict(held_out=sorted(held), fit_recall=bs,
+                                      policy=dict(vars(best))))
             e, o = run(best, rep)
             errs.append(e); orns.append(o); vis.append(Q["e_vis"][rep])
 
@@ -190,7 +231,8 @@ def main() -> int:
                        recalls={f"{t}m": float((e < t).mean()) for t in TH},
                        vision_recalls={f"{t}m": float((v < t).mean()) for t in TH},
                        median=float(np.median(e)), vision_median=float(np.median(v)),
-                       structures={f"{a}/{b}": n for (a, b), n in structure_votes.items()})
+                       structures={f"{a}/{b}": n for (a, b), n in structure_votes.items()},
+                       folds=fold_policies)
         print(f"[{tag}] structures chosen per fold: {dict(structure_votes)}")
 
     W("\nThe structure chosen inside each fold is listed in the JSON. A structure "
@@ -200,7 +242,9 @@ def main() -> int:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text("\n".join(out) + "\n")
     args.json_out.parent.mkdir(parents=True, exist_ok=True)
-    args.json_out.write_text(json.dumps(dict(condition=args.condition, results=js,
+    args.json_out.write_text(json.dumps(dict(condition=args.condition, grid=args.grid,
+                                             fix_structure=args.fix_structure,
+                                             simple=args.simple, results=js,
                                              provenance=stamp()), indent=2, default=str))
     print("\n".join(out))
     print(f"\nwrote {args.out}")

@@ -220,6 +220,17 @@ fold and every reported query comes from a room its scalars never saw.
 wider and spans zero on Replica. Saying so in the paper is far cheaper than
 having a reviewer discover it.
 
+**Done, and one thing learned (`results/H_fixed_structure.md`).** Searching
+the structure inside each fold as well as the scalars is unstable with two
+fitting rooms: the twelve summary pairs pick differently in nearly every fold,
+and the held-out room pays for it. Fixing the structure at the paper's one
+choice (visual centre, acoustic 0.9 quantile, continuous gate) and refitting
+only the scalars gives F3Loc +5.0 [+1.7, +8.5], UnLoc +7.0 [+3.8, +10.2] and
+DisCo-FLoc +0.7 [-1.8, +3.2]; the searched version gave +4.2, +4.5 and +2.7.
+The fixed-structure run is the headline table, and its JSON also records the
+scalars each held-out room was scored under, which is what the qualitative
+figures in `../vis` draw with.
+
 **Placement.** Main table protocol paragraph plus a supplementary table.
 Tier 1.
 
