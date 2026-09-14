@@ -105,6 +105,10 @@ def parse_args() -> argparse.Namespace:
                         "dark:<gain 0..1>, noise:<sigma 0..255>, occlude:<fraction>, "
                         "downscale:<factor>")
     p.add_argument("--degrade-seed", type=int, default=0)
+    p.add_argument("--acoustic-projection", default=None,
+                   help="npz with W (D x d) from feasible/run_invariant_projection.py; "
+                        "candidate and query features are projected before scoring, "
+                        "so the score becomes -L1 in the learned space")
     p.add_argument("--align-ring", default="none", choices=["none", "vis", "gt"],
                    help="roll the query's ring channels into the candidate frame. "
                         "The query ring turns with the camera while candidates are "
@@ -186,6 +190,17 @@ def main() -> int:
     mcfg = ModeConfig(nms_radius_m=args.nms_radius_m, n_modes=args.n_modes,
                       local_radius_m=args.local_radius_m)
     deg_rng = np.random.default_rng(args.degrade_seed)
+    PROJ = None
+    if args.acoustic_projection:
+        PROJ = np.load(args.acoustic_projection)["W"].astype(np.float32)
+        print(f"[proj] acoustic projection {PROJ.shape} from {args.acoustic_projection}")
+
+    def project(feat):
+        """(..., C*B, T) feature -> (..., d, 1) so `score` still sums over (1, 2)."""
+        if PROJ is None:
+            return feat
+        flat = feat.reshape(feat.shape[:-2] + (-1,))
+        return (flat @ PROJ)[..., None]
     posterior = None          # set by every single-image branch below
     posterior_chunk = None    # set by the multi-view branches instead
     F_W = (args.f_w if args.f_w is not None
@@ -362,6 +377,8 @@ def main() -> int:
             cand = {}
             for name, lo, hi in TIME_RANGES:
                 f = featurise(E[:, :, int(lo * fpm): int(hi * fpm)], full)
+                if name == PRIMARY_RANGE:
+                    f = project(f)
                 a = np.zeros((len(rows), f.shape[1], f.shape[2]), dtype=np.float32)
                 a[present] = f[pick[present]]
                 cand[name] = a
@@ -415,6 +432,8 @@ def main() -> int:
                 ac_by_range = {}
                 for name, lo, hi in TIME_RANGES:
                     o = featurise(obs_full[:, int(lo * fpm): int(hi * fpm)], full)
+                    if name == PRIMARY_RANGE:
+                        o = project(o)
                     ac_by_range[name] = score(cand[name], o, present, full)
                 ac = ac_by_range[PRIMARY_RANGE]
 
@@ -563,7 +582,7 @@ def main() -> int:
             # rather than raising, so both are recorded with every table.
             n_rays=args.n_rays, f_w=float(F_W), n_poses=args.n_poses,
             degrade=args.degrade, degrade_seed=args.degrade_seed,
-            align_ring=args.align_ring,
+            align_ring=args.align_ring, acoustic_projection=args.acoustic_projection,
             collections=list(args.collections), scenes=list(args.scenes),
             grid_dir=str(args.grid_dir), dataset_root=str(args.dataset_root),
             time_ranges=[list(t) for t in TIME_RANGES])), indent=2))

@@ -56,6 +56,10 @@ def parse_args() -> argparse.Namespace:
                    help="0 means leave one room out. A positive value groups the "
                         "rooms into that many folds, for datasets with too many "
                         "rooms to refit once each.")
+    p.add_argument("--only-collection", default=None,
+                   help="restrict to one motion collection, e.g. mp3d_f, so a "
+                        "backbone that collapses on in-place rotation can be "
+                        "judged on the motion it was built for")
     p.add_argument("--boot", type=int, default=10000)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--out", type=Path, default=REPO_ROOT / "docs" / "room_cv.md")
@@ -124,6 +128,9 @@ def main() -> int:
             print(f"[skip] {qp.name} not on disk")
             continue
         Q = read(qp)
+        if args.only_collection:
+            keep = Q["collection"] == args.only_collection
+            Q = {k: v[keep] for k, v in Q.items()}
         M = group(read(args.analysis_dir / f"modes_{args.condition}_{tag}.csv"))
         qids = [str(x) for x in Q["query_id"]]
         rooms = sorted({str(x) for x in Q["scene"]})
