@@ -9,10 +9,10 @@ Identical queries throughout; only the set of places the acoustic score is asked
 |---|---|---|---|---|
 | vision alone (no acoustics) | 1 | 38.3% | 38.3% | – |
 | hypotheses, K=1 | 1 | 38.3% | 38.3% | 38.3% |
-| hypotheses, K=2 | 2 | 35.8% | 34.5% | 52.2% |
-| hypotheses, K=3 | 3 | 34.2% | 37.3% | 62.8% |
-| hypotheses, K=5 | 5 | 31.8% | 41.7% | 73.3% |
-| hypotheses, K=10 | 10 | 26.3% | 43.3% | 86.2% |
+| hypotheses, K=2 | 2 | 35.8% | 39.5% | 52.2% |
+| hypotheses, K=3 | 3 | 34.2% | 41.7% | 62.8% |
+| hypotheses, K=5 | 5 | 31.8% | 43.7% | 73.3% |
+| hypotheses, K=10 | 10 | 26.3% | 44.8% | 86.2% |
 | visual top-50 cells | 50 | 46.0% | – | – |
 | all cells, acoustic only | 5344 | 20.8% | – | – |
 
@@ -22,10 +22,10 @@ Identical queries throughout; only the set of places the acoustic score is asked
 |---|---|---|---|---|
 | vision alone (no acoustics) | 1 | 50.7% | 50.7% | – |
 | hypotheses, K=1 | 1 | 50.7% | 50.7% | 50.7% |
-| hypotheses, K=2 | 2 | 47.5% | 51.8% | 65.3% |
-| hypotheses, K=3 | 3 | 46.0% | 52.5% | 76.3% |
-| hypotheses, K=5 | 5 | 41.3% | 54.0% | 85.5% |
-| hypotheses, K=10 | 10 | 35.3% | 57.7% | 92.8% |
+| hypotheses, K=2 | 2 | 47.5% | 51.0% | 65.3% |
+| hypotheses, K=3 | 3 | 46.0% | 53.5% | 76.3% |
+| hypotheses, K=5 | 5 | 41.3% | 55.3% | 85.5% |
+| hypotheses, K=10 | 10 | 35.3% | 58.2% | 92.8% |
 | visual top-50 cells | 50 | 52.2% | – | – |
 | all cells, acoustic only | 5344 | 20.8% | – | – |
 
@@ -35,10 +35,10 @@ Identical queries throughout; only the set of places the acoustic score is asked
 |---|---|---|---|---|
 | vision alone (no acoustics) | 1 | 40.5% | 40.5% | – |
 | hypotheses, K=1 | 1 | 40.5% | 40.5% | 40.5% |
-| hypotheses, K=2 | 2 | 36.7% | 39.3% | 53.7% |
-| hypotheses, K=3 | 3 | 35.2% | 41.5% | 66.7% |
+| hypotheses, K=2 | 2 | 36.7% | 39.0% | 53.7% |
+| hypotheses, K=3 | 3 | 35.2% | 40.2% | 66.7% |
 | hypotheses, K=5 | 5 | 33.0% | 42.0% | 73.2% |
-| hypotheses, K=10 | 10 | 30.8% | 41.2% | 84.5% |
+| hypotheses, K=10 | 10 | 30.8% | 43.2% | 84.5% |
 | visual top-50 cells | 50 | 45.8% | – | – |
 | all cells, acoustic only | 5344 | 20.8% | – | – |
 

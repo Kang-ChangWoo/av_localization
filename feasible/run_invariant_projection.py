@@ -48,6 +48,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--cache", type=Path, default=REPO_ROOT / "outputs" / "metrics" / "proj_feature_cache.npz")
     p.add_argument("--out", type=Path, default=HERE / "results" / "P_invariant_projection.md")
     p.add_argument("--weights", type=Path, default=REPO_ROOT / "outputs" / "metrics" / "acoustic_projection.npz")
+    p.add_argument("--extra-cache", type=Path, nargs="*", default=[],
+                   help="feature caches of other datasets whose train and val rooms are "
+                        "pooled with this one's, for a projection trained across datasets")
+    p.add_argument("--skip-grid-test", action="store_true",
+                   help="train and select only; the candidate-grid test is done by "
+                        "extract_mode_table.py --acoustic-projection and room_cv_eval.py")
     return p.parse_args()
 
 
@@ -102,6 +108,14 @@ def main() -> int:
         args.cache.parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(args.cache, **{k: np.array(v, dtype=object) for k, v in data.items()})
 
+    for extra in args.extra_cache:
+        z = np.load(extra, allow_pickle=True)
+        for split in ("train", "val"):
+            for s, d in z[split].item().items():
+                data[split][f"{extra.stem}:{s}"] = d
+        print(f"[cache] pooled train/val rooms from {extra}")
+    print(f"[data] train rooms {len(data['train'])}, val rooms {len(data['val'])}")
+
     D = int(np.prod(next(iter(data["train"].values()))["f"].shape[1:]))
     dev = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -154,10 +168,11 @@ def main() -> int:
              f"identity {100*base_val:.1f}%, projected {100*best_val:.1f}%.\n",
              "| test room | queries | acoustic alone @1m, identity | projected | median GT rank, identity | projected |",
              "|---|---|---|---|---|---|"]
-    js = dict(dim=args.dim, val_identity=base_val, val_projected=best_val, test={})
+    js = dict(dim=args.dim, val_identity=base_val, val_projected=best_val, test={},
+              train_rooms=len(rooms), extra_cache=[str(x) for x in args.extra_cache])
     Wn = best_W.cpu().numpy()
     tot_e = {"id": [], "pr": []}; tot_r = {"id": [], "pr": []}
-    for s, d in data["test"].items():
+    for s, d in ({} if args.skip_grid_test else data["test"]).items():
         b = np.load(args.grid_dir / f"{s}.npz", allow_pickle=False)
         idx = b["index"]
         Fc = np.stack([featurise(band_energy(r, cfg), cfg) for r in b["rir"]]).astype(np.float32)
@@ -192,10 +207,11 @@ def main() -> int:
                              rank_projected=float(np.median(rk['pr'])))
         del Fc, C, Ct, Cp
     ei, ep_ = np.array(tot_e["id"]), np.array(tot_e["pr"])
-    lines.append(f"| **all** | {len(ei)} | {100*(ei<1).mean():.1f}% | {100*(ep_<1).mean():.1f}% | "
+    if ei.size:
+      lines.append(f"| **all** | {len(ei)} | {100*(ei<1).mean():.1f}% | {100*(ep_<1).mean():.1f}% | "
                  f"{np.median(tot_r['id']):.0f} | {np.median(tot_r['pr']):.0f} |")
-    js["test"]["all"] = dict(n=len(ei), r1_identity=float((ei < 1).mean()),
-                             r1_projected=float((ep_ < 1).mean()))
+      js["test"]["all"] = dict(n=len(ei), r1_identity=float((ei < 1).mean()),
+                               r1_projected=float((ep_ < 1).mean()))
     lines.append("\nAcoustic score alone over the whole candidate grid, furnished query, "
                  "test rooms never seen in training or selection. If the projected column "
                  "is not above the identity column here, the feature cannot close the gap "

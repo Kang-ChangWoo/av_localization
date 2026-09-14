@@ -193,7 +193,8 @@ def main() -> int:
     from track1_core.likelihood.mode_fusion import ModeFusionConfig, choose, evidence_columns
     pol_p = REPO_ROOT / "outputs" / "metrics" / "unified_policy.json"
     pol = json.loads(pol_p.read_text())["policy"] if pol_p.exists() else {}
-    keys = ("vis_evidence", "ac_evidence", "rule", "weight", "sigmoid_scale", "tau_v", "tau_a")
+    keys = ("vis_evidence", "ac_evidence", "rule", "weight", "sigmoid_scale", "tau_v", "tau_a",
+            "ac_transform")
     clus = []
     for tag, label in (("f3STFT", "F3Loc mono"), ("unlocSTFT", "UnLoc"), ("discoID", "DisCo-FLoc RRP")):
         qp = args.analysis_dir / f"queries_raw_scan_open_{tag}.csv"

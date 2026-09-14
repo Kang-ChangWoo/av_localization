@@ -82,7 +82,8 @@ def main() -> int:
     POL = json.loads(pol_p.read_text())["policy"] if pol_p.exists() else {}
     cv_p = REPO_ROOT / "outputs" / "metrics" / "room_cv.json"
     CV = json.loads(cv_p.read_text())["results"] if cv_p.exists() else {}
-    KEYS = ("vis_evidence", "ac_evidence", "rule", "weight", "sigmoid_scale", "tau_v", "tau_a")
+    KEYS = ("vis_evidence", "ac_evidence", "rule", "weight", "sigmoid_scale", "tau_v", "tau_a",
+            "ac_transform")
 
     rng = np.random.default_rng(args.seed)
     out, js = [], {}
@@ -106,7 +107,7 @@ def main() -> int:
         M = read(mp)
         # per query, the hypotheses in visual order
         cfg = (ModeFusionConfig(**{k: (-np.inf if POL[tag][k] is None else POL[tag][k])
-                                  for k in KEYS}) if tag in POL else None)
+                                  for k in KEYS if k in POL[tag]}) if tag in POL else None)
         if tag in CV and CV[tag].get("folds"):
             cfg_of = {r: ModeFusionConfig(**f["policy"]) for f in CV[tag]["folds"]
                       for r in f["held_out"]}

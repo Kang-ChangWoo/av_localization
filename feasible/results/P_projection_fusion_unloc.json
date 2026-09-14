@@ -1,55 +1,29 @@
 {
   "condition": "raw_scan_open",
+  "grid": "absolute",
+  "fix_structure": [
+    "centre",
+    "quantile"
+  ],
+  "rule": "simple",
   "results": {
     "unlocSTFT": {
       "dataset": "Replica",
       "rooms": 3,
       "n": 600,
       "vision": 0.5066666666666667,
-      "ours": 0.5516666666666666,
-      "gain": 0.045,
+      "ours": 0.5816666666666667,
+      "gain": 0.075,
       "ci": [
-        0.011666666666666667,
-        0.07670833333333273
+        0.043333333333333335,
+        0.10666666666666667
       ],
       "recalls": {
-        "0.1m": 0.10166666666666667,
-        "0.5m": 0.49,
-        "1.0m": 0.5516666666666666,
-        "2.0m": 0.5933333333333334,
-        "5.0m": 0.875
-      },
-      "vision_recalls": {
-        "0.1m": 0.095,
-        "0.5m": 0.45166666666666666,
-        "1.0m": 0.5066666666666667,
-        "2.0m": 0.545,
-        "5.0m": 0.8483333333333334
-      },
-      "median": 0.5250627125332089,
-      "vision_median": 0.9012120639444843,
-      "structures": {
-        "centre/quantile": 1,
-        "max/quantile": 2
-      }
-    },
-    "unloc_uproj": {
-      "dataset": "Replica",
-      "rooms": 3,
-      "n": 600,
-      "vision": 0.5066666666666667,
-      "ours": 0.5866666666666667,
-      "gain": 0.08,
-      "ci": [
-        0.041666666666666664,
-        0.11666666666666667
-      ],
-      "recalls": {
-        "0.1m": 0.10166666666666667,
-        "0.5m": 0.5183333333333333,
-        "1.0m": 0.5866666666666667,
-        "2.0m": 0.635,
-        "5.0m": 0.9166666666666666
+        "0.1m": 0.10833333333333334,
+        "0.5m": 0.5166666666666667,
+        "1.0m": 0.5816666666666667,
+        "2.0m": 0.6233333333333333,
+        "5.0m": 0.8883333333333333
       },
       "vision_recalls": {
         "0.1m": 0.095,
@@ -61,13 +35,149 @@
       "median": 0.45785457576249444,
       "vision_median": 0.9012120639444843,
       "structures": {
-        "max/quantile": 2,
-        "max/lse": 1
-      }
+        "centre/quantile": 3
+      },
+      "folds": [
+        {
+          "held_out": [
+            "apartment_2"
+          ],
+          "fit_recall": 0.67,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.005,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "frl_apartment_5"
+          ],
+          "fit_recall": 0.495,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.05,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "office_4"
+          ],
+          "fit_recall": 0.61,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "unloc_uproj": {
+      "dataset": "Replica",
+      "rooms": 3,
+      "n": 600,
+      "vision": 0.5066666666666667,
+      "ours": 0.61,
+      "gain": 0.10333333333333333,
+      "ci": [
+        0.06662500000000003,
+        0.14166666666666666
+      ],
+      "recalls": {
+        "0.1m": 0.105,
+        "0.5m": 0.5316666666666666,
+        "1.0m": 0.61,
+        "2.0m": 0.6683333333333333,
+        "5.0m": 0.9316666666666666
+      },
+      "vision_recalls": {
+        "0.1m": 0.095,
+        "0.5m": 0.45166666666666666,
+        "1.0m": 0.5066666666666667,
+        "2.0m": 0.545,
+        "5.0m": 0.8483333333333334
+      },
+      "median": 0.385936176020357,
+      "vision_median": 0.9012120639444843,
+      "structures": {
+        "centre/quantile": 3
+      },
+      "folds": [
+        {
+          "held_out": [
+            "apartment_2"
+          ],
+          "fit_recall": 0.7225,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "frl_apartment_5"
+          ],
+          "fit_recall": 0.4925,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "office_4"
+          ],
+          "fit_recall": 0.6475,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
     }
   },
   "provenance": {
-    "utc": "2026-09-14T17:10:24Z",
+    "utc": "2026-09-14T17:30:00Z",
     "argv": [
       "scripts/room_cv_eval.py",
       "--backbones",
@@ -75,16 +185,19 @@
       "unloc_uproj",
       "--condition",
       "raw_scan_open",
+      "--fix-structure",
+      "centre",
+      "quantile",
       "--out",
       "feasible/results/P_projection_fusion_unloc.md",
       "--json-out",
       "feasible/results/P_projection_fusion_unloc.json"
     ],
     "git": {
-      "commit": "ea168c2233d2",
+      "commit": "db4366aa817e",
       "dirty": true,
-      "diff_sha1": "d8729545b033",
-      "diff_lines": 689
+      "diff_sha1": "75c5042cb768",
+      "diff_lines": 287
     },
     "env": {
       "python": "3.8.20",

@@ -209,8 +209,10 @@ def main() -> int:
     import itertools
     scene_of = np.array([r["scene"] for r in rec])
     rooms = sorted(set(scene_of))
-    grid = list(itertools.product((0.5, 1.0, 2.0), (0.02, 0.05, 0.1),
-                                  (0.005, 0.02, 0.05, 0.1, 0.2), (-2.0, 0.0, 0.2, 0.4)))
+    # the paper's three-scalar rule; the acoustic gate is held open and the
+    # standardised summary is used directly (feasible/results/H_simple_rule.md)
+    grid = [(w, s, tv, -2.0) for w, s, tv in itertools.product(
+        (0.5, 1.0, 2.0), (0.02, 0.05, 0.1), (0.005, 0.02, 0.05, 0.1, 0.2))]
 
     def run(v, cfg, idx):
         e, o = [], []
@@ -263,7 +265,7 @@ def main() -> int:
                 for w, s, tv, ta in grid:
                     c = ModeFusionConfig(vis_evidence="lse", ac_evidence="quantile",
                                          rule="continuous", weight=w, sigmoid_scale=s,
-                                         tau_v=tv, tau_a=ta)
+                                         tau_v=tv, tau_a=ta, ac_transform="standard")
                     sc = float((run(v, c, fit)[0] < 1).mean())
                     if sc > bs:
                         best, bs = c, sc
@@ -273,7 +275,7 @@ def main() -> int:
             for w, s, tv, ta in grid:
                 c = ModeFusionConfig(vis_evidence="lse", ac_evidence="quantile",
                                      rule="continuous", weight=w, sigmoid_scale=s,
-                                     tau_v=tv, tau_a=ta)
+                                     tau_v=tv, tau_a=ta, ac_transform="standard")
                 sc = float((run(v, c, idx)[0] < 1).mean())
                 if sc > bs:
                     best, bs = c, sc

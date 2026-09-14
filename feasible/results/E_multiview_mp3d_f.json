@@ -1,23 +1,29 @@
 {
   "condition": "raw_scan_open",
+  "grid": "absolute",
+  "fix_structure": [
+    "centre",
+    "quantile"
+  ],
+  "rule": "simple",
   "results": {
     "f3loc_mono_mp3d12": {
       "dataset": "Matterport3D",
       "rooms": 12,
       "n": 480,
       "vision": 0.3104166666666667,
-      "ours": 0.3375,
-      "gain": 0.027083333333333334,
+      "ours": 0.3333333333333333,
+      "gain": 0.022916666666666665,
       "ci": [
-        0.0020833333333333333,
-        0.052083333333333336
+        0.0,
+        0.04791666666666667
       ],
       "recalls": {
         "0.1m": 0.0625,
-        "0.5m": 0.2520833333333333,
-        "1.0m": 0.3375,
-        "2.0m": 0.39375,
-        "5.0m": 0.5229166666666667
+        "0.5m": 0.24791666666666667,
+        "1.0m": 0.3333333333333333,
+        "2.0m": 0.3854166666666667,
+        "5.0m": 0.53125
       },
       "vision_recalls": {
         "0.1m": 0.058333333333333334,
@@ -29,28 +35,104 @@
       "median": 4.33264744161918,
       "vision_median": 4.842827901133121,
       "structures": {
-        "max/lse": 1,
-        "centre/lse": 2,
-        "max/quantile": 1
-      }
+        "centre/quantile": 4
+      },
+      "folds": [
+        {
+          "held_out": [
+            "8WUmhLawc2A_f0",
+            "gTV8FGcVJC9_f0",
+            "pLe4wQe7qrG_f0"
+          ],
+          "fit_recall": 0.33055555555555555,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 0.5,
+            "tau_v": 0.02,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f0",
+            "gTV8FGcVJC9_f2",
+            "q9vSo1VnCiC_f0"
+          ],
+          "fit_recall": 0.33055555555555555,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 0.5,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.1,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f1",
+            "gTV8FGcVJC9_f4",
+            "sT4fr6TAbpF_f0"
+          ],
+          "fit_recall": 0.3611111111111111,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.02,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "Z6MFQCViBuw_f0",
+            "gTV8FGcVJC9_f5",
+            "uNb9QFRL6hY_f1"
+          ],
+          "fit_recall": 0.38333333333333336,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.02,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
     },
     "f3loc_mv_mp3d12": {
       "dataset": "Matterport3D",
       "rooms": 12,
       "n": 480,
       "vision": 0.43333333333333335,
-      "ours": 0.4895833333333333,
-      "gain": 0.05625,
+      "ours": 0.47708333333333336,
+      "gain": 0.04375,
       "ci": [
-        0.029166666666666667,
-        0.08541666666666667
+        0.010416666666666666,
+        0.07708333333333334
       ],
       "recalls": {
-        "0.1m": 0.13333333333333333,
-        "0.5m": 0.42916666666666664,
-        "1.0m": 0.4895833333333333,
-        "2.0m": 0.5125,
-        "5.0m": 0.6270833333333333
+        "0.1m": 0.12916666666666668,
+        "0.5m": 0.42083333333333334,
+        "1.0m": 0.47708333333333336,
+        "2.0m": 0.50625,
+        "5.0m": 0.60625
       },
       "vision_recalls": {
         "0.1m": 0.12083333333333333,
@@ -59,31 +141,107 @@
         "2.0m": 0.4666666666666667,
         "5.0m": 0.5666666666666667
       },
-      "median": 1.2672385494756773,
+      "median": 1.8645896834299551,
       "vision_median": 2.9368246048295577,
       "structures": {
-        "centre/centre": 2,
-        "max/lse": 1,
-        "max/centre": 1
-      }
+        "centre/quantile": 4
+      },
+      "folds": [
+        {
+          "held_out": [
+            "8WUmhLawc2A_f0",
+            "gTV8FGcVJC9_f0",
+            "pLe4wQe7qrG_f0"
+          ],
+          "fit_recall": 0.46944444444444444,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.05,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f0",
+            "gTV8FGcVJC9_f2",
+            "q9vSo1VnCiC_f0"
+          ],
+          "fit_recall": 0.46111111111111114,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.05,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f1",
+            "gTV8FGcVJC9_f4",
+            "sT4fr6TAbpF_f0"
+          ],
+          "fit_recall": 0.5222222222222223,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.05,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "Z6MFQCViBuw_f0",
+            "gTV8FGcVJC9_f5",
+            "uNb9QFRL6hY_f1"
+          ],
+          "fit_recall": 0.5333333333333333,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 0.5,
+            "tau_v": 0.02,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.1,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
     },
     "f3loc_comp_mp3d12": {
       "dataset": "Matterport3D",
       "rooms": 12,
       "n": 480,
       "vision": 0.31666666666666665,
-      "ours": 0.3416666666666667,
-      "gain": 0.025,
+      "ours": 0.36041666666666666,
+      "gain": 0.04375,
       "ci": [
-        -0.010416666666666666,
-        0.058333333333333334
+        0.00625,
+        0.08125
       ],
       "recalls": {
-        "0.1m": 0.07291666666666667,
-        "0.5m": 0.275,
-        "1.0m": 0.3416666666666667,
-        "2.0m": 0.38958333333333334,
-        "5.0m": 0.53125
+        "0.1m": 0.075,
+        "0.5m": 0.28541666666666665,
+        "1.0m": 0.36041666666666666,
+        "2.0m": 0.4125,
+        "5.0m": 0.5645833333333333
       },
       "vision_recalls": {
         "0.1m": 0.06666666666666667,
@@ -92,17 +250,93 @@
         "2.0m": 0.3729166666666667,
         "5.0m": 0.49583333333333335
       },
-      "median": 4.307776040528606,
+      "median": 3.71999318561791,
       "vision_median": 5.111021801299693,
       "structures": {
-        "centre/centre": 2,
-        "max/max": 1,
-        "max/quantile": 1
-      }
+        "centre/quantile": 4
+      },
+      "folds": [
+        {
+          "held_out": [
+            "8WUmhLawc2A_f0",
+            "gTV8FGcVJC9_f0",
+            "pLe4wQe7qrG_f0"
+          ],
+          "fit_recall": 0.35555555555555557,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.005,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f0",
+            "gTV8FGcVJC9_f2",
+            "q9vSo1VnCiC_f0"
+          ],
+          "fit_recall": 0.35,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.02,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f1",
+            "gTV8FGcVJC9_f4",
+            "sT4fr6TAbpF_f0"
+          ],
+          "fit_recall": 0.38055555555555554,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "Z6MFQCViBuw_f0",
+            "gTV8FGcVJC9_f5",
+            "uNb9QFRL6hY_f1"
+          ],
+          "fit_recall": 0.3972222222222222,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.02,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
     }
   },
   "provenance": {
-    "utc": "2026-09-14T16:48:34Z",
+    "utc": "2026-09-14T17:30:27Z",
     "argv": [
       "scripts/room_cv_eval.py",
       "--backbones",
@@ -115,16 +349,19 @@
       "4",
       "--only-collection",
       "mp3d_f",
+      "--fix-structure",
+      "centre",
+      "quantile",
       "--out",
       "feasible/results/E_multiview_mp3d_f.md",
       "--json-out",
       "feasible/results/E_multiview_mp3d_f.json"
     ],
     "git": {
-      "commit": "ea168c2233d2",
+      "commit": "db4366aa817e",
       "dirty": true,
-      "diff_sha1": "13d4627ec604",
-      "diff_lines": 198
+      "diff_sha1": "2ea872e4e2be",
+      "diff_lines": 1207
     },
     "env": {
       "python": "3.8.20",

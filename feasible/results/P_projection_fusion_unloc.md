@@ -5,8 +5,8 @@ The `_f` and `_g` collections are two motion regimes over the same rooms. They a
 
 | dataset | backbone | rooms | queries | vision @1m | ours @1m | gain | 95% CI |
 |---|---|---|---|---|---|---|---|
-| Replica | UnLoc | 3 | 600 | 50.7% | 55.2% | +4.5 | [+1.2, +7.7] |
-| Replica | unloc_uproj | 3 | 600 | 50.7% | 58.7% | +8.0 | [+4.2, +11.7] |
+| Replica | UnLoc | 3 | 600 | 50.7% | 58.2% | +7.5 | [+4.3, +10.7] |
+| Replica | unloc_uproj | 3 | 600 | 50.7% | 61.0% | +10.3 | [+6.7, +14.2] |
 
 The structure chosen inside each fold is listed in the JSON. A structure that wins every fold is a property of the method; one that changes fold to fold would mean the summaries are not doing what we claim.
 

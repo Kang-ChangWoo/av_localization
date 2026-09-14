@@ -73,11 +73,12 @@ def parse_args() -> argparse.Namespace:
                         "an order of magnitude lower (DisCo-FLoc's do) gets a gate that "
                         "can actually close on its confident queries. Nothing from the "
                         "held-out room enters either grid")
-    p.add_argument("--simple", action="store_true",
-                   help="the stripped rule: no acoustic gate (tau_a off) and the "
-                        "standardised acoustic summary in place of the relative "
-                        "evidence, so two scalars fewer and one transform fewer. "
-                        "If this matches the full rule, the full rule is decoration")
+    p.add_argument("--rule", choices=["simple", "full"], default="simple",
+                   help="'simple' is the paper's rule: a visual-ambiguity gate on the "
+                        "standardised acoustic summary, three scalars. 'full' adds the "
+                        "acoustic-margin gate and the relative-evidence transform, four "
+                        "scalars; it was the original rule and is kept as the ablation, "
+                        "since on every backbone it matched or lost to the simple one")
     p.add_argument("--boot", type=int, default=10000)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--out", type=Path, default=REPO_ROOT / "docs" / "room_cv.md")
@@ -122,8 +123,8 @@ def main() -> int:
 
     rng = np.random.default_rng(args.seed)
     WEIGHTS = (0.5, 1.0, 2.0)
-    TAU_A = (-2.0,) if args.simple else (-2.0, 0.0, 0.2, 0.4)
-    AC_TRANSFORM = "standard" if args.simple else "relative"
+    TAU_A = (-2.0,) if args.rule == "simple" else (-2.0, 0.0, 0.2, 0.4)
+    AC_TRANSFORM = "standard" if args.rule == "simple" else "relative"
     absolute = list(itertools.product(WEIGHTS, (0.02, 0.05, 0.1),
                                       (0.005, 0.02, 0.05, 0.1, 0.2), TAU_A))
 
@@ -244,7 +245,7 @@ def main() -> int:
     args.json_out.parent.mkdir(parents=True, exist_ok=True)
     args.json_out.write_text(json.dumps(dict(condition=args.condition, grid=args.grid,
                                              fix_structure=args.fix_structure,
-                                             simple=args.simple, results=js,
+                                             rule=args.rule, results=js,
                                              provenance=stamp()), indent=2, default=str))
     print("\n".join(out))
     print(f"\nwrote {args.out}")

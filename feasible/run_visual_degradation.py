@@ -153,8 +153,11 @@ def main() -> int:
     from track1_core.provenance import stamp
 
     rng = np.random.default_rng(args.seed)
+    # the paper's three-scalar rule: visual-ambiguity gate on the standardised
+    # acoustic summary. The acoustic gate and the relative-evidence transform
+    # were dropped after the room-held-out ablation (feasible/results/H_simple_rule.md)
     scalars = list(itertools.product((0.5, 1.0, 2.0), (0.02, 0.05, 0.1),
-                                     (0.005, 0.02, 0.05, 0.1, 0.2), (-2.0, 0.0, 0.2, 0.4)))
+                                     (0.005, 0.02, 0.05, 0.1, 0.2)))
     # The structure is held at the paper's shared choice, read from the policy
     # file rather than typed here: a hand-typed "lse" once cost the clean level
     # 16 points against the same rooms scored with the policy's "centre".
@@ -185,9 +188,10 @@ def main() -> int:
         for held in rooms:
             rep = scene == held; fit = ~rep
             best, bs = None, -1.0
-            for w, s, tv, ta in scalars:
+            for w, s, tv in scalars:
                 c = ModeFusionConfig(vis_evidence=VE, ac_evidence=AE, rule="continuous",
-                                     weight=w, sigmoid_scale=s, tau_v=tv, tau_a=ta)
+                                     weight=w, sigmoid_scale=s, tau_v=tv, tau_a=-2.0,
+                                     ac_transform="standard")
                 sc = float((run(c, fit) < 1).mean())
                 if sc > bs:
                     best, bs = c, sc
