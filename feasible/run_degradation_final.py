@@ -41,11 +41,13 @@ BASE = ("--dataset-root /root/storage/echoloc_dataset/replica --collections repl
         "--scenes office_4 apartment_2 frl_apartment_5 --condition raw_scan_open "
         f"--grid-dir outputs/acoustic_grid_v2 --backbone unloc --checkpoint {UNLOC_CK} "
         "--feature stft_band --nfft 256 --hop 64 --n-poses 100")
-LEVELS = [("clean", None), ("blur", 1), ("blur", 2), ("blur", 4), ("blur", 8),
-          ("dark", 0.75), ("dark", 0.5), ("dark", 0.25), ("dark", 0.1),
-          ("noise", 10), ("noise", 25), ("noise", 50),
-          ("occlude", 0.1), ("occlude", 0.3), ("occlude", 0.5),
-          ("downscale", 2), ("downscale", 4), ("downscale", 8)]
+# the last two of each family are past anything a working camera produces; they
+# are there to show where the shortlist itself gives out
+LEVELS = [("clean", None), ("blur", 1), ("blur", 2), ("blur", 4), ("blur", 8), ("blur", 16), ("blur", 32),
+          ("dark", 0.75), ("dark", 0.5), ("dark", 0.25), ("dark", 0.1), ("dark", 0.05), ("dark", 0.02),
+          ("noise", 10), ("noise", 25), ("noise", 50), ("noise", 100), ("noise", 150),
+          ("occlude", 0.1), ("occlude", 0.3), ("occlude", 0.5), ("occlude", 0.7), ("occlude", 0.9),
+          ("downscale", 2), ("downscale", 4), ("downscale", 8), ("downscale", 16), ("downscale", 32)]
 LABEL = {"clean": "clean", "blur": "blur σ={}", "dark": "dark ×{}", "noise": "noise σ={}",
          "occlude": "occlude {:.0%}", "downscale": "downscale {}×"}
 # UnLoc at batch 1 takes about 3.5 GB, so a card that other tenants leave 6 GB
@@ -132,7 +134,7 @@ def main() -> int:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     fams = ["blur", "dark", "noise", "occlude", "downscale"]
-    fig, axes = plt.subplots(1, len(fams), figsize=(3.0 * len(fams), 3.0), sharey=True)
+    fig, axes = plt.subplots(1, len(fams), figsize=(3.4 * len(fams), 3.2), sharey=True)
     clean = next((r for r in rows if r["family"] == "clean"), None)
     for ax, fam in zip(axes, fams):
         rs = [r for r in rows if r["family"] == fam]
