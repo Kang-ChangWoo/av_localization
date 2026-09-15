@@ -370,7 +370,7 @@ def main() -> int:
         QUERY_GEOM[ds] = GEOM_OF[spec["condition"]]
     QUERY_GEOM.setdefault("Structured3D", r"\textendash")
     QUERY_GEOM.setdefault("Matterport3D", r"\textendash")
-    begin_table("tab_main_multi")
+    begin_table("tab_main_multi_collection")   # the paper's tab_main_multi is now written by scripts/val_tables.py
     TEX(r"\begin{table*}[t]")
     TEX(r"\centering\small")
     TEX(r"\caption{Single-frame localization. Recall in \%. $\checkmark$ denotes "
@@ -384,7 +384,7 @@ def main() -> int:
         r"acoustic side substantially easier; its rows are not comparable to "
         r"Replica's on equal terms. Datasets without impulse responses are left "
         r"empty rather than filled from a visual-only run.}")
-    TEX(r"\label{tab:main_multi}")
+    TEX(r"\label{tab:main_multi_collection}")
     TEX(r"\setlength{\tabcolsep}{5.2pt}")
     TEX(r"\renewcommand{\arraystretch}{1.12}")
     TEX(r"\begin{tabular}{llllccccccccc}")
