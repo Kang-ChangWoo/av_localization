@@ -39,6 +39,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--dataset-root", type=Path, default=Path("/root/storage/echoloc_dataset/replica"))
     p.add_argument("--grid-dir", type=Path, default=REPO_ROOT / "outputs" / "acoustic_grid_v2")
     p.add_argument("--collection", default="replica_f")
+    p.add_argument("--furnished-condition", default="raw_scan_open",
+                   help="the query-side recording paired with the wall-only one. Structured3D "
+                        "has no furnished mesh, so passing floorplan_closed pairs each "
+                        "recording with itself: those rooms then contribute only a "
+                        "position-separation term to the loss, no invariance, and the "
+                        "run should say so")
     p.add_argument("--dim", type=int, default=128)
     p.add_argument("--epochs", type=int, default=40)
     p.add_argument("--lr", type=float, default=1e-3)
@@ -78,7 +84,7 @@ def main() -> int:
     def load_room(scene, n):
         P = np.array([[float(v) for v in l.split()]
                       for l in open(R / args.collection / scene / "poses.txt") if l.strip()])
-        rd_f = R / "rir" / args.collection / "raw_scan_open" / scene
+        rd_f = R / "rir" / args.collection / args.furnished_condition / scene
         rd_c = R / "rir" / args.collection / "floorplan_closed" / scene
         dirs = sorted(d for d in os.listdir(rd_f) if d.startswith("pose_"))
         picks = np.linspace(0, len(dirs) - 1, min(n, len(dirs))).astype(int)

@@ -36,7 +36,15 @@ GPUS = [1, 2, 3, 4, 5, 6]
 
 W = {"R": MET / "acoustic_projection.npz",
      "M": MET / "acoustic_projection_mp3d.npz",
-     "B": MET / "acoustic_projection_both.npz"}
+     "B": MET / "acoustic_projection_both.npz",
+     # T: the two above plus Structured3D's train rooms, whose recordings have no
+     # furnished twin and so enter as (x, x) pairs: a position-separation term
+     # only. Included because the reader will ask; the honest expectation is
+     # that it changes little.
+     "T": MET / "acoustic_projection_three.npz"}
+SOURCES = ("R", "M", "B", "T")
+POOLED = {"B": [MET / "proj_feature_cache_mp3d.npz"],
+          "T": [MET / "proj_feature_cache_mp3d.npz", MET / "proj_feature_cache_s3d.npz"]}
 
 S3D_SCENES = ("scene_03250 scene_03253 scene_03258 scene_03259 scene_03267 scene_03290 "
               "scene_03310 scene_03316 scene_03319 scene_03346 scene_03363 scene_03367 "
@@ -66,7 +74,9 @@ BASE = {
         "--dataset-root /root/storage/echoloc_dataset/replica --collections replica_f replica_g "
         "--scenes office_4 apartment_2 frl_apartment_5 --condition raw_scan_open "
         "--grid-dir outputs/acoustic_grid_v2 --backbone disco_rrp "
-        f"--checkpoint {DISCO}/checkpoints/RRP_gibson_f_best.ckpt "
+        # the in-domain ray predictor, trained on Replica's training rooms like the
+        # other two backbones; the Gibson checkpoint reads 31.0% here against 40.5%
+        f"--checkpoint {DISCO}/logs/rrp_runs/rrp_replica_f_20260909_191458/checkpoints/epoch=05-val_action_loss=0.30.ckpt "
         "--feature stft_band --nfft 256 --hop 64 --n-poses 100"),
     ("mp3d", "f3loc"): (
         "--dataset-root /root/storage/echoloc_dataset/mp3d --collections mp3d_f mp3d_g "
@@ -143,44 +153,52 @@ def wait_for(paths, what):
 
 def main() -> int:
     LOG.mkdir(exist_ok=True)
-    # 1. the Matterport3D projection, being trained by run_invariant_projection.py
-    wait_for([W["M"], MET / "proj_feature_cache_mp3d.npz"], "Matterport3D projection")
-
-    # 2. the pooled projection, trained here
-    if not W["B"].exists():
-        while not any(gpu_free(g) for g in GPUS):
-            time.sleep(60)
-        g = next(g for g in GPUS if gpu_free(g))
-        log(f"training pooled projection on gpu {g}")
-        subprocess.run(f"{PY} feasible/run_invariant_projection.py --cache {MET}/proj_feature_cache.npz "
-                       f"--extra-cache {MET}/proj_feature_cache_mp3d.npz --skip-grid-test --gpu {g} "
-                       f"--weights {W['B']} --out feasible/results/P_invariant_projection_both.md "
-                       f"> logs/P_both.log 2>&1", shell=True, cwd=ROOT, check=True)
-
-    # 3. every extraction not yet on disk, one per free GPU
+    # One scheduler for everything before the room CV. A pooled projection is
+    # trained as soon as its caches exist; an extraction starts as soon as its
+    # projection exists and a GPU is free. Nothing waits for the Matterport3D
+    # projection unless it needs it, so the extractions under the Replica
+    # projection run while that cache is still being read.
     jobs = []
     for target in ("replica", "mp3d", "s3d"):
         for backbone in ("f3loc", "unloc", "disco"):
-            for source in ("R", "M", "B"):
+            for source in SOURCES:
                 key = (target, backbone, source)
                 if key in EXISTING or table(target, tag_of(*key)).exists():
                     continue
                 jobs.append(key)
     log(f"{len(jobs)} extractions to run")
-    running: dict[int, tuple[subprocess.Popen, tuple]] = {}
-    busy_by_others = set()
-    while jobs or running:
+    running: dict[int, tuple[subprocess.Popen, object]] = {}
+    training: set = set()
+    while jobs or running or any(not W[s].exists() for s in POOLED):
         for g, (p, key) in list(running.items()):
             if p.poll() is not None:
-                ok = table(key[0], tag_of(*key)).exists()
-                log(f"gpu {g}: {key} {'done' if ok else 'FAILED (no table)'}")
+                if isinstance(key, str):
+                    log(f"gpu {g}: projection {key} {'done' if W[key].exists() else 'FAILED'}")
+                    training.discard(key)
+                else:
+                    ok = table(key[0], tag_of(*key)).exists()
+                    log(f"gpu {g}: {key} {'done' if ok else 'FAILED (no table)'}")
                 del running[g]
         for g in GPUS:
-            if not jobs:
-                break
             if g in running or not gpu_free(g):
                 continue
-            key = jobs.pop(0)
+            src = next((s for s, extra in POOLED.items()
+                        if not W[s].exists() and s not in training
+                        and all(e.exists() for e in extra)), None)
+            if src is not None:
+                extra = POOLED[src]
+                cmd = (f"{PY} feasible/run_invariant_projection.py --cache {MET}/proj_feature_cache.npz "
+                       f"--extra-cache {' '.join(map(str, extra))} --skip-grid-test --gpu {g} "
+                       f"--weights {W[src]} --out feasible/results/P_invariant_projection_{src}.md "
+                       f"> logs/P_{src}.log 2>&1")
+                running[g] = (subprocess.Popen(cmd, shell=True, cwd=ROOT), src)
+                training.add(src)
+                log(f"gpu {g}: training pooled projection {src}")
+                continue
+            i = next((i for i, k in enumerate(jobs) if W[k[2]].exists()), None)
+            if i is None:
+                continue
+            key = jobs.pop(i)
             tag = tag_of(*key)
             suffix = tag[len(PREFIX[key[1]]):]
             cmd = (f"{PY} scripts/extract_mode_table.py --gpu {g} {BASE[(key[0], key[1])]} "
@@ -194,7 +212,7 @@ def main() -> int:
         tags = []
         for backbone in ("f3loc", "unloc", "disco"):
             tags.append(IDENT[(target, backbone)])
-            tags += [tag_of(target, backbone, s) for s in ("R", "M", "B")]
+            tags += [tag_of(target, backbone, s) for s in SOURCES]
         wait_for([table(target, t) for t in tags], f"{target} tables")
         log(f"room CV on {target}")
         subprocess.run(f"{PY} scripts/room_cv_eval.py --backbones {' '.join(tags)} --condition {COND[target]} "

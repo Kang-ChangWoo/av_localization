@@ -1,0 +1,484 @@
+{
+  "condition": "raw_scan_open",
+  "grid": "absolute",
+  "fix_structure": [
+    "centre",
+    "quantile"
+  ],
+  "rule": "simple",
+  "results": {
+    "f3loc_mono_mp3d12": {
+      "dataset": "Matterport3D",
+      "rooms": 12,
+      "n": 960,
+      "vision": 0.3333333333333333,
+      "ours": 0.37395833333333334,
+      "gain": 0.040625,
+      "ci": [
+        0.020833333333333332,
+        0.06145833333333333
+      ],
+      "recalls": {
+        "0.1m": 0.06041666666666667,
+        "0.5m": 0.27708333333333335,
+        "1.0m": 0.37395833333333334,
+        "2.0m": 0.4322916666666667,
+        "5.0m": 0.5489583333333333
+      },
+      "vision_recalls": {
+        "0.1m": 0.059375,
+        "0.5m": 0.25416666666666665,
+        "1.0m": 0.3333333333333333,
+        "2.0m": 0.38229166666666664,
+        "5.0m": 0.5083333333333333
+      },
+      "median": 3.606323853575437,
+      "vision_median": 4.842827901133121,
+      "structures": {
+        "centre/quantile": 4
+      },
+      "folds": [
+        {
+          "held_out": [
+            "8WUmhLawc2A_f0",
+            "gTV8FGcVJC9_f0",
+            "pLe4wQe7qrG_f0"
+          ],
+          "fit_recall": 0.3597222222222222,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.02,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f0",
+            "gTV8FGcVJC9_f2",
+            "q9vSo1VnCiC_f0"
+          ],
+          "fit_recall": 0.3611111111111111,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.02,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f1",
+            "gTV8FGcVJC9_f4",
+            "sT4fr6TAbpF_f0"
+          ],
+          "fit_recall": 0.3819444444444444,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.02,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "Z6MFQCViBuw_f0",
+            "gTV8FGcVJC9_f5",
+            "uNb9QFRL6hY_f1"
+          ],
+          "fit_recall": 0.39305555555555555,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.02,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "f3loc_mono_mp3d12proj": {
+      "dataset": "Matterport3D",
+      "rooms": 12,
+      "n": 960,
+      "vision": 0.3333333333333333,
+      "ours": 0.403125,
+      "gain": 0.06979166666666667,
+      "ci": [
+        0.04375,
+        0.09583333333333334
+      ],
+      "recalls": {
+        "0.1m": 0.06354166666666666,
+        "0.5m": 0.3072916666666667,
+        "1.0m": 0.403125,
+        "2.0m": 0.4625,
+        "5.0m": 0.5979166666666667
+      },
+      "vision_recalls": {
+        "0.1m": 0.059375,
+        "0.5m": 0.25416666666666665,
+        "1.0m": 0.3333333333333333,
+        "2.0m": 0.38229166666666664,
+        "5.0m": 0.5083333333333333
+      },
+      "median": 2.9015423229725834,
+      "vision_median": 4.842827901133121,
+      "structures": {
+        "centre/quantile": 4
+      },
+      "folds": [
+        {
+          "held_out": [
+            "8WUmhLawc2A_f0",
+            "gTV8FGcVJC9_f0",
+            "pLe4wQe7qrG_f0"
+          ],
+          "fit_recall": 0.4027777777777778,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.05,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f0",
+            "gTV8FGcVJC9_f2",
+            "q9vSo1VnCiC_f0"
+          ],
+          "fit_recall": 0.39166666666666666,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f1",
+            "gTV8FGcVJC9_f4",
+            "sT4fr6TAbpF_f0"
+          ],
+          "fit_recall": 0.4166666666666667,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "Z6MFQCViBuw_f0",
+            "gTV8FGcVJC9_f5",
+            "uNb9QFRL6hY_f1"
+          ],
+          "fit_recall": 0.425,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "unloc_mp3d12": {
+      "dataset": "Matterport3D",
+      "rooms": 12,
+      "n": 960,
+      "vision": 0.453125,
+      "ours": 0.49166666666666664,
+      "gain": 0.03854166666666667,
+      "ci": [
+        0.019791666666666666,
+        0.057291666666666664
+      ],
+      "recalls": {
+        "0.1m": 0.10625,
+        "0.5m": 0.41875,
+        "1.0m": 0.49166666666666664,
+        "2.0m": 0.5291666666666667,
+        "5.0m": 0.63125
+      },
+      "vision_recalls": {
+        "0.1m": 0.1,
+        "0.5m": 0.38958333333333334,
+        "1.0m": 0.453125,
+        "2.0m": 0.4864583333333333,
+        "5.0m": 0.59375
+      },
+      "median": 1.1933411187273895,
+      "vision_median": 2.3065995198429565,
+      "structures": {
+        "centre/quantile": 4
+      },
+      "folds": [
+        {
+          "held_out": [
+            "8WUmhLawc2A_f0",
+            "gTV8FGcVJC9_f0",
+            "pLe4wQe7qrG_f0"
+          ],
+          "fit_recall": 0.4791666666666667,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.005,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f0",
+            "gTV8FGcVJC9_f2",
+            "q9vSo1VnCiC_f0"
+          ],
+          "fit_recall": 0.4722222222222222,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.02,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f1",
+            "gTV8FGcVJC9_f4",
+            "sT4fr6TAbpF_f0"
+          ],
+          "fit_recall": 0.5166666666666667,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.02,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "Z6MFQCViBuw_f0",
+            "gTV8FGcVJC9_f5",
+            "uNb9QFRL6hY_f1"
+          ],
+          "fit_recall": 0.5263888888888889,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.005,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "unloc_mp3d12proj": {
+      "dataset": "Matterport3D",
+      "rooms": 12,
+      "n": 960,
+      "vision": 0.453125,
+      "ours": 0.50625,
+      "gain": 0.053125,
+      "ci": [
+        0.03125,
+        0.07604166666666666
+      ],
+      "recalls": {
+        "0.1m": 0.10625,
+        "0.5m": 0.43645833333333334,
+        "1.0m": 0.50625,
+        "2.0m": 0.5447916666666667,
+        "5.0m": 0.6479166666666667
+      },
+      "vision_recalls": {
+        "0.1m": 0.1,
+        "0.5m": 0.38958333333333334,
+        "1.0m": 0.453125,
+        "2.0m": 0.4864583333333333,
+        "5.0m": 0.59375
+      },
+      "median": 0.9339285591280598,
+      "vision_median": 2.3065995198429565,
+      "structures": {
+        "centre/quantile": 4
+      },
+      "folds": [
+        {
+          "held_out": [
+            "8WUmhLawc2A_f0",
+            "gTV8FGcVJC9_f0",
+            "pLe4wQe7qrG_f0"
+          ],
+          "fit_recall": 0.5111111111111111,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.05,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f0",
+            "gTV8FGcVJC9_f2",
+            "q9vSo1VnCiC_f0"
+          ],
+          "fit_recall": 0.4861111111111111,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.05,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f1",
+            "gTV8FGcVJC9_f4",
+            "sT4fr6TAbpF_f0"
+          ],
+          "fit_recall": 0.5430555555555555,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.1,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "Z6MFQCViBuw_f0",
+            "gTV8FGcVJC9_f5",
+            "uNb9QFRL6hY_f1"
+          ],
+          "fit_recall": 0.55,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.1,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    }
+  },
+  "provenance": {
+    "utc": "2026-09-14T20:04:53Z",
+    "argv": [
+      "scripts/room_cv_eval.py",
+      "--backbones",
+      "f3loc_mono_mp3d12",
+      "f3loc_mono_mp3d12proj",
+      "unloc_mp3d12",
+      "unloc_mp3d12proj",
+      "--condition",
+      "raw_scan_open",
+      "--folds",
+      "4",
+      "--fix-structure",
+      "centre",
+      "quantile",
+      "--out",
+      "feasible/results/P_projection_fusion_mp3d.md",
+      "--json-out",
+      "feasible/results/P_projection_fusion_mp3d.json"
+    ],
+    "git": {
+      "commit": "99d22620016b",
+      "dirty": true,
+      "diff_sha1": "bdfa5f2f968e",
+      "diff_lines": 652
+    },
+    "env": {
+      "python": "3.8.20",
+      "platform": "Linux-6.8.0-84-generic-x86_64-with-glibc2.17",
+      "numpy": "1.24.3",
+      "torch": "2.4.1",
+      "cv2": "5.0.0",
+      "scipy": "1.10.1"
+    },
+    "inputs": []
+  }
+}

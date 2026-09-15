@@ -1,0 +1,264 @@
+{
+  "condition": "raw_scan_open",
+  "grid": "absolute",
+  "fix_structure": [
+    "centre",
+    "quantile"
+  ],
+  "rule": "simple",
+  "results": {
+    "disco_rrp_mp3d12": {
+      "dataset": "Matterport3D",
+      "rooms": 12,
+      "n": 960,
+      "vision": 0.22916666666666666,
+      "ours": 0.25833333333333336,
+      "gain": 0.029166666666666667,
+      "ci": [
+        0.00625,
+        0.053125
+      ],
+      "recalls": {
+        "0.1m": 0.026041666666666668,
+        "0.5m": 0.19895833333333332,
+        "1.0m": 0.25833333333333336,
+        "2.0m": 0.31979166666666664,
+        "5.0m": 0.48541666666666666
+      },
+      "vision_recalls": {
+        "0.1m": 0.019791666666666666,
+        "0.5m": 0.16666666666666666,
+        "1.0m": 0.22916666666666666,
+        "2.0m": 0.2916666666666667,
+        "5.0m": 0.44375
+      },
+      "median": 5.332482914555887,
+      "vision_median": 5.821964123493531,
+      "structures": {
+        "centre/quantile": 4
+      },
+      "folds": [
+        {
+          "held_out": [
+            "8WUmhLawc2A_f0",
+            "gTV8FGcVJC9_f0",
+            "pLe4wQe7qrG_f0"
+          ],
+          "fit_recall": 0.26805555555555555,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.1,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f0",
+            "gTV8FGcVJC9_f2",
+            "q9vSo1VnCiC_f0"
+          ],
+          "fit_recall": 0.25277777777777777,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 1.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f1",
+            "gTV8FGcVJC9_f4",
+            "sT4fr6TAbpF_f0"
+          ],
+          "fit_recall": 0.30416666666666664,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.005,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.1,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "Z6MFQCViBuw_f0",
+            "gTV8FGcVJC9_f5",
+            "uNb9QFRL6hY_f1"
+          ],
+          "fit_recall": 0.2847222222222222,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "disco_rrp_mp3d12proj": {
+      "dataset": "Matterport3D",
+      "rooms": 12,
+      "n": 960,
+      "vision": 0.22916666666666666,
+      "ours": 0.32708333333333334,
+      "gain": 0.09791666666666667,
+      "ci": [
+        0.07083333333333333,
+        0.125
+      ],
+      "recalls": {
+        "0.1m": 0.026041666666666668,
+        "0.5m": 0.24270833333333333,
+        "1.0m": 0.32708333333333334,
+        "2.0m": 0.3885416666666667,
+        "5.0m": 0.521875
+      },
+      "vision_recalls": {
+        "0.1m": 0.019791666666666666,
+        "0.5m": 0.16666666666666666,
+        "1.0m": 0.22916666666666666,
+        "2.0m": 0.2916666666666667,
+        "5.0m": 0.44375
+      },
+      "median": 4.585451522387292,
+      "vision_median": 5.821964123493531,
+      "structures": {
+        "centre/quantile": 4
+      },
+      "folds": [
+        {
+          "held_out": [
+            "8WUmhLawc2A_f0",
+            "gTV8FGcVJC9_f0",
+            "pLe4wQe7qrG_f0"
+          ],
+          "fit_recall": 0.3138888888888889,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f0",
+            "gTV8FGcVJC9_f2",
+            "q9vSo1VnCiC_f0"
+          ],
+          "fit_recall": 0.30277777777777776,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "EDJbREhghzL_f1",
+            "gTV8FGcVJC9_f4",
+            "sT4fr6TAbpF_f0"
+          ],
+          "fit_recall": 0.3625,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "Z6MFQCViBuw_f0",
+            "gTV8FGcVJC9_f5",
+            "uNb9QFRL6hY_f1"
+          ],
+          "fit_recall": 0.34444444444444444,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    }
+  },
+  "provenance": {
+    "utc": "2026-09-14T20:03:29Z",
+    "argv": [
+      "scripts/room_cv_eval.py",
+      "--backbones",
+      "disco_rrp_mp3d12",
+      "disco_rrp_mp3d12proj",
+      "--condition",
+      "raw_scan_open",
+      "--folds",
+      "4",
+      "--fix-structure",
+      "centre",
+      "quantile",
+      "--out",
+      "feasible/results/P_projection_fusion_mp3d_disco.md",
+      "--json-out",
+      "feasible/results/P_projection_fusion_mp3d_disco.json"
+    ],
+    "git": {
+      "commit": "99d22620016b",
+      "dirty": true,
+      "diff_sha1": "bdfa5f2f968e",
+      "diff_lines": 652
+    },
+    "env": {
+      "python": "3.8.20",
+      "platform": "Linux-6.8.0-84-generic-x86_64-with-glibc2.17",
+      "numpy": "1.24.3",
+      "torch": "2.4.1",
+      "cv2": "5.0.0",
+      "scipy": "1.10.1"
+    },
+    "inputs": []
+  }
+}

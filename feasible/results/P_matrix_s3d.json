@@ -1,0 +1,1484 @@
+{
+  "condition": "floorplan_closed",
+  "grid": "absolute",
+  "fix_structure": [
+    "centre",
+    "quantile"
+  ],
+  "rule": "simple",
+  "results": {
+    "f3loc_mono_s3d": {
+      "dataset": "Structured3D",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.24193548387096775,
+      "ours": 0.46774193548387094,
+      "gain": 0.22580645161290322,
+      "ci": [
+        0.18458781362007168,
+        0.2670250896057348
+      ],
+      "recalls": {
+        "0.1m": 0.03046594982078853,
+        "0.5m": 0.3225806451612903,
+        "1.0m": 0.46774193548387094,
+        "2.0m": 0.5860215053763441,
+        "5.0m": 0.7670250896057348
+      },
+      "vision_recalls": {
+        "0.1m": 0.007168458781362007,
+        "0.5m": 0.15053763440860216,
+        "1.0m": 0.24193548387096775,
+        "2.0m": 0.32437275985663083,
+        "5.0m": 0.6218637992831542
+      },
+      "median": 1.2489538165095024,
+      "vision_median": 4.064379167201442,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.4618055555555556,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.05,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.4740740740740741,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.05,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "f3loc_mono_s3dprojR": {
+      "dataset": "Replica",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.24193548387096775,
+      "ours": 0.5053763440860215,
+      "gain": 0.26344086021505375,
+      "ci": [
+        0.2222222222222222,
+        0.3046594982078853
+      ],
+      "recalls": {
+        "0.1m": 0.03046594982078853,
+        "0.5m": 0.33512544802867383,
+        "1.0m": 0.5053763440860215,
+        "2.0m": 0.6254480286738351,
+        "5.0m": 0.7885304659498208
+      },
+      "vision_recalls": {
+        "0.1m": 0.007168458781362007,
+        "0.5m": 0.15053763440860216,
+        "1.0m": 0.24193548387096775,
+        "2.0m": 0.32437275985663083,
+        "5.0m": 0.6218637992831542
+      },
+      "median": 0.9649635021177367,
+      "vision_median": 4.064379167201442,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.4965277777777778,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.5148148148148148,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "f3loc_mono_s3dprojM": {
+      "dataset": "Replica",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.24193548387096775,
+      "ours": 0.507168458781362,
+      "gain": 0.26523297491039427,
+      "ci": [
+        0.22401433691756273,
+        0.3064516129032258
+      ],
+      "recalls": {
+        "0.1m": 0.03046594982078853,
+        "0.5m": 0.32616487455197135,
+        "1.0m": 0.507168458781362,
+        "2.0m": 0.6164874551971327,
+        "5.0m": 0.7903225806451613
+      },
+      "vision_recalls": {
+        "0.1m": 0.007168458781362007,
+        "0.5m": 0.15053763440860216,
+        "1.0m": 0.24193548387096775,
+        "2.0m": 0.32437275985663083,
+        "5.0m": 0.6218637992831542
+      },
+      "median": 0.9350762144101551,
+      "vision_median": 4.064379167201442,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.5104166666666666,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.5074074074074074,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "f3loc_mono_s3dprojB": {
+      "dataset": "Replica",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.24193548387096775,
+      "ours": 0.5017921146953405,
+      "gain": 0.25985663082437277,
+      "ci": [
+        0.21863799283154123,
+        0.30286738351254483
+      ],
+      "recalls": {
+        "0.1m": 0.03046594982078853,
+        "0.5m": 0.3207885304659498,
+        "1.0m": 0.5017921146953405,
+        "2.0m": 0.6146953405017921,
+        "5.0m": 0.7903225806451613
+      },
+      "vision_recalls": {
+        "0.1m": 0.007168458781362007,
+        "0.5m": 0.15053763440860216,
+        "1.0m": 0.24193548387096775,
+        "2.0m": 0.32437275985663083,
+        "5.0m": 0.6218637992831542
+      },
+      "median": 0.9817321127807305,
+      "vision_median": 4.064379167201442,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.5,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.5037037037037037,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "f3loc_mono_s3dprojT": {
+      "dataset": "Replica",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.24193548387096775,
+      "ours": 0.5161290322580645,
+      "gain": 0.27419354838709675,
+      "ci": [
+        0.23297491039426524,
+        0.3154121863799283
+      ],
+      "recalls": {
+        "0.1m": 0.03046594982078853,
+        "0.5m": 0.33154121863799285,
+        "1.0m": 0.5161290322580645,
+        "2.0m": 0.6236559139784946,
+        "5.0m": 0.7885304659498208
+      },
+      "vision_recalls": {
+        "0.1m": 0.007168458781362007,
+        "0.5m": 0.15053763440860216,
+        "1.0m": 0.24193548387096775,
+        "2.0m": 0.32437275985663083,
+        "5.0m": 0.6218637992831542
+      },
+      "median": 0.8982387693896843,
+      "vision_median": 4.064379167201442,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.5104166666666666,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.5259259259259259,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "unloc_s3d": {
+      "dataset": "Structured3D",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.3010752688172043,
+      "ours": 0.5824372759856631,
+      "gain": 0.28136200716845877,
+      "ci": [
+        0.24014336917562723,
+        0.3225806451612903
+      ],
+      "recalls": {
+        "0.1m": 0.06451612903225806,
+        "0.5m": 0.45878136200716846,
+        "1.0m": 0.5824372759856631,
+        "2.0m": 0.6630824372759857,
+        "5.0m": 0.8512544802867383
+      },
+      "vision_recalls": {
+        "0.1m": 0.026881720430107527,
+        "0.5m": 0.23476702508960573,
+        "1.0m": 0.3010752688172043,
+        "2.0m": 0.3709677419354839,
+        "5.0m": 0.6559139784946236
+      },
+      "median": 0.5616852289840468,
+      "vision_median": 3.5600071959867527,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.6145833333333334,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.5555555555555556,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "unloc_s3dprojR": {
+      "dataset": "Replica",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.3010752688172043,
+      "ours": 0.5806451612903226,
+      "gain": 0.27956989247311825,
+      "ci": [
+        0.24014336917562723,
+        0.3207885304659498
+      ],
+      "recalls": {
+        "0.1m": 0.05913978494623656,
+        "0.5m": 0.45161290322580644,
+        "1.0m": 0.5806451612903226,
+        "2.0m": 0.6577060931899642,
+        "5.0m": 0.8476702508960573
+      },
+      "vision_recalls": {
+        "0.1m": 0.026881720430107527,
+        "0.5m": 0.23476702508960573,
+        "1.0m": 0.3010752688172043,
+        "2.0m": 0.3709677419354839,
+        "5.0m": 0.6559139784946236
+      },
+      "median": 0.572375680631635,
+      "vision_median": 3.5600071959867527,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.5972222222222222,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.562962962962963,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "unloc_s3dprojM": {
+      "dataset": "Replica",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.3010752688172043,
+      "ours": 0.5824372759856631,
+      "gain": 0.28136200716845877,
+      "ci": [
+        0.24193548387096775,
+        0.3225806451612903
+      ],
+      "recalls": {
+        "0.1m": 0.06093189964157706,
+        "0.5m": 0.45161290322580644,
+        "1.0m": 0.5824372759856631,
+        "2.0m": 0.6684587813620072,
+        "5.0m": 0.8476702508960573
+      },
+      "vision_recalls": {
+        "0.1m": 0.026881720430107527,
+        "0.5m": 0.23476702508960573,
+        "1.0m": 0.3010752688172043,
+        "2.0m": 0.3709677419354839,
+        "5.0m": 0.6559139784946236
+      },
+      "median": 0.5701493662547168,
+      "vision_median": 3.5600071959867527,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.6041666666666666,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.5703703703703704,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "unloc_s3dprojB": {
+      "dataset": "Replica",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.3010752688172043,
+      "ours": 0.5752688172043011,
+      "gain": 0.27419354838709675,
+      "ci": [
+        0.23297491039426524,
+        0.3154121863799283
+      ],
+      "recalls": {
+        "0.1m": 0.05913978494623656,
+        "0.5m": 0.44623655913978494,
+        "1.0m": 0.5752688172043011,
+        "2.0m": 0.6577060931899642,
+        "5.0m": 0.8405017921146953
+      },
+      "vision_recalls": {
+        "0.1m": 0.026881720430107527,
+        "0.5m": 0.23476702508960573,
+        "1.0m": 0.3010752688172043,
+        "2.0m": 0.3709677419354839,
+        "5.0m": 0.6559139784946236
+      },
+      "median": 0.5865373274221519,
+      "vision_median": 3.5600071959867527,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.6041666666666666,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.05,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.5592592592592592,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "unloc_s3dprojT": {
+      "dataset": "Replica",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.3010752688172043,
+      "ours": 0.5770609318996416,
+      "gain": 0.27598566308243727,
+      "ci": [
+        0.23476702508960573,
+        0.3172043010752688
+      ],
+      "recalls": {
+        "0.1m": 0.06093189964157706,
+        "0.5m": 0.449820788530466,
+        "1.0m": 0.5770609318996416,
+        "2.0m": 0.6594982078853047,
+        "5.0m": 0.8351254480286738
+      },
+      "vision_recalls": {
+        "0.1m": 0.026881720430107527,
+        "0.5m": 0.23476702508960573,
+        "1.0m": 0.3010752688172043,
+        "2.0m": 0.3709677419354839,
+        "5.0m": 0.6559139784946236
+      },
+      "median": 0.5795702750088343,
+      "vision_median": 3.5600071959867527,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.5833333333333334,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.5740740740740741,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "disco_rrp_s3d": {
+      "dataset": "Structured3D",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.2060931899641577,
+      "ours": 0.46415770609318996,
+      "gain": 0.25806451612903225,
+      "ci": [
+        0.21680107526881723,
+        0.3010752688172043
+      ],
+      "recalls": {
+        "0.1m": 0.023297491039426525,
+        "0.5m": 0.3010752688172043,
+        "1.0m": 0.46415770609318996,
+        "2.0m": 0.5555555555555556,
+        "5.0m": 0.7634408602150538
+      },
+      "vision_recalls": {
+        "0.1m": 0.014336917562724014,
+        "0.5m": 0.11469534050179211,
+        "1.0m": 0.2060931899641577,
+        "2.0m": 0.2939068100358423,
+        "5.0m": 0.6057347670250897
+      },
+      "median": 1.29531157346417,
+      "vision_median": 4.113964449421052,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.4861111111111111,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.44074074074074077,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "disco_rrp_s3dprojR": {
+      "dataset": "Replica",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.2060931899641577,
+      "ours": 0.47491039426523296,
+      "gain": 0.26881720430107525,
+      "ci": [
+        0.22759856630824374,
+        0.3118279569892473
+      ],
+      "recalls": {
+        "0.1m": 0.021505376344086023,
+        "0.5m": 0.30286738351254483,
+        "1.0m": 0.47491039426523296,
+        "2.0m": 0.5519713261648745,
+        "5.0m": 0.7759856630824373
+      },
+      "vision_recalls": {
+        "0.1m": 0.014336917562724014,
+        "0.5m": 0.11469534050179211,
+        "1.0m": 0.2060931899641577,
+        "2.0m": 0.2939068100358423,
+        "5.0m": 0.6057347670250897
+      },
+      "median": 1.3052805211500766,
+      "vision_median": 4.113964449421052,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.4826388888888889,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.4740740740740741,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "disco_rrp_s3dprojM": {
+      "dataset": "Replica",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.2060931899641577,
+      "ours": 0.4982078853046595,
+      "gain": 0.2921146953405018,
+      "ci": [
+        0.25089605734767023,
+        0.3333333333333333
+      ],
+      "recalls": {
+        "0.1m": 0.01971326164874552,
+        "0.5m": 0.3064516129032258,
+        "1.0m": 0.4982078853046595,
+        "2.0m": 0.5860215053763441,
+        "5.0m": 0.7849462365591398
+      },
+      "vision_recalls": {
+        "0.1m": 0.014336917562724014,
+        "0.5m": 0.11469534050179211,
+        "1.0m": 0.2060931899641577,
+        "2.0m": 0.2939068100358423,
+        "5.0m": 0.6057347670250897
+      },
+      "median": 1.0074046581729372,
+      "vision_median": 4.113964449421052,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.4930555555555556,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.2,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.5074074074074074,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "disco_rrp_s3dprojB": {
+      "dataset": "Replica",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.2060931899641577,
+      "ours": 0.478494623655914,
+      "gain": 0.2724014336917563,
+      "ci": [
+        0.23118279569892472,
+        0.31362007168458783
+      ],
+      "recalls": {
+        "0.1m": 0.021505376344086023,
+        "0.5m": 0.2885304659498208,
+        "1.0m": 0.478494623655914,
+        "2.0m": 0.5806451612903226,
+        "5.0m": 0.7956989247311828
+      },
+      "vision_recalls": {
+        "0.1m": 0.014336917562724014,
+        "0.5m": 0.11469534050179211,
+        "1.0m": 0.2060931899641577,
+        "2.0m": 0.2939068100358423,
+        "5.0m": 0.6057347670250897
+      },
+      "median": 1.0889055645593753,
+      "vision_median": 4.113964449421052,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.4756944444444444,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.05,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.4962962962962963,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    },
+    "disco_rrp_s3dprojT": {
+      "dataset": "Replica",
+      "rooms": 30,
+      "n": 558,
+      "vision": 0.2060931899641577,
+      "ours": 0.492831541218638,
+      "gain": 0.2867383512544803,
+      "ci": [
+        0.24551971326164876,
+        0.3279569892473118
+      ],
+      "recalls": {
+        "0.1m": 0.021505376344086023,
+        "0.5m": 0.3010752688172043,
+        "1.0m": 0.492831541218638,
+        "2.0m": 0.5824372759856631,
+        "5.0m": 0.7974910394265233
+      },
+      "vision_recalls": {
+        "0.1m": 0.014336917562724014,
+        "0.5m": 0.11469534050179211,
+        "1.0m": 0.2060931899641577,
+        "2.0m": 0.2939068100358423,
+        "5.0m": 0.6057347670250897
+      },
+      "median": 1.018440817185267,
+      "vision_median": 4.113964449421052,
+      "structures": {
+        "centre/quantile": 2
+      },
+      "folds": [
+        {
+          "held_out": [
+            "scene_03250",
+            "scene_03258",
+            "scene_03267",
+            "scene_03310",
+            "scene_03319",
+            "scene_03363",
+            "scene_03379",
+            "scene_03386",
+            "scene_03399",
+            "scene_03413",
+            "scene_03432",
+            "scene_03440",
+            "scene_03460",
+            "scene_03474",
+            "scene_03479"
+          ],
+          "fit_recall": 0.4895833333333333,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        },
+        {
+          "held_out": [
+            "scene_03253",
+            "scene_03259",
+            "scene_03290",
+            "scene_03316",
+            "scene_03346",
+            "scene_03367",
+            "scene_03383",
+            "scene_03391",
+            "scene_03400",
+            "scene_03422",
+            "scene_03437",
+            "scene_03447",
+            "scene_03461",
+            "scene_03478",
+            "scene_03483"
+          ],
+          "fit_recall": 0.4962962962962963,
+          "policy": {
+            "vis_evidence": "centre",
+            "ac_evidence": "quantile",
+            "rule": "continuous",
+            "weight": 2.0,
+            "tau_v": 0.1,
+            "tau_a": -2.0,
+            "sigmoid_scale": 0.02,
+            "lam": 1.0,
+            "ac_transform": "standard"
+          }
+        }
+      ]
+    }
+  },
+  "provenance": {
+    "utc": "2026-09-15T00:36:49Z",
+    "argv": [
+      "scripts/room_cv_eval.py",
+      "--backbones",
+      "f3loc_mono_s3d",
+      "f3loc_mono_s3dprojR",
+      "f3loc_mono_s3dprojM",
+      "f3loc_mono_s3dprojB",
+      "f3loc_mono_s3dprojT",
+      "unloc_s3d",
+      "unloc_s3dprojR",
+      "unloc_s3dprojM",
+      "unloc_s3dprojB",
+      "unloc_s3dprojT",
+      "disco_rrp_s3d",
+      "disco_rrp_s3dprojR",
+      "disco_rrp_s3dprojM",
+      "disco_rrp_s3dprojB",
+      "disco_rrp_s3dprojT",
+      "--condition",
+      "floorplan_closed",
+      "--fix-structure",
+      "centre",
+      "quantile",
+      "--folds",
+      "2",
+      "--out",
+      "feasible/results/P_matrix_s3d.md",
+      "--json-out",
+      "feasible/results/P_matrix_s3d.json"
+    ],
+    "git": {
+      "commit": "99d22620016b",
+      "dirty": true,
+      "diff_sha1": "d3f7b3acda46",
+      "diff_lines": 996
+    },
+    "env": {
+      "python": "3.8.20",
+      "platform": "Linux-6.8.0-84-generic-x86_64-with-glibc2.17",
+      "numpy": "1.24.3",
+      "torch": "2.4.1",
+      "cv2": "5.0.0",
+      "scipy": "1.10.1"
+    },
+    "inputs": []
+  }
+}

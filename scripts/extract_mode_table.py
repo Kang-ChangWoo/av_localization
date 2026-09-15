@@ -56,6 +56,8 @@ PRIMARY_RANGE = "0-128"
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--dataset-root", default="/root/storage/echoloc_dataset")
+    p.add_argument("--desdf-dir", type=Path, default=None,
+                   help="where <scene>/desdf.npy lives; default <dataset-root>/desdf")
     p.add_argument("--collections", nargs="+", default=["replica_f", "replica_g"])
     p.add_argument("--scenes", nargs="+", default=["office_4", "apartment_2", "frl_apartment_5"])
     p.add_argument("--condition", default="raw_scan_open",
@@ -357,7 +359,7 @@ def main() -> int:
             # frame is window_ms long, the STFT frame is hop/sample_rate long
             fpm = 1.0 / full.ms_per_frame
 
-            desdf = np.load(root / "desdf" / scene / "desdf.npy", allow_pickle=True).item()
+            desdf = np.load((args.desdf_dir or root / "desdf") / scene / "desdf.npy", allow_pickle=True).item()
             desdf["desdf"][desdf["desdf"] > 10] = 10
             occ = cv2.imread(str(root / coll / scene / "map.png"))[:, :, 0]
             pg = PoseGrid.from_desdf(desdf, occ.shape)

@@ -52,6 +52,9 @@ RING_ANGLES_RAD = np.array(
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--dataset-root", default="/root/storage/echoloc_dataset")
+    p.add_argument("--desdf-dir", type=Path, default=None,
+                   help="where <scene>/desdf.npy lives; default <dataset-root>/desdf. Validation "
+                        "rooms use a cache built by scripts/build_desdf.py")
     p.add_argument("--collection", default="replica_f")
     p.add_argument("--scene", required=True)
     p.add_argument("--out", type=Path, default=None,
@@ -157,7 +160,7 @@ def main() -> int:
     scene = args.scene
     glb = str(root / "floorplan_proxy" / scene / "floorplan.glb")
 
-    desdf = np.load(root / "desdf" / scene / "desdf.npy", allow_pickle=True).item()
+    desdf = np.load((args.desdf_dir or root / "desdf") / scene / "desdf.npy", allow_pickle=True).item()
     occ = cv2.imread(str(root / args.collection / scene / "map.png"))[:, :, 0]
     grid = PoseGrid.from_desdf(desdf, occ.shape)
     mask = valid_pose_mask(occ, grid, clearance_m=args.clearance_m)
