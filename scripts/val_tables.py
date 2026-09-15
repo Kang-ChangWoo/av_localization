@@ -128,18 +128,19 @@ def main() -> int:
              r"together, deployed everywhere. \emph{searched}: source, summaries and rule also "
              r"chosen on validation, the most flexible protocol and not the one we report.}")
     Q.append(r"\label{tab:protocol}")
-    Q.append(r"\begin{tabular}{llcccc}\toprule")
-    Q.append(r"Benchmark & Backbone & none & own $W$ & pooled $W$ & searched \\\midrule")
+    Q.append(r"\begin{tabular}{llccccc}\toprule")
+    Q.append(r"Benchmark & Backbone & none & own $W$ & pooled $W$ & three $W$ & searched \\\midrule")
     for key, name, _ in DS:
         own = load(RES / f"VAL_{key}_fixed_indomain.json")
         pooled = load(RES / f"VAL_{key}_fixed_B.json")
+        three = load(RES / f"VAL_{key}_fixed_T.json")
         searched = load(RES / f"VAL_{key}.json")
         for i, (bb, label) in enumerate(BB):
             def g(j, variant):
                 r = (j or {}).get("results", {}).get(bb, {}).get(variant)
                 return f"{100*r['gain']:+.1f}" if r and "gain" in r else TBD
             cells = [g(own, "no projection"), g(own, "selected"), g(pooled, "selected"),
-                     g(searched, "selected")]
+                     g(three, "selected"), g(searched, "selected")]
             first = rf"\multirow{{{len(BB)}}}{{*}}{{{name}}} " if i == 0 else ""
             Q.append(rf"{first}& {label} & " + " & ".join(cells) + r" \\")
         Q.append(r"\midrule")

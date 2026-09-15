@@ -49,7 +49,7 @@ def parse_args() -> argparse.Namespace:
                         "with a few hundred validation queries a half-point difference is noise, "
                         "and the smaller rule is preferred at a tie")
     p.add_argument("--out", type=Path, default=None)
-    p.add_argument("--source", choices=["val", "indomain", "B"], default="val",
+    p.add_argument("--source", choices=["val", "indomain", "B", "T"], default="val",
                    help="how the projection source is chosen. 'val' searches it with the rest; "
                         "'indomain' is the source trained on the same benchmark (R on Replica, M "
                         "on Matterport3D; Structured3D cannot train one and uses B); 'B' is the "
@@ -110,7 +110,7 @@ def main() -> int:
     INDOMAIN = {"replica": "R", "mp3d": "M", "s3d": "B"}
     allowed_sources = {"val": (None,) + tuple(SOURCES),
                        "indomain": (INDOMAIN[args.dataset], None),
-                       "B": ("B", None)}[args.source]
+                       "B": ("B", None), "T": ("T", None)}[args.source]
 
     # The selection grid is ~13,500 configurations per source, so the rule is
     # evaluated on padded (queries x hypotheses) arrays rather than query by

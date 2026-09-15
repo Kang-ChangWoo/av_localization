@@ -2,17 +2,17 @@
 \begin{table}[t]\centering\small
 \caption{Gain at $1$\,m on the test rooms under four ways of fixing the method, each with its scalars chosen on validation rooms. \emph{none}: no projection. \emph{own}: projection trained on the benchmark's training rooms (pooled for Structured3D). \emph{pooled}: one projection trained on Replica and Matterport3D together, deployed everywhere. \emph{searched}: source, summaries and rule also chosen on validation, the most flexible protocol and not the one we report.}
 \label{tab:protocol}
-\begin{tabular}{llcccc}\toprule
-Benchmark & Backbone & none & own $W$ & pooled $W$ & searched \\\midrule
-\multirow{3}{*}{Replica} & F3Loc mono & +6.2 & +10.5 & +11.0 & +8.8 \\
-& UnLoc & +5.2 & +9.3 & +7.5 & +7.5 \\
-& DisCo-FLoc RRP & +2.8 & +11.8 & +8.2 & +9.5 \\
+\begin{tabular}{llccccc}\toprule
+Benchmark & Backbone & none & own $W$ & pooled $W$ & three $W$ & searched \\\midrule
+\multirow{3}{*}{Replica} & F3Loc mono & +6.2 & +10.5 & +11.0 & +9.0 & +8.8 \\
+& UnLoc & +5.2 & +9.3 & +7.5 & +8.7 & +7.5 \\
+& DisCo-FLoc RRP & +2.8 & +11.8 & +8.2 & +6.8 & +9.5 \\
 \midrule
-\multirow{3}{*}{Matterport3D} & F3Loc mono & +2.0 & +6.8 & +4.7 & +4.4 \\
-& UnLoc & +4.3 & +4.7 & +6.8 & +4.6 \\
-& DisCo-FLoc RRP & +4.2 & +10.0 & +8.0 & +8.5 \\
+\multirow{3}{*}{Matterport3D} & F3Loc mono & +2.0 & +6.8 & +4.7 & +5.1 & +4.4 \\
+& UnLoc & +4.3 & +4.7 & +6.8 & +4.8 & +4.6 \\
+& DisCo-FLoc RRP & +4.2 & +10.0 & +8.0 & +7.3 & +8.5 \\
 \midrule
-\multirow{3}{*}{Structured3D} & F3Loc mono & +22.2 & +24.4 & +24.4 & +27.2 \\
-& UnLoc & +28.3 & +27.8 & +27.8 & +31.4 \\
-& DisCo-FLoc RRP & +25.8 & +27.8 & +27.8 & +31.2 \\
+\multirow{3}{*}{Structured3D} & F3Loc mono & +22.2 & +24.4 & +24.4 & +27.4 & +27.2 \\
+& UnLoc & +28.3 & +27.8 & +27.8 & +27.6 & +31.4 \\
+& DisCo-FLoc RRP & +25.8 & +27.8 & +27.8 & +27.4 & +31.2 \\
 \bottomrule\end{tabular}\end{table}
