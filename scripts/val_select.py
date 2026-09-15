@@ -54,6 +54,14 @@ def parse_args() -> argparse.Namespace:
                         "'indomain' is the source trained on the same benchmark (R on Replica, M "
                         "on Matterport3D; Structured3D cannot train one and uses B); 'B' is the "
                         "pooled projection everywhere. Both fixed choices are made in advance")
+    p.add_argument("--variants", action="store_true",
+                   help="with --fixed: also select and test the three ways of answering from "
+                        "outside the visual shortlist. A: the acoustic field's own peaks injected "
+                        "as extra hypotheses (m chosen on validation); B: the whole shortlist "
+                        "rejected in favour of the acoustic top-1 when the injected candidate's "
+                        "acoustic evidence exceeds the best visual hypothesis' by a margin; C: a "
+                        "cell-wise product of the visual posterior and a softmax of the acoustic "
+                        "score, its two temperatures chosen on validation")
     p.add_argument("--fixed", action="store_true",
                    help="the paper's protocol: one method everywhere. The projection source (B), "
                         "the hypothesis summaries (centre/quantile) and the rule (three scalars) "
@@ -77,7 +85,7 @@ VAL_ROOMS = {"replica": {"apartment_1", "frl_apartment_4", "office_3"},
                      "scene_03215", "scene_03231", "scene_03236", "scene_03223", "scene_03208"}}
 
 
-def load(cond: str, tag: str, expect_rooms=None):
+def load(cond: str, tag: str, expect_rooms=None, inject: int = 0):
     qp = AN / f"queries_{cond}_{tag}.csv"
     if not qp.exists():
         return None
@@ -87,7 +95,7 @@ def load(cond: str, tag: str, expect_rooms=None):
         if not rooms <= expect_rooms:
             raise RuntimeError(f"{qp.name} holds rooms {sorted(rooms)[:3]}..., not the expected "
                                f"validation rooms; a table was written under the wrong name")
-    M = group(read(AN / f"modes_{cond}_{tag}.csv"))
+    M = group(read(AN / f"modes_{cond}_{tag}.csv"), inject=inject)
     return Q, M
 
 
@@ -246,6 +254,93 @@ def main() -> int:
                                    vision_recalls={f"{t}m": float((v < t).mean()) for t in TH},
                                    median=float(np.median(e)), vision_median=float(np.median(v)))
         print(f"[{bb}] " + "; ".join(f"{k}: val {100*v[-1]:.1f} src {v[1]} {v[2]} {v[3]}" for k, v in best.items()))
+
+        if args.variants and "selected" in best:
+            _, src0, st0, rule0, sc0, cfg0, r0 = best["selected"]
+            vtag, ttag = val_tag(bb, src0, args.dataset), test_tag(args.dataset, bb, src0)
+            T0 = load(cond, ttag)
+            has_inj = all("source" in read(AN / f"modes_{cond}_{t}.csv") for t in (vtag, ttag)
+                          if (AN / f"modes_{cond}_{t}.csv").exists())
+            if T0 is None or not has_inj:
+                print(f"[{bb}] variants skipped: tables without injected candidates"); continue
+            v_test = T0[0]["e_vis"]
+
+            def report(name, setting, rval, e):
+                d = (e < 1).astype(float) - (v_test < 1).astype(float)
+                m = d[rng.integers(0, d.size, size=(args.boot, d.size))].mean(axis=1)
+                lo, hi = np.percentile(m, [2.5, 97.5])
+                W(f"| {LABEL[bb]} | {name} | {src0} | {st0[0]}/{st0[1]} | {rule0} | {setting} | "
+                  f"{100*rval:.1f} | {100*(v_test<1).mean():.1f} | {100*(e<1).mean():.1f} | {100*d.mean():+.1f} | "
+                  f"[{100*lo:+.1f}, {100*hi:+.1f}] |")
+                js[bb][name] = dict(val=rval, source=src0, structure=st0, rule=rule0, scalars=sc0,
+                                    setting=setting, test_tag=ttag, n=int(e.size),
+                                    vision=float((v_test < 1).mean()), ours=float((e < 1).mean()),
+                                    gain=float(d.mean()), ci=[float(lo), float(hi)],
+                                    recalls={f"{t}m": float((e < t).mean()) for t in TH},
+                                    median=float(np.median(e)))
+
+            ve0, ae0 = st0
+            grid0 = rules["simple"]
+            # ---- A: injected acoustic hypotheses, m chosen on validation ------
+            bestA = (r0 - 0.0, 0, sc0)          # m = 0 is the paper's rule
+            for m_inj in (1, 2, 3):
+                QMv = load(cond, vtag, VAL_ROOMS[args.dataset], inject=m_inj)
+                Pm = prepare(QMv, ve0, ae0)
+                rb, scb = -1.0, None
+                for w, s_, tv, ta, tr in grid0:
+                    r = float((score_prep(Pm, w, s_, tv, ta, tr) < 1).mean())
+                    if r > rb:
+                        rb, scb = r, (w, s_, tv, ta)
+                if rb - args.simplicity_margin > bestA[0]:
+                    bestA = (rb - args.simplicity_margin, m_inj, scb)
+                print(f"[{bb}] A inject m={m_inj}: val {100*rb:.1f}", flush=True)
+            _, mA, scA = bestA
+            if mA > 0:
+                Tm = load(cond, ttag, inject=mA)
+                e = score_prep(prepare(Tm, ve0, ae0), scA[0], scA[1], scA[2], scA[3], "standard")
+                report("A: injected acoustic hypotheses", f"m={mA} w={scA[0]:g} s={scA[1]:g} τv={scA[2]:g}",
+                       bestA[0] + args.simplicity_margin, e)
+            else:
+                report("A: injected acoustic hypotheses", "m=0 (validation kept the plain shortlist)", r0,
+                       score(T0, cfg0))
+
+            # ---- B: reject the shortlist on the acoustic gap ------------------
+            def gap_and_inj(QM1):
+                vc_, ac_ = evidence_columns(cfg0)
+                V, A, D = pack(QM1, vc_, ac_)
+                K = V.shape[1] - 1                    # the injected row sorts last
+                a_vis, a_inj = A[:, :K], A[:, K]
+                ok = np.isfinite(a_vis)
+                mu = np.nanmax(np.where(ok, a_vis, np.nan), axis=1)
+                sd = np.nanstd(np.where(ok, a_vis, np.nan), axis=1); sd = np.where(sd > 1e-12, sd, 1.0)
+                return (a_inj - mu) / sd, D[:, K]
+            QMv1 = load(cond, vtag, VAL_ROOMS[args.dataset], inject=1)
+            gv, einj_v = gap_and_inj(QMv1)
+            e0v = score_prep(prepare(load(cond, vtag, VAL_ROOMS[args.dataset]), ve0, ae0),
+                             sc0[0], sc0[1], sc0[2], sc0[3], "standard")
+            bestB = (r0, np.inf)
+            for tg in (0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0):
+                r = float(np.where(gv > tg, einj_v < 1, e0v < 1).mean())
+                if r - args.simplicity_margin > bestB[0]:
+                    bestB = (r - args.simplicity_margin, tg)
+                print(f"[{bb}] B reject tau_g={tg}: val {100*r:.1f} (used {100*float((gv>tg).mean()):.0f}%)", flush=True)
+            rB, tgB = bestB
+            gt_, einj_t = gap_and_inj(load(cond, ttag, inject=1))
+            e0t = score(T0, cfg0)
+            eB = np.where(gt_ > tgB, einj_t, e0t)
+            report("B: shortlist rejection", f"τg={tgB:g}, used on {100*float((gt_>tgB).mean()):.0f}% of test",
+                   rB + (args.simplicity_margin if np.isfinite(tgB) else 0.0), eB)
+
+            # ---- C: cell-wise product, temperatures chosen on validation ------
+            Qv0 = load(cond, vtag, VAL_ROOMS[args.dataset])[0]
+            cols_c = [c for c in Qv0 if c.startswith("e_cellprod_")]
+            bestC = (-1.0, None)
+            for c in cols_c:
+                r = float((Qv0[c] < 1).mean())
+                if r > bestC[0]:
+                    bestC = (r, c)
+            if bestC[1] is not None:
+                report("C: cell-wise product", bestC[1].replace("e_cellprod_", ""), bestC[0], T0[0][bestC[1]])
 
     suffix = ("_fixed" if args.fixed else "") + ("" if args.source == "val" else f"_{args.source}")
     outp = args.out or REPO_ROOT / "feasible" / "results" / f"VAL_{args.dataset}{suffix}.md"

@@ -450,6 +450,31 @@ def main() -> int:
                 ac_agg = aggregate(ac, modes, discs, mcfg)
                 ac_rank_agg = aggregate(ra, modes, discs, mcfg)
 
+                # ---- candidates from outside the visual shortlist ----------
+                # The rule can only answer with a hypothesis it is given, so
+                # once the visual shortlist misses, sound cannot help however
+                # right it is. Three ways past that are recorded here and
+                # chosen between downstream, never here:
+                #  A. the acoustic field's own separated peaks as extra
+                #     hypotheses (mode index 100+, `source` = acoustic), with
+                #     the same summaries as the visual ones;
+                #  B. needs nothing more: the gap between the best injected
+                #     and the best visual acoustic evidence is computable
+                #     from those rows;
+                #  C. a cell-wise product of the visual posterior and a
+                #     softmax of the acoustic score, on a small grid of its
+                #     two temperatures, as an error per query.
+                from dataclasses import replace as _replace
+                ac_modes = extract_modes(ac, rows, cols, res, _replace(mcfg, n_modes=3))
+                ac_discs = local_discs(ac_modes, rows, cols, res, mcfg.local_radius_m)
+                inj_vis_agg = aggregate(np.log(np.clip(vis, 1e-300, None)), ac_modes, ac_discs, mcfg)
+                inj_ac_agg = aggregate(ac, ac_modes, ac_discs, mcfg)
+                inj_ac_rank_agg = aggregate(ra, ac_modes, ac_discs, mcfg)
+                zac = (ac - ac.mean()) / max(float(ac.std()), 1e-9)
+                logv = np.log(np.clip(vis, 1e-300, None))
+                cellprod = {f"e_cellprod_b{b:g}_T{T:g}": float(dist[int((b * logv + zac / T).argmax())])
+                            for b in (0.25, 0.5, 1.0, 2.0) for T in (0.5, 1.0, 2.0, 5.0)}
+
                 # ---- existing decision rules, for comparison -------------
                 lv, la = np.log(rv), np.log(ra)
                 fused_cell = int((lv + args.legacy_weight * la).argmax())
@@ -519,11 +544,12 @@ def main() -> int:
                     e_ac=float(dist[int(ac.argmax())]),
                     e_rerank=float(dist[rerank_cell]), orn_rerank=orn_err_deg(yaw[rerank_cell], gth),
                     e_fused=float(dist[fused_cell]), orn_fused=orn_err_deg(yaw[fused_cell], gth),
+                    **cellprod,
                 ))
 
                 for j, mi in enumerate(modes):
                     m_rows.append(dict(
-                        query_id=qid, scene=scene, collection=coll, mode=j,
+                        query_id=qid, scene=scene, collection=coll, mode=j, source="vision",
                         x=int(cols[mi]), y=int(rows[mi]),
                         vis_raw=float(vis[mi]), vis_rank=float(rv[mi]),
                         ac_raw=float(ac[mi]), ac_rank=float(ra[mi]),
@@ -542,6 +568,27 @@ def main() -> int:
                                                            rows[mi] - rows[modes[0]]) * res),
                         yaw_err_deg=orn_err_deg(yaw[mi], gth),
                         disc_cells=int(discs[j].size)))
+                for j, mi in enumerate(ac_modes):
+                    m_rows.append(dict(
+                        query_id=qid, scene=scene, collection=coll, mode=100 + j, source="acoustic",
+                        x=int(cols[mi]), y=int(rows[mi]),
+                        vis_raw=float(vis[mi]), vis_rank=float(rv[mi]),
+                        ac_raw=float(ac[mi]), ac_rank=float(ra[mi]),
+                        vis_log_centre=float(inj_vis_agg["centre"][j]),
+                        vis_log_max=float(inj_vis_agg["max"][j]),
+                        vis_log_lse=float(inj_vis_agg["lse"][j]),
+                        ac_centre=float(inj_ac_agg["centre"][j]),
+                        ac_max=float(inj_ac_agg["max"][j]),
+                        ac_quantile=float(inj_ac_agg["quantile"][j]),
+                        ac_lse=float(inj_ac_agg["lse"][j]),
+                        ac_rank_max=float(inj_ac_rank_agg["max"][j]),
+                        ac_rank_quantile=float(inj_ac_rank_agg["quantile"][j]),
+                        ac_rel=np.nan,
+                        dist_gt_m=float(dist[mi]), within_1m=bool(dist[mi] < 1.0),
+                        dist_to_best_mode_m=float(np.hypot(cols[mi] - cols[modes[0]],
+                                                           rows[mi] - rows[modes[0]]) * res),
+                        yaw_err_deg=orn_err_deg(yaw[mi], gth),
+                        disc_cells=int(ac_discs[j].size)))
 
                 for name, _, _ in TIME_RANGES:
                     s = ac_by_range[name]

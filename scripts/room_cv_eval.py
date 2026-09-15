@@ -101,11 +101,17 @@ def read(p: Path) -> dict[str, np.ndarray]:
     return out
 
 
-def group(M: dict[str, np.ndarray]) -> dict[str, dict[str, np.ndarray]]:
+def group(M: dict[str, np.ndarray], inject: int = 0) -> dict[str, dict[str, np.ndarray]]:
+    """Per-query hypothesis arrays. Rows with mode index 100+ are acoustic
+    candidates injected by the extractor; ``inject`` says how many of them to
+    keep, and the default keeps none, so every existing evaluation is unchanged."""
     cols = [c for c in M if c not in ("query_id", "scene", "collection")
             and M[c].dtype not in (object, bool)]
     g: dict[str, dict[str, list]] = {}
     for i, q in enumerate(M["query_id"]):
+        mode = int(M["mode"][i])
+        if mode >= 100 and mode - 100 >= inject:
+            continue
         d = g.setdefault(str(q), {c: [] for c in cols})
         for c in cols:
             d[c].append(M[c][i])

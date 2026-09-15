@@ -132,6 +132,8 @@ def group(M: dict[str, np.ndarray]) -> dict[str, dict[str, np.ndarray]]:
     g: dict[str, dict[str, list]] = {}
     cols = [c for c in M if c not in ("query_id", "scene", "collection")]
     for i, q in enumerate(M["query_id"]):
+        if int(M["mode"][i]) >= 100:      # injected acoustic candidates, not part of the shortlist
+            continue
         d = g.setdefault(str(q), {c: [] for c in cols})
         for c in cols:
             d[c].append(M[c][i])
