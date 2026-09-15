@@ -7,9 +7,9 @@ Every discrete choice and every scalar is chosen on the validation rooms by reca
 | F3Loc mono | selected | R | centre/quantile | simple | w=2 s=0.05 τv=0.02 | 48.8 | 38.3 | 48.8 | +10.5 | [+7.0, +14.0] |
 | F3Loc mono | three-scalar rule | R | centre/quantile | simple | w=2 s=0.05 τv=0.02 | 48.8 | 38.3 | 48.8 | +10.5 | [+7.0, +14.0] |
 | F3Loc mono | no projection | none | centre/quantile | simple | w=0.5 s=0.05 τv=0.05 | 43.5 | 38.3 | 44.5 | +6.2 | [+3.5, +8.8] |
-| UnLoc | selected | R | centre/quantile | simple | w=2 s=0.02 τv=0.02 | 49.4 | 50.7 | 59.7 | +9.0 | [+6.0, +12.0] |
-| UnLoc | three-scalar rule | R | centre/quantile | simple | w=2 s=0.02 τv=0.02 | 49.4 | 50.7 | 59.7 | +9.0 | [+6.0, +12.2] |
-| UnLoc | no projection | none | centre/quantile | simple | w=1 s=0.05 τv=0.02 | 47.7 | 50.7 | 57.0 | +6.3 | [+3.7, +9.2] |
+| UnLoc | selected | R | centre/quantile | simple | w=1 s=0.1 τv=0.1 | 55.7 | 50.7 | 60.0 | +9.3 | [+6.3, +12.5] |
+| UnLoc | three-scalar rule | R | centre/quantile | simple | w=1 s=0.1 τv=0.1 | 55.7 | 50.7 | 60.0 | +9.3 | [+6.3, +12.5] |
+| UnLoc | no projection | none | centre/quantile | simple | w=0.5 s=0.02 τv=0.05 | 52.5 | 50.7 | 55.8 | +5.2 | [+2.7, +7.7] |
 | DisCo-FLoc RRP | selected | R | centre/quantile | simple | w=2 s=0.02 τv=0.02 | 47.5 | 40.5 | 52.3 | +11.8 | [+8.3, +15.5] |
 | DisCo-FLoc RRP | three-scalar rule | R | centre/quantile | simple | w=2 s=0.02 τv=0.02 | 47.5 | 40.5 | 52.3 | +11.8 | [+8.2, +15.5] |
 | DisCo-FLoc RRP | no projection | none | centre/quantile | simple | w=0.5 s=0.05 τv=0.05 | 42.2 | 40.5 | 43.3 | +2.8 | [-0.2, +5.8] |

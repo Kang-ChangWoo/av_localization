@@ -1,0 +1,152 @@
+% The acoustic branch, step by step, exactly as the code runs it.
+% Sources of every number: track1_core/likelihood/grid_score.py (feature, score),
+% feasible/run_invariant_projection.py (projection), scripts/soundspaces_render.py
+% (candidate grid), track1_core/modes.py and track1_core/likelihood/mode_fusion.py
+% (hypotheses, evidence, gate), scripts/val_select.py (selection protocol).
+% Requires amsmath, booktabs, algorithm, algorithmic.
+
+\section{The acoustic branch, in full}
+\label{sec:audio-branch}
+
+The branch takes one query recording $g$ and the visual backbone's posterior,
+and returns one of the backbone's own hypotheses. Nothing in it is trained
+except a single linear map $W$, and nothing in it is tuned except three
+scalars. The stages below are in execution order.
+
+\paragraph{0. Offline: the candidate grid.}
+The floorplan is extruded to a watertight mesh and every free cell of the
+$0.1$\,m pose grid whose centre clears the nearest wall by $0.25$\,m receives a
+room impulse response from SoundSpaces~2.0: a co-located omnidirectional source
+and a ring of six omnidirectional receivers of radius $5$\,cm at the dataset's
+receiver height, $48$\,kHz, $20{,}000$ indirect rays, reflection depth $50$,
+diffraction to order $10$. The ring is rendered at world yaw $0$ only; the
+channels are interchangeable at this aperture, so the query's ring rotation is
+never compensated. The grid is rendered once per building and only its feature
+(stage~1) is kept at inference.
+
+\paragraph{1. Feature $\phi$.}
+Applied identically to the query and to every candidate.
+\begin{enumerate}
+  \item \textbf{Align.} Find the direct arrival as the sample of largest
+        absolute amplitude over the six channels. Skip a $2$\,ms guard after it
+        ($96$ samples) and keep the next $128$\,ms ($6144$ samples), zero-padded
+        if the response is shorter. Everything before the guard, including the
+        direct sound, is discarded.
+  \item \textbf{Band energy.} Per channel, a Hann-windowed STFT with $n_\mathrm{fft}=256$
+        and hop $64$ ($93$ frames of $5.33$\,ms), summed into three bands,
+        $0$--$0.5$, $0.5$--$1.5$ and $1.5$--$4$\,kHz. This gives an
+        $18 \times 93$ energy matrix $E$ (six channels $\times$ three bands, by frame).
+  \item \textbf{Scale-free shape.} Each of the $18$ rows is divided by its own sum,
+        so a row is a temporal decay profile that no gain can change; the $18$
+        row sums, divided by their total, are appended as a $18 \times 4$ block
+        (the split repeated four times so that it carries comparable weight).
+        The result is $\phi \in \mathbb{R}^{18 \times 97}$, flattened to
+        $d = 1746$.
+\end{enumerate}
+
+\paragraph{2. Projection $W$ (the only learned part).}
+A linear map $W \in \mathbb{R}^{1746 \times 128}$, no bias, no nonlinearity. Both
+the query feature and every candidate feature are multiplied by $W$ before
+scoring; without $W$ the score of stage~3 is taken on $\phi$ directly.
+
+\emph{Training.} Every pose of every training room has two recordings, one on
+the furnished scan ($f$) and one on the wall-only extrusion ($c$). Within one
+room with $N$ sampled poses, the loss is an InfoNCE over the $N \times N$
+matrix of negative $L_1$ distances between projected furnished and projected
+wall-only recordings,
+\begin{equation}
+  \mathcal{L} = -\frac{1}{N}\sum_{i=1}^{N}
+  \log \frac{\exp(-\|W^{\!\top}\! f_i - W^{\!\top}\! c_i\|_1 / \tau)}
+            {\sum_{j=1}^{N} \exp(-\|W^{\!\top}\! f_i - W^{\!\top}\! c_j\|_1 / \tau)},
+  \qquad \tau = 0.05,
+\end{equation}
+so a furnished recording must land nearer its own wall-only twin than the
+wall-only recording of any other pose in the room. Negatives are always from
+the same room, which makes the loss a ranking objective rather than a
+regression onto the mean effect of furniture. $W$ is initialised at
+$0.1\,I + 0.01\,\mathcal{N}(0,1)$, trained with Adam at $10^{-3}$ for $40$
+epochs, one room per step, and the epoch is chosen by in-room retrieval recall
+at $1$\,m on the validation rooms, which needs no candidate grid. Sources: R,
+the $11$ Replica training rooms at $400$ poses each; M, the $131$ Matterport3D
+training rooms at up to $100$ poses each; B, both pooled. The paper deploys
+each benchmark's own source; Structured3D has no furnished recordings and
+deploys B.
+
+\paragraph{3. Score.}
+For every candidate cell $c$ with a rendered response,
+\begin{equation}
+  a(c) = -\big\| W^{\!\top}\phi(g_c) - W^{\!\top}\phi(g) \big\|_1 ,
+  \label{eq:ab-score}
+\end{equation}
+higher is better. Cells without a candidate are set below the minimum so the
+array stays aligned with the grid. This is the whole acoustic observation
+model: no likelihood calibration, no temperature.
+
+\paragraph{4. Visual hypotheses.}
+From the backbone's predicted depth a fan of $V$ rays at $10^\circ$ spacing is
+matched against the DESDF ($V = 11$ for the $106.26^\circ$ cameras of Replica
+and Matterport3D, $7$ for Structured3D's $80^\circ$, so that the fan fits the
+image), giving a posterior $p_v(c, o)$ over cells and $36$ headings. Let
+$\pi(c) = \max_o p_v(c,o)$ and $\omega(c) = \arg\max_o p_v(c,o)$. Hypotheses
+are extracted by non-maximum suppression on $\pi$: take the strongest cell, suppress
+every cell within $1.5$\,m, repeat, up to $K = 10$. Each hypothesis $h_k$ owns
+the disc $\mathcal{D}_k$ of cells within $0.5$\,m of it; the discs never overlap.
+
+\paragraph{5. Evidence per hypothesis.}
+\begin{align}
+  v_k &= \log \pi(h_k) & &\text{(the log-posterior at the centre)} \\
+  \alpha_k &= Q_{0.9}\{\, a(c) : c \in \mathcal{D}_k,\ c \text{ rendered} \,\} & &\text{(upper quantile over the disc)}
+\end{align}
+Both are standardised across the $K$ hypotheses of the query,
+$\tilde v_k = (v_k - \mu_v)/\sigma_v$ and $\tilde\alpha_k = (\alpha_k - \mu_\alpha)/\sigma_\alpha$,
+with $\sigma$ replaced by $1$ if it is below $10^{-12}$. Standardising is what
+lets one weight serve every query: \eqref{eq:ab-score} has a query-dependent
+offset and scale, and $\tilde\alpha$ removes both.
+
+\paragraph{6. Gate and decision.}
+Visual ambiguity is the log-odds between the two strongest hypotheses,
+$m_v = v_{(1)} - v_{(2)}$. Then
+\begin{equation}
+  \gamma = w \cdot \sigma\!\Big(\frac{\tau_v - m_v}{s}\Big), \qquad
+  k^\star = \arg\max_k \big(\tilde v_k + \gamma\, \tilde\alpha_k\big),
+  \label{eq:ab-select}
+\end{equation}
+and the answer is the cell $h_{k^\star}$ with heading $\omega(h_{k^\star})$.
+Heading is never touched by the acoustic term. With $K < 2$ the visual
+argmax is returned unchanged; with $\gamma = 0$ the rule is the visual backbone
+exactly.
+
+\paragraph{7. What is fixed and what is chosen.}
+Fixed for every benchmark and backbone: everything above, including $K$, the
+radii, the quantile, the feature and its window, and the form of
+\eqref{eq:ab-select}. Chosen per backbone on the benchmark's validation rooms,
+by recall at $1$\,m over the pooled forward and general collections: the three
+scalars, from $w \in \{0.5, 1, 2\}$, $s \in \{0.02, 0.05, 0.1\}$,
+$\tau_v \in \{0.005, 0.02, 0.05, 0.1, 0.2\}$. The validation rooms are
+$3$ on Replica, $6$ on Matterport3D and $10$ on Structured3D, disjoint from
+the training rooms of $W$ and of the backbones and from the test rooms; their
+candidate grids are rendered with stage~0 and their DESDFs rebuilt with the
+dataset's convention. The test rooms are evaluated once with the chosen
+scalars and nothing is refit on them.
+
+\paragraph{8. Ablations that were removed from the rule.}
+An earlier version had a second gate on the acoustic margin, $\sigma((m_a -
+\tau_a)/s)$ with $m_a$ the gap between the two best acoustic evidences, and a
+transform $\varrho_k = \tilde\alpha_k - \log\sum_{j \ne k}\exp\tilde\alpha_j$ in
+place of $\tilde\alpha_k$. Under the protocol of stage~7 neither raised
+validation recall by more than one point on any backbone of any benchmark, and
+the rule was reduced to the three scalars above.
+
+\begin{algorithm}[t]
+\caption{Acoustic verification of visual hypotheses}
+\begin{algorithmic}[1]
+\Require recording $g$, backbone posterior $p_v(c,o)$, candidate features $\{W^{\!\top}\phi(g_c)\}$, scalars $(w, s, \tau_v)$
+\State $\phi(g) \gets$ align, band energies, scale-free shape \Comment{stage 1}
+\State $a(c) \gets -\|W^{\!\top}\phi(g_c) - W^{\!\top}\phi(g)\|_1$ for every rendered $c$ \Comment{stage 3}
+\State $\{h_k\}_{k \le 10} \gets$ NMS on $\max_o p_v$ at $1.5$\,m \Comment{stage 4}
+\State $v_k \gets \log \pi(h_k)$;\; $\alpha_k \gets Q_{0.9}\{a(c): c \in \mathcal{D}_k\}$ \Comment{stage 5}
+\State standardise $v$ and $\alpha$ over $k$
+\State $\gamma \gets w\,\sigma((\tau_v - (v_{(1)} - v_{(2)}))/s)$ \Comment{stage 6}
+\State \Return $h_{k^\star}$, $\omega(h_{k^\star})$ with $k^\star = \arg\max_k \tilde v_k + \gamma \tilde\alpha_k$
+\end{algorithmic}
+\end{algorithm}

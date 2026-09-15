@@ -70,11 +70,23 @@ def test_tag(dataset: str, backbone: str, source) -> str:
     return IDENT[(dataset, backbone)] if source is None else tag_of(dataset, backbone, source)
 
 
-def load(cond: str, tag: str):
+VAL_ROOMS = {"replica": {"apartment_1", "frl_apartment_4", "office_3"},
+             "mp3d": {"EU6Fwq7SyZv_f2", "1LXtFkjw3qL_f2", "1LXtFkjw3qL_f0", "1pXnuDYAj8r_f1",
+                      "r47D5H71a5s_f0", "ZMojNkEp431_f0"},
+             "s3d": {"scene_03242", "scene_03209", "scene_03203", "scene_03220", "scene_03248",
+                     "scene_03215", "scene_03231", "scene_03236", "scene_03223", "scene_03208"}}
+
+
+def load(cond: str, tag: str, expect_rooms=None):
     qp = AN / f"queries_{cond}_{tag}.csv"
     if not qp.exists():
         return None
     Q = read(qp)
+    if expect_rooms is not None:
+        rooms = {str(x) for x in Q["scene"]}
+        if not rooms <= expect_rooms:
+            raise RuntimeError(f"{qp.name} holds rooms {sorted(rooms)[:3]}..., not the expected "
+                               f"validation rooms; a table was written under the wrong name")
     M = group(read(AN / f"modes_{cond}_{tag}.csv"))
     return Q, M
 
@@ -184,7 +196,7 @@ def main() -> int:
     W("|---|---|---|---|---|---|---|---|---|---|---|")
 
     for bb in args.backbones:
-        val = {s: load(cond, val_tag(bb, s, args.dataset)) for s in allowed_sources}
+        val = {s: load(cond, val_tag(bb, s, args.dataset), VAL_ROOMS[args.dataset]) for s in allowed_sources}
         val = {s: v for s, v in val.items() if v is not None}
         if not val:
             print(f"[{bb}] no validation tables yet"); continue
