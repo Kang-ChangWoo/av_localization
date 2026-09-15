@@ -11,7 +11,9 @@
       "gain": 0.09333333333333334,
       "lo": 0.06333333333333334,
       "hi": 0.125,
-      "audio_used": 0.9116666666666666
+      "audio_used": 0.9116666666666666,
+      "ours_fallback": 0.6,
+      "fallback_used": 0.0
     },
     {
       "family": "blur",
@@ -24,7 +26,9 @@
       "gain": 0.08833333333333333,
       "lo": 0.056666666666666664,
       "hi": 0.12166666666666667,
-      "audio_used": 0.9266666666666666
+      "audio_used": 0.9266666666666666,
+      "ours_fallback": 0.5916666666666667,
+      "fallback_used": 0.0
     },
     {
       "family": "blur",
@@ -37,7 +41,9 @@
       "gain": 0.08833333333333333,
       "lo": 0.055,
       "hi": 0.12333333333333334,
-      "audio_used": 0.94
+      "audio_used": 0.94,
+      "ours_fallback": 0.5683333333333334,
+      "fallback_used": 0.0
     },
     {
       "family": "blur",
@@ -50,7 +56,9 @@
       "gain": 0.085,
       "lo": 0.05,
       "hi": 0.12,
-      "audio_used": 0.965
+      "audio_used": 0.965,
+      "ours_fallback": 0.5133333333333333,
+      "fallback_used": 0.0
     },
     {
       "family": "blur",
@@ -63,7 +71,9 @@
       "gain": 0.09833333333333333,
       "lo": 0.065,
       "hi": 0.13166666666666665,
-      "audio_used": 1.0
+      "audio_used": 1.0,
+      "ours_fallback": 0.37833333333333335,
+      "fallback_used": 0.0
     },
     {
       "family": "blur",
@@ -76,7 +86,9 @@
       "gain": 0.05,
       "lo": 0.021666666666666667,
       "hi": 0.07666666666666666,
-      "audio_used": 1.0
+      "audio_used": 1.0,
+      "ours_fallback": 0.12166666666666667,
+      "fallback_used": 0.0
     },
     {
       "family": "blur",
@@ -89,7 +101,9 @@
       "gain": 0.035,
       "lo": 0.018333333333333333,
       "hi": 0.051666666666666666,
-      "audio_used": 1.0
+      "audio_used": 1.0,
+      "ours_fallback": 0.06333333333333334,
+      "fallback_used": 0.0
     },
     {
       "family": "dark",
@@ -102,7 +116,9 @@
       "gain": 0.07,
       "lo": 0.03833333333333333,
       "hi": 0.10170833333333273,
-      "audio_used": 0.9133333333333333
+      "audio_used": 0.9133333333333333,
+      "ours_fallback": 0.575,
+      "fallback_used": 0.0
     },
     {
       "family": "dark",
@@ -115,7 +131,9 @@
       "gain": 0.08166666666666667,
       "lo": 0.04833333333333333,
       "hi": 0.115,
-      "audio_used": 0.9166666666666666
+      "audio_used": 0.9166666666666666,
+      "ours_fallback": 0.5533333333333333,
+      "fallback_used": 0.0
     },
     {
       "family": "dark",
@@ -128,7 +146,9 @@
       "gain": 0.08833333333333333,
       "lo": 0.055,
       "hi": 0.12166666666666667,
-      "audio_used": 0.9266666666666666
+      "audio_used": 0.9266666666666666,
+      "ours_fallback": 0.53,
+      "fallback_used": 0.0
     },
     {
       "family": "dark",
@@ -141,7 +161,9 @@
       "gain": 0.10666666666666667,
       "lo": 0.07166666666666667,
       "hi": 0.14,
-      "audio_used": 0.9533333333333334
+      "audio_used": 0.9533333333333334,
+      "ours_fallback": 0.49166666666666664,
+      "fallback_used": 0.0
     },
     {
       "family": "dark",
@@ -154,7 +176,9 @@
       "gain": 0.1,
       "lo": 0.07,
       "hi": 0.13166666666666665,
-      "audio_used": 0.985
+      "audio_used": 0.985,
+      "ours_fallback": 0.37833333333333335,
+      "fallback_used": 0.0
     },
     {
       "family": "dark",
@@ -167,7 +191,9 @@
       "gain": 0.09333333333333334,
       "lo": 0.06666666666666667,
       "hi": 0.12,
-      "audio_used": 1.0
+      "audio_used": 1.0,
+      "ours_fallback": 0.12666666666666668,
+      "fallback_used": 0.0
     },
     {
       "family": "noise",
@@ -180,7 +206,9 @@
       "gain": 0.07666666666666666,
       "lo": 0.045,
       "hi": 0.11,
-      "audio_used": 0.915
+      "audio_used": 0.915,
+      "ours_fallback": 0.5483333333333333,
+      "fallback_used": 0.0
     },
     {
       "family": "noise",
@@ -193,7 +221,9 @@
       "gain": 0.095,
       "lo": 0.06166666666666667,
       "hi": 0.12833333333333333,
-      "audio_used": 0.9316666666666666
+      "audio_used": 0.9316666666666666,
+      "ours_fallback": 0.5383333333333333,
+      "fallback_used": 0.0
     },
     {
       "family": "noise",
@@ -206,7 +236,9 @@
       "gain": 0.08,
       "lo": 0.04666666666666667,
       "hi": 0.11333333333333333,
-      "audio_used": 0.9583333333333334
+      "audio_used": 0.9583333333333334,
+      "ours_fallback": 0.49666666666666665,
+      "fallback_used": 0.0
     },
     {
       "family": "noise",
@@ -219,7 +251,9 @@
       "gain": 0.10166666666666667,
       "lo": 0.06666666666666667,
       "hi": 0.13666666666666666,
-      "audio_used": 0.9933333333333333
+      "audio_used": 0.9933333333333333,
+      "ours_fallback": 0.335,
+      "fallback_used": 0.0
     },
     {
       "family": "noise",
@@ -232,7 +266,9 @@
       "gain": 0.065,
       "lo": 0.04,
       "hi": 0.09,
-      "audio_used": 1.0
+      "audio_used": 1.0,
+      "ours_fallback": 0.12,
+      "fallback_used": 0.0
     },
     {
       "family": "occlude",
@@ -245,7 +281,9 @@
       "gain": 0.12666666666666668,
       "lo": 0.09166666666666666,
       "hi": 0.16166666666666665,
-      "audio_used": 0.9766666666666667
+      "audio_used": 0.9766666666666667,
+      "ours_fallback": 0.47,
+      "fallback_used": 0.0
     },
     {
       "family": "occlude",
@@ -258,7 +296,9 @@
       "gain": 0.06666666666666667,
       "lo": 0.03833333333333333,
       "hi": 0.095,
-      "audio_used": 0.995
+      "audio_used": 0.995,
+      "ours_fallback": 0.22333333333333333,
+      "fallback_used": 0.0
     },
     {
       "family": "occlude",
@@ -271,7 +311,9 @@
       "gain": 0.07,
       "lo": 0.045,
       "hi": 0.09666666666666666,
-      "audio_used": 1.0
+      "audio_used": 1.0,
+      "ours_fallback": 0.18,
+      "fallback_used": 0.0
     },
     {
       "family": "occlude",
@@ -284,7 +326,9 @@
       "gain": 0.045,
       "lo": 0.02,
       "hi": 0.07166666666666667,
-      "audio_used": 1.0
+      "audio_used": 1.0,
+      "ours_fallback": 0.11833333333333333,
+      "fallback_used": 0.0
     },
     {
       "family": "occlude",
@@ -297,7 +341,9 @@
       "gain": 0.056666666666666664,
       "lo": 0.03666666666666667,
       "hi": 0.07833333333333334,
-      "audio_used": 1.0
+      "audio_used": 1.0,
+      "ours_fallback": 0.09833333333333333,
+      "fallback_used": 0.0
     },
     {
       "family": "downscale",
@@ -310,7 +356,9 @@
       "gain": 0.09666666666666666,
       "lo": 0.06333333333333334,
       "hi": 0.13,
-      "audio_used": 0.915
+      "audio_used": 0.915,
+      "ours_fallback": 0.5916666666666667,
+      "fallback_used": 0.0
     },
     {
       "family": "downscale",
@@ -323,7 +371,9 @@
       "gain": 0.07166666666666667,
       "lo": 0.03833333333333333,
       "hi": 0.10504166666666606,
-      "audio_used": 0.9316666666666666
+      "audio_used": 0.9316666666666666,
+      "ours_fallback": 0.5483333333333333,
+      "fallback_used": 0.0
     },
     {
       "family": "downscale",
@@ -336,7 +386,9 @@
       "gain": 0.095,
       "lo": 0.06333333333333334,
       "hi": 0.12666666666666668,
-      "audio_used": 0.9616666666666667
+      "audio_used": 0.9616666666666667,
+      "ours_fallback": 0.52,
+      "fallback_used": 0.0
     },
     {
       "family": "downscale",
@@ -349,7 +401,9 @@
       "gain": 0.12166666666666667,
       "lo": 0.08833333333333333,
       "hi": 0.155,
-      "audio_used": 0.99
+      "audio_used": 0.99,
+      "ours_fallback": 0.4266666666666667,
+      "fallback_used": 0.0
     },
     {
       "family": "downscale",
@@ -362,20 +416,22 @@
       "gain": 0.08,
       "lo": 0.056666666666666664,
       "hi": 0.105,
-      "audio_used": 1.0
+      "audio_used": 1.0,
+      "ours_fallback": 0.14666666666666667,
+      "fallback_used": 0.0
     }
   ],
   "policy": "ModeFusionConfig(vis_evidence='centre', ac_evidence='quantile', rule='continuous', weight=1.0, tau_v=0.1, tau_a=-2.0, sigmoid_scale=0.1, lam=1.0, ac_transform='standard')",
   "provenance": {
-    "utc": "2026-09-15T14:25:46Z",
+    "utc": "2026-09-15T16:33:08Z",
     "argv": [
       "feasible/run_degradation_final.py"
     ],
     "git": {
-      "commit": "04622e4d1786",
+      "commit": "741b83466611",
       "dirty": true,
-      "diff_sha1": "24178ab30ea1",
-      "diff_lines": 75
+      "diff_sha1": "0b4c407d339f",
+      "diff_lines": 145
     },
     "env": {
       "python": "3.8.20",

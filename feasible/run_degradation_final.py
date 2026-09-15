@@ -100,14 +100,34 @@ def main() -> int:
                            ac_transform="standard" if sel["rule"] == "simple" else "relative")
     vc, ac = evidence_columns(cfg)
     rng = np.random.default_rng(0)
+
+    def amb_of(Q, M):
+        return np.array([np.sort(M[str(q)][vc])[::-1][:2].__len__() > 1 and
+                         float(np.sort(M[str(q)][vc])[::-1][0] - np.sort(M[str(q)][vc])[::-1][1]) or np.inf
+                         for q in Q["query_id"]])
+
+    # acoustic fallback threshold on the clean validation rooms: below this
+    # visual log-odds the answer is the acoustic top-1 over the whole grid
+    Qv = read(AN / "queries_raw_scan_open_unloc_valprojR.csv"); Mv = group(read(AN / "modes_raw_scan_open_unloc_valprojR.csv"))
+    ev = np.array([Mv[str(q)]["dist_gt_m"][choose(Mv[str(q)][vc], Mv[str(q)][ac], cfg)[0]] for q in Qv["query_id"]])
+    av = amb_of(Qv, Mv)
+    best_tf, best_r = 0.0, float((ev < 1).mean())
+    for tf in (0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1):
+        r = float(np.where(av < tf, Qv["e_ac"] < 1, ev < 1).mean())
+        if r > best_r:
+            best_tf, best_r = tf, r
+    print(f"[fallback] validation: ours {100*float((ev<1).mean()):.1f}%, with fallback tau_f={best_tf:g}: {100*best_r:.1f}%", flush=True)
     rows, out = [], []
     out.append("# Visual degradation under the final protocol: UnLoc, Replica\n")
     out.append(f"Projection R and the scalars chosen on the clean validation rooms are frozen "
                f"({cfg}); the query image is corrupted at test time and nothing is refit. "
                f"`acoustic alone` is the projected score's own top-1 over the whole grid; "
                f"`audio acts` is the fraction of queries where the gate weight exceeds 0.05.\n")
-    out.append("| degradation | queries | vision @1m | acoustic alone | ours @1m | gain | 95% CI | audio acts |")
-    out.append("|---|---|---|---|---|---|---|---|")
+    out.append(f"`ours+fallback` answers with the acoustic top-1 whenever the visual log-odds "
+               f"between the two best hypotheses fall below tau_f={best_tf:g}, chosen on the clean "
+               f"validation rooms; it is frozen too.\n")
+    out.append("| degradation | queries | vision @1m | acoustic alone | ours @1m | gain | 95% CI | audio acts | ours+fallback | fallback used |")
+    out.append("|---|---|---|---|---|---|---|---|---|---|")
     for fam, lvl in LEVELS:
         t = tag(fam, lvl)
         if not table(t).exists():
@@ -117,16 +137,20 @@ def main() -> int:
         for q in Q["query_id"]:
             m = M[str(q)]; k, acted = choose(m[vc], m[ac], cfg); e.append(m["dist_gt_m"][k]); used.append(acted)
         e = np.asarray(e); v = Q["e_vis"]; a = Q["e_ac"]
+        fb = amb_of(Q, M) < best_tf
+        ef = np.where(fb, a, e)
         d = (e < 1).astype(float) - (v < 1).astype(float)
         mb = d[rng.integers(0, d.size, size=(10000, d.size))].mean(axis=1)
         lo, hi = np.percentile(mb, [2.5, 97.5])
         label = LABEL[fam].format(lvl) if lvl is not None else "clean"
         rows.append(dict(family=fam, level=lvl, label=label, n=int(e.size), vision=float((v < 1).mean()),
                          acoustic=float((a < 1).mean()), ours=float((e < 1).mean()), gain=float(d.mean()),
-                         lo=float(lo), hi=float(hi), audio_used=float(np.mean(used))))
+                         lo=float(lo), hi=float(hi), audio_used=float(np.mean(used)),
+                         ours_fallback=float((ef < 1).mean()), fallback_used=float(fb.mean())))
         r = rows[-1]
         out.append(f"| {label} | {r['n']} | {100*r['vision']:.1f}% | {100*r['acoustic']:.1f}% | {100*r['ours']:.1f}% | "
-                   f"{100*r['gain']:+.1f} | [{100*lo:+.1f}, {100*hi:+.1f}] | {100*r['audio_used']:.0f}% |")
+                   f"{100*r['gain']:+.1f} | [{100*lo:+.1f}, {100*hi:+.1f}] | {100*r['audio_used']:.0f}% | "
+                   f"{100*r['ours_fallback']:.1f}% | {100*r['fallback_used']:.0f}% |")
         print(out[-1], flush=True)
 
     # ------------------------------------------------------------ figure
@@ -144,6 +168,7 @@ def main() -> int:
         ax.plot(x, [100 * r["vision"] for r in rs], "o-", color="#0072B2", label="vision")
         ax.plot(x, [100 * r["ours"] for r in rs], "s-", color="#009E73", label="ours")
         ax.plot(x, [100 * r["acoustic"] for r in rs], "^--", color="#E69F00", label="acoustic alone")
+        ax.plot(x, [100 * r["ours_fallback"] for r in rs], "d:", color="#CC79A7", label="ours + acoustic fallback")
         ax.fill_between(x, [100 * r["vision"] for r in rs], [100 * r["ours"] for r in rs], color="#009E73", alpha=0.15)
         ax.set_xticks(x); ax.set_xticklabels(lab, fontsize=7, rotation=30); ax.set_title(fam)
         ax.grid(alpha=0.3)
