@@ -21,7 +21,25 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 import sys
 sys.path.insert(0, str(HERE))
-from run_projection_matrix import BASE, COND, GPUS, PREFIX, PY, SOURCES, W, gpu_free, log  # noqa: E402
+from run_projection_matrix import BASE, COND, GPUS, PREFIX, PY, SOURCES, W, log  # noqa: E402
+
+
+def gpu_free_mib(g):
+    out = subprocess.run(["nvidia-smi", "--query-gpu=memory.total,memory.used",
+                          "--format=csv,noheader,nounits", "-i", str(g)],
+                         capture_output=True, text=True).stdout.strip()
+    try:
+        tot, used = (int(x) for x in out.split(","))
+    except ValueError:
+        return 0
+    return tot - used
+
+
+# other tenants hold most of every card, so a job starts when enough is left for
+# it rather than when the card is empty: the ViT-L backbone needs about 12 GB,
+# the two ResNet ones about 4 GB
+NEED_MIB = {"unloc": 12000, "f3loc": 4000, "disco": 4000}
+MAX_TRIES = 3
 
 AN = ROOT / "outputs" / "analysis"
 VAL_ROOMS = {
@@ -32,8 +50,10 @@ VAL_ROOMS = {
 }
 
 
-def val_tag(backbone, source):
-    return f"{PREFIX[backbone]}_val" + (f"proj{source}" if source else "")
+def val_tag(backbone, source, ds="replica"):
+    # the tag carries the benchmark, since two benchmarks share the raw_scan_open
+    # condition and would otherwise write the same file name
+    return f"{PREFIX[backbone]}_val" + ("" if ds == "replica" else ds) + (f"proj{source}" if source else "")
 
 
 def grids_ready(ds):
@@ -49,7 +69,7 @@ def command(ds, backbone, source, gpu):
     base = BASE[(ds, backbone)]
     base = re.sub(r"--scenes .*? --condition", f"--scenes {VAL_ROOMS[ds]} --condition", base)
     base = re.sub(r"--grid-dir \S+", f"--grid-dir outputs/acoustic_grid_val/{ds}", base)
-    tag = val_tag(backbone, source)
+    tag = val_tag(backbone, source, ds)
     suffix = tag[len(PREFIX[backbone]):]
     proj = f" --acoustic-projection {W[source]}" if source else ""
     return (f"{PY} scripts/extract_mode_table.py --gpu {gpu} {base} --desdf-dir outputs/desdf_val/{ds} "
@@ -59,22 +79,30 @@ def command(ds, backbone, source, gpu):
 def main() -> int:
     jobs = [(ds, bb, src) for ds in VAL_ROOMS for bb in ("f3loc", "unloc", "disco")
             for src in (None,) + tuple(SOURCES)]
-    jobs = [j for j in jobs if not table(j[0], val_tag(j[1], j[2])).exists()]
+    jobs = [j for j in jobs if not table(j[0], val_tag(j[1], j[2], j[0])).exists()]
     log(f"{len(jobs)} validation extractions to run")
-    running, selected = {}, set()
+    running, selected, tries = {}, set(), {}
     while jobs or running or len(selected) < len(VAL_ROOMS):
         for g, (p, key) in list(running.items()):
             if p.poll() is not None:
-                ok = table(key[0], val_tag(key[1], key[2])).exists()
+                ok = table(key[0], val_tag(key[1], key[2], key[0])).exists()
                 log(f"gpu {g}: {key} {'done' if ok else 'FAILED (no table)'}")
                 del running[g]
+                if not ok:
+                    tries[key] = tries.get(key, 0) + 1
+                    if tries[key] < MAX_TRIES:
+                        jobs.append(key); log(f"requeued {key} (try {tries[key] + 1})")
         for g in GPUS:
-            if g in running or not gpu_free(g):
+            if g in running:
                 continue
+            free = gpu_free_mib(g)
             i = next((i for i, (ds, bb, src) in enumerate(jobs)
-                      if grids_ready(ds) and (src is None or W[src].exists())), None)
+                      if grids_ready(ds) and (src is None or W[src].exists())
+                      and free >= NEED_MIB[bb]
+                      and subprocess.run(["pgrep", "-f", f"--tag {val_tag(bb, src, ds)[len(PREFIX[bb]):]} "],
+                                         capture_output=True).returncode != 0), None)
             if i is None:
-                break
+                continue
             key = jobs.pop(i)
             cmd, tag = command(*key, g)
             running[g] = (subprocess.Popen(cmd, shell=True, cwd=ROOT), key)

@@ -49,11 +49,21 @@ def parse_args() -> argparse.Namespace:
                         "with a few hundred validation queries a half-point difference is noise, "
                         "and the smaller rule is preferred at a tie")
     p.add_argument("--out", type=Path, default=None)
+    p.add_argument("--source", choices=["val", "indomain", "B"], default="val",
+                   help="how the projection source is chosen. 'val' searches it with the rest; "
+                        "'indomain' is the source trained on the same benchmark (R on Replica, M "
+                        "on Matterport3D; Structured3D cannot train one and uses B); 'B' is the "
+                        "pooled projection everywhere. Both fixed choices are made in advance")
+    p.add_argument("--fixed", action="store_true",
+                   help="the paper's protocol: one method everywhere. The projection source (B), "
+                        "the hypothesis summaries (centre/quantile) and the rule (three scalars) "
+                        "are fixed across benchmarks and backbones; only the three scalars are "
+                        "chosen on the validation rooms. Writes VAL_<dataset>_fixed.*")
     return p.parse_args()
 
 
-def val_tag(backbone: str, source) -> str:
-    return f"{PREFIX[backbone]}_val" + (f"proj{source}" if source else "")
+def val_tag(backbone: str, source, ds: str = "replica") -> str:
+    return f"{PREFIX[backbone]}_val" + ("" if ds == "replica" else ds) + (f"proj{source}" if source else "")
 
 
 def test_tag(dataset: str, backbone: str, source) -> str:
@@ -77,10 +87,18 @@ def main() -> int:
     rng = np.random.default_rng(0)
 
     structures = list(itertools.product(("centre", "max", "lse"), ("centre", "max", "quantile", "lse")))
+    if args.fixed:
+        structures = [("centre", "quantile")]
     base = list(itertools.product((0.5, 1.0, 2.0), (0.02, 0.05, 0.1), (0.005, 0.02, 0.05, 0.1, 0.2)))
     rules = {"simple": [(w, s, tv, -2.0, "standard") for w, s, tv in base],
              "full": [(w, s, tv, ta, "relative") for (w, s, tv), ta in
                       itertools.product(base, (-2.0, 0.0, 0.2, 0.4))]}
+    if args.fixed:
+        rules = {"simple": rules["simple"]}
+    INDOMAIN = {"replica": "R", "mp3d": "M", "s3d": "B"}
+    allowed_sources = {"val": (None,) + tuple(SOURCES),
+                       "indomain": (INDOMAIN[args.dataset], None),
+                       "B": ("B", None)}[args.source]
 
     # The selection grid is ~13,500 configurations per source, so the rule is
     # evaluated on padded (queries x hypotheses) arrays rather than query by
@@ -146,7 +164,7 @@ def main() -> int:
         rng_ = np.random.default_rng(1)
         for _ in range(6):
             ve, ae = structures[rng_.integers(len(structures))]
-            rule = ("simple", "full")[rng_.integers(2)]
+            rule = list(rules)[rng_.integers(len(rules))]
             w, s, tv, ta, tr = rules[rule][rng_.integers(len(rules[rule]))]
             cfg = ModeFusionConfig(vis_evidence=ve, ac_evidence=ae, rule="continuous", weight=w,
                                    sigmoid_scale=s, tau_v=tv, tau_a=ta, ac_transform=tr)
@@ -166,7 +184,7 @@ def main() -> int:
     W("|---|---|---|---|---|---|---|---|---|---|---|")
 
     for bb in args.backbones:
-        val = {s: load(cond, val_tag(bb, s)) for s in (None,) + tuple(SOURCES)}
+        val = {s: load(cond, val_tag(bb, s, args.dataset)) for s in allowed_sources}
         val = {s: v for s, v in val.items() if v is not None}
         if not val:
             print(f"[{bb}] no validation tables yet"); continue
@@ -184,6 +202,8 @@ def main() -> int:
                         # the selection score charges each extra part a margin, so a
                         # part survives only if it earns more than noise on validation
                         penalised = r - args.simplicity_margin * ((src is not None) + (rule == "full"))
+                        if args.source != "val" and src is None:
+                            penalised = -1.0      # the fixed protocol always carries W; 'no projection' is the ablation
                         for variant, ok, key in (("selected", True, penalised),
                                                  ("no projection", src is None, r),
                                                  ("four-scalar rule", rule == "full", r),
@@ -215,7 +235,8 @@ def main() -> int:
                                    median=float(np.median(e)), vision_median=float(np.median(v)))
         print(f"[{bb}] " + "; ".join(f"{k}: val {100*v[-1]:.1f} src {v[1]} {v[2]} {v[3]}" for k, v in best.items()))
 
-    outp = args.out or REPO_ROOT / "feasible" / "results" / f"VAL_{args.dataset}.md"
+    suffix = ("_fixed" if args.fixed else "") + ("" if args.source == "val" else f"_{args.source}")
+    outp = args.out or REPO_ROOT / "feasible" / "results" / f"VAL_{args.dataset}{suffix}.md"
     outp.write_text("\n".join(out) + "\n")
     outp.with_suffix(".json").write_text(json.dumps(dict(dataset=args.dataset, results=js,
                                                          provenance=stamp()), indent=2, default=str))
