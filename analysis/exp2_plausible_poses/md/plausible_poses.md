@@ -97,9 +97,11 @@ bootstraps over samples.
 **Table 1: the gain lives where vision has more than one plausible pose.**
 With a single plausible pose the acoustic term changes nothing (Replica UnLoc
 +0.5, Matterport3D +0.9, both within noise) and breaks almost nothing (1 and
-0 samples). From two plausible poses on, the gain is +8 to +16 points on the
-furnished benchmarks and +14 to +29 on Structured3D, and repairs outnumber
-breaks by 3 to 10 to one. This is the setting the title names, several
+0 samples). From two plausible poses on, the gain is +5 to +19 points in eleven of the
+twelve furnished cells (the exception is F3Loc on Matterport3D with two
+plausible poses, +0.0, seven repairs against seven breaks) and +14 to +31
+on Structured3D; everywhere else repairs outnumber breaks by about three to
+one or more. This is the setting the title names, several
 visually plausible poses, and the numbers say the method is inert outside it
 and works inside it.
 
@@ -115,11 +117,14 @@ with no visual prior, 75–77 %. With four or more plausible poses vision is at
 +20.2 points, [12.9, 28.2]; Matterport3D UnLoc +10.8, [6.1, 16.2]). On
 Structured3D, where the query and the candidates share geometry, sound alone
 resolves four-way ambiguity 68 % of the time against vision's 31 %. The same
-holds for F3Loc and DisCo-FLoc; `data/plausible_poses.json` has every cell.
+holds for F3Loc and DisCo-FLoc, with one exception, F3Loc on Matterport3D
+with two plausible poses, where vision is already at 88 % and neither sound
+nor the fused rule improves on it; `data/plausible_poses.json` has every
+cell.
 
 **What this does not show.** The group sizes depend on τ_v, which differs by
 backbone because the posteriors sit on different scales; DisCo-FLoc on
 Matterport3D and Structured3D has nearly every sample in the ≥4 group. The
-"GT in plausible set" fraction (60–85 % on the furnished benchmarks) is the
+"GT in plausible set" fraction (46–83 % on the furnished benchmarks) is the
 share of ambiguous samples the method can help at all; the rest are capped by
 the shortlist, which `../exp4_formulation` measures.

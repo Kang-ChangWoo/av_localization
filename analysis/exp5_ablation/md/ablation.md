@@ -82,27 +82,34 @@ section is by hand.
 
 **Projection source (Table 1, `figs/projection_source.png`).** The
 projection is the largest single lever: from none to the benchmark's own W
-the gain roughly doubles on Replica (+6.2 → +10.5, +5.2 → +9.3, +2.8 → +11.8)
-and Matterport3D (+2.0 → +6.8, +4.3 → +4.7, +4.2 → +10.0). One pooled W
-trained on Replica and Matterport3D together keeps 70–100 % of that
-everywhere, so a deployment can ship one projection. Adding Structured3D's
-self-pairs (three W) helps nowhere; searching the source on validation with
-the structure and rule is worse than fixing them, because three to six
-validation rooms cannot resolve those choices.
+the gain roughly doubles in five of the six furnished cells (Replica
++6.2 → +10.5, +5.2 → +9.3, +2.8 → +11.8; Matterport3D +2.0 → +6.8,
++4.2 → +10.0; UnLoc on Matterport3D is the exception, +4.3 → +4.7). One
+pooled W trained on Replica and Matterport3D together keeps at least 69 % of
+the own-W gain in every cell and exceeds it in two, so a deployment can ship
+one projection. Adding Structured3D's self-pairs (three W) helps nowhere on
+the furnished benchmarks; searching source, structure and rule on validation
+is worse than fixing them in every furnished cell and better only on
+Structured3D, because three to six validation rooms cannot resolve those
+choices on the furnished data.
 
 **Three scalars against four (Table 2).** The acoustic-margin gate and the
-relative-evidence transform buy nothing: the two rules are within one point
-in every cell and the sign flips from cell to cell. The paper reports three.
+relative-evidence transform buy nothing: the two rules are within 1.3 points
+in eight of nine cells and the sign flips from cell to cell; the exception is
+DisCo-FLoc on Structured3D, +3.4 for the four-scalar rule, inside the
+interval. The paper reports three.
 
 **Beyond the shortlist (Table 3).** Injecting the acoustic field's own peaks
-as extra hypotheses (A) helps only on Structured3D; rejecting the whole
-shortlist on the acoustic gap (B) is switched off by validation on every
-furnished cell; the cell-wise product (C) is the one that matters and is
+as extra hypotheses (A) adds 10 points on Structured3D, 2–3 in two furnished
+cells (DisCo-FLoc on Replica, UnLoc on Matterport3D) and costs 1–2 in the
+others; rejecting the whole shortlist on the acoustic gap (B) is switched off
+by validation in five of six furnished cells (τ_g = ∞, used on 0 % of test)
+and fires on 8 % for DisCo-FLoc on Matterport3D, where it loses a point; the cell-wise product (C) is the one that matters and is
 taken up in Table 4.
 
 **The cell-product rule (Table 4).** argmax over cells of log π(c) + λ z_a(c),
 one scalar, no hypotheses and no gate, λ chosen on validation on a wide
-log-spaced grid. It matches or beats the hypothesis rule in 8 of 9 cells and
+log-spaced grid. It is within 0.2 of the hypothesis rule or ahead of it in 8 of 9 cells and
 by a wide margin on Structured3D (+40 to +44 against +24 to +28); the one
 loss is DisCo-FLoc on Matterport3D (+6.6 against +10.0, intervals
 overlapping). Under a degrading camera it is ahead at every level
@@ -111,5 +118,6 @@ strongest, which is a decision for the paper rather than for this table.
 
 **Transfer matrix (Table 5).** Test-room cross-validation, not the headline
 protocol; kept because it is the only view of every source on every target.
-A projection trained elsewhere can hurt (Matterport3D's W on Replica UnLoc:
-+7.5 → +4.2); the pooled one does not.
+A projection trained elsewhere can cost half the gain (Matterport3D's W on
+DisCo-FLoc for Replica: +5.8 against +11.3 from Replica's own); the pooled
+one sits between (+8.3).

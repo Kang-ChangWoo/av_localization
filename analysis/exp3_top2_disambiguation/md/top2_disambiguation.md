@@ -75,18 +75,23 @@ whole test set (equal-count groups by rank, an analysis-only boundary).
 
 **Sound separates the two places vision confuses most.** On all decidable
 samples the acoustic ordering is right 80.8–82.5 % on Replica and 75.4–81.1 %
-on Matterport3D, against 73.4–77.9 % and 64.6–78.8 % for vision; on the
-hardest fifth the gap opens: DisCo-FLoc on Replica 83.8 against 48.6
-(+35.1, [10.8, 56.8]), UnLoc on Matterport3D 82.8 against 58.6 (+24.1,
-[10.3, 37.9]), F3Loc on Matterport3D 77.1 against 58.3. Where vision is at
-chance, sound is at 80 %. On Structured3D the hardest fifth consists of exact
-ties (two hypotheses with identical posterior), vision is at 50 % by
-definition and sound at 84.6 %. The figure shows the same thing as a curve:
+on Matterport3D, against 73.6–78.1 % and 64.7–78.8 % for vision; on the
+hardest fifth the gap opens: DisCo-FLoc on Replica 83.8 against 50.0
+(+33.8, [10.8, 56.8]), UnLoc on Matterport3D 82.8 against 58.6 (+24.1,
+[10.3, 37.9]), F3Loc on Matterport3D 77.1 against 59.4. The acoustic ordering leads in
+all nine hardest-fifth cells, by 6 to 36 points, and the lead clears the
+interval in five of them; the weakest is UnLoc on Replica (63.5 against
+57.7), where the hardest fifth is small (52 samples) and both are near
+chance. On Structured3D the hardest fifth consists largely of exact
+ties (two hypotheses with identical posterior), so vision is at 49–56 %
+and sound at 84–85 %. The figure shows the same thing as a curve:
 accuracy on the decidable samples admitted hardest-first; the acoustic curve
 is flat, the visual one climbs only as easy samples are let in.
 
 **Supplementary protocol (Table 2).** Every correct × incorrect pair among
 the ten hypotheses, samples weighted equally over their pairs, bootstrap over
 samples: 3,800–7,000 pairs per cell, so the intervals are tight, and the
-same ordering holds (acoustic 80–92 % against visual 69–85 %). It includes
+same ordering holds in eight of nine cells (acoustic 80–92 % against visual
+72–85 %); the one where vision is ahead on all pairs, UnLoc on Matterport3D
+(81.8 against 84.9), reverses on the hardest fifth (78.4 against 74.2). It includes
 easy negatives, which is why it is the supplementary and not the main test.

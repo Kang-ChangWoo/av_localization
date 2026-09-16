@@ -164,25 +164,29 @@ three scalars frozen at their clean-validation values, the query image is
 corrupted at 28 levels across blur, darkness, noise, occlusion and
 downscaling. The gain from sound is positive at every level, +3.5 to +12.7
 with the lower interval above +1.8 everywhere, and it is largest in the
-middle of the range (downscale 16× +12.2, dark ×0.05 +10.0, noise σ=100
-+10.2), where vision is at 20–40 % and its shortlist still covers the truth
+middle of the range (occlude 10 % +12.7, downscale 16× +12.2, noise σ=100 +10.2,
+dark ×0.05 +10.0), where vision is at 20–40 % and its shortlist still covers the truth
 often enough to be worth verifying.
 
-**The shortlist is the ceiling.** Below roughly 35 % visual recall the fused
+**The shortlist is the ceiling.** Below roughly 25 % visual recall the fused
 rule falls under the acoustic score alone (36.0 %), because a hypothesis rule
-can only answer with a place vision proposed. The cell-product rule (Table 2,
-column C in Table 1) does not have that ceiling in the same way and is ahead
-of the hypothesis rule at every level from blur σ=4 on, by 5–13 points at
-the extreme ones, though it too stays below acoustic-alone once vision is
+can only answer with a place vision proposed. The cell-product rule (column C in
+Table 1 with the 16-point λ grid; Table 2 with the wide grid, 1–3 points
+higher) does not have that ceiling in the same way and is ahead of the
+hypothesis rule at every level, by under a point on clean queries and by
+9–13 points in the mid-severe range (blur σ=16, noise σ=150, occlude 30 %,
+downscale 32×), though it too stays below acoustic-alone once vision is
 under 10 %.
 
 **Collapse cannot be detected well enough to switch (Table 3).** Four
 indicators of a broken shortlist, entropy and peak mass of the posterior, the
 acoustic score at vision's own argmax, and the posterior mass near the
 acoustic peak, separate covered from broken samples only moderately (AUROC
-0.5–0.86). A switch to acoustic-alone with a threshold chosen on *degraded
-validation* queries rescues the extreme levels but fires on 32–45 % of clean
-queries and costs 5–10 points there; a switch to the cell product fires on
+0.43–0.86). A switch to acoustic-alone with a threshold chosen on *degraded
+validation* queries rescues the extreme levels, but the two usable indicators
+(peak mass, acoustic score at vision's argmax) fire on 32–45 % of clean
+queries and cost 5–10 points there, and the other two fire on nearly every
+query; a switch to the cell product fires on
 88–98 % and is simply the cell product. The honest statement is a limit: when
 the camera is far gone, the acoustic score alone is the better answer, and
 the system cannot tell from the inside when that is.

@@ -74,18 +74,19 @@ visual hypotheses it gets *worse* as K grows on both furnished benchmarks
 peaks at K=5 and falls). More candidates mean more places for a weak global
 score to prefer wrongly.
 
-**Sound can help choose.** The gated fusion over the same K rises
-monotonically on every furnished cell (UnLoc: Replica 50.8 → 60.0,
+**Sound can help choose.** The gated fusion over the same K rises with K
+in every furnished cell (UnLoc: Replica 50.8 → 60.0,
 Matterport3D 45.3 → 50.0), because the acoustic term only reorders a short
 list that vision has already made plausible, and the gate keeps it out where
 vision is decided. That is the formulation: vision proposes, sound verifies.
 
 **The shortlist has headroom.** The oracle over K=10 is 84–93 % on Replica
-and 65–79 % on Matterport3D, 25–37 points above the fused rule. The right
+and 65–79 % on Matterport3D, 29–37 points above the fused rule. The right
 place is usually on the list; what limits the method is how often sound can
 tell it from the others, not the list itself.
 
 **Structured3D is the control.** With no furniture gap the acoustic score
-alone reaches 59.3 % over the whole grid and is competitive at every K; there
-the visual shortlist is a constraint rather than a help, which is why the
+alone reaches 59.3 % over the whole grid, above every K=10 shortlist, and
+matches the gated fusion from K=3 on; there the visual shortlist is a
+constraint rather than a help, which is why the
 cell-product rule (`../exp5_ablation`) gains most on that benchmark.
