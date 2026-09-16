@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""The compute tables, in Markdown, from data/*.json.
+"""The compute tables, regenerated inside md/computational_resource.md.
 
-    md/tables.md   parameters; per-building (offline) cost; per-query stage
-                   times for the two decision rules; what sound could replace
-
-Reads data/cost.json (measure_cost.py), data/render_cost.json and
-data/backbone_<tag>.json (measure_backbones.py). The prose that reads the
-numbers is md/notes.md and is written by hand, so that a regenerated table
-never silently rewrites a sentence.
+The file holds the four tables between ``<!-- tables:start -->`` and
+``<!-- tables:end -->`` and, after them, prose written by hand. This script
+rewrites only the block between the markers, so a regenerated table never
+silently rewrites a sentence. Reads data/cost.json (measure_cost.py),
+data/render_cost.json (measure_render_cost.py) and data/backbone_<tag>.json
+(measure_backbones.py).
 
     python src/make_tables.py
 """
@@ -126,8 +125,16 @@ def main() -> int:
         W(f"| {label} | {b['params']['encoder']/1e6:.1f} M | {b['params']['head']/1e6:.2f} M | {m['encoder']:.0f} | "
           f"{m['head']:.1f} | {m['localize']:.1f} | {m['visual_total']:.0f} | {ac_ms:.1f} |")
     MD.mkdir(exist_ok=True)
-    (MD / "tables.md").write_text("\n".join(L) + "\n")
-    print("wrote md/tables.md")
+    target = MD / "computational_resource.md"
+    block = "\n".join(L[1:]).rstrip() + "\n\n"      # L[0] is the title, kept in the file
+    start, end = "<!-- tables:start -->", "<!-- tables:end -->"
+    if target.exists() and start in target.read_text() and end in target.read_text():
+        text = target.read_text()
+        text = text[: text.index(start) + len(start)] + "\n" + block + text[text.index(end):]
+    else:
+        text = L[0] + "\n\n" + start + "\n" + block + end + "\n"
+    target.write_text(text)
+    print(f"wrote {target} (tables block)")
     return 0
 
 

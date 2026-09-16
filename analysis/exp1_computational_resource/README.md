@@ -12,13 +12,12 @@ src/measure_cost.py         GPU: parameters, per-query stage times (UnLoc, 30
 src/measure_backbones.py    GPU: encoder / head / match split per backbone
                             (one process each)               -> data/backbone_<tag>.json
 src/measure_render_cost.py  CPU: rendering wall time and core-hours from the
-                            shard logs, grid sizes           -> data/render_cost.json, md/render_cost.md
-src/make_tables.py          CPU: the four tables             -> md/tables.md
+                            shard logs, grid sizes           -> data/render_cost.json
+src/make_tables.py          CPU: the four tables, regenerated inside the one
+                            markdown file between its markers
 data/                       the measurements (cost_hypothesis_rule_unprojected.json
                             is the earlier run without W, kept for the caveat)
-md/tables.md                generated tables
-md/notes.md                 what the numbers say, written by hand
-md/render_cost.md           the rendering analysis
+md/computational_resource.md  the tables (generated block) and the reading of them
 ```
 
 ```bash

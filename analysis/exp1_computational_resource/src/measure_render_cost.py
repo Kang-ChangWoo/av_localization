@@ -48,7 +48,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--log-dir", type=Path, default=REPO_ROOT / "logs")
     p.add_argument("--repeats", type=int, default=20, help="timing repeats per stage")
     p.add_argument("--k", type=int, default=10, help="hypotheses scored per query")
-    p.add_argument("--out", type=Path, default=HERE / "md" / "render_cost.md")
+    p.add_argument("--out", type=Path, default=None,
+                   help="optional markdown copy; the tables the paper uses come from make_tables.py")
     return p.parse_args()
 
 
@@ -209,12 +210,13 @@ def main() -> int:
       f"largest scene. Working over hypotheses is not only more accurate "
       f"(Tab.~\\ref{{tab:fusion}}), it examines a few percent of the cells.\n")
 
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text("\n".join(out) + "\n")
+    if args.out is not None:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text("\n".join(out) + "\n")
     (HERE / "data" / "render_cost.json").write_text(
         json.dumps(dict(results=js, provenance=stamp()), indent=2, default=str))
     print("\n".join(out))
-    print(f"\nwrote {args.out}")
+    print(f"\nwrote {HERE / 'data' / 'render_cost.json'}" + (f" and {args.out}" if args.out else ""))
     return 0
 
 
