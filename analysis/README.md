@@ -8,7 +8,7 @@ in seconds after any change to the pipeline.
 python analysis/run_analysis.py  --backbone unlocSTFT          # A, B, D, E, F, G, I
 python analysis/beyond_fov.py    --backbone unlocSTFT          # C, furnished
 python analysis/beyond_fov.py    --backbone unlocSTFT --condition floorplan_closed
-python analysis/compute_cost.py                                # cost
+python analysis/exp1_computational_resource/src/measure_render_cost.py   # cost, see exp1_computational_resource/
 ```
 
 | block | question | result file |
@@ -21,7 +21,7 @@ python analysis/compute_cost.py                                # cost
 | F | is the gain actually acoustic | same |
 | G | does sound complement visual failure | same, `results/G_complementarity.png` |
 | I | does the acoustic score know when it is wrong | same |
-| cost | rendering, storage, inference | `results/compute_cost.md` |
+| cost | rendering, storage, inference | `exp1_computational_resource/md/` |
 
 ## What the blocks establish, in one line each
 
@@ -56,6 +56,7 @@ is.
 self-confidence measure exceeds AUROC 0.64, while visual ambiguity predicts an
 acoustic mistake at 0.80, which is why the gate leans on the visual side.
 
-**Cost.** 3.9 s of single-core simulation per candidate cell, about 5 core-hours
-for a 5,000-cell floorplan, paid once per building. Inference adds 6 ms, two
-orders of magnitude below the visual backbone.
+**Cost.** See `exp1_computational_resource/md/notes.md`: 3.9 s of single-core
+simulation per candidate cell, about 5 core-hours for a 5,000-cell floorplan,
+paid once per building; the acoustic branch at inference is a few milliseconds
+next to a visual backbone that runs a ViT-L.

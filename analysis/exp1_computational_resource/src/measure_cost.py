@@ -50,6 +50,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--n-queries", type=int, default=30, help="timed per scene")
     p.add_argument("--warmup", type=int, default=5)
     p.add_argument("--out", type=Path, default=HERE / "data" / "cost.json")
+    p.add_argument("--projection", type=Path, default=REPO_ROOT / "outputs" / "metrics" / "acoustic_projection.npz",
+                   help="the learned linear projection W applied to candidate and query features")
+    p.add_argument("--selection", type=Path,
+                   default=REPO_ROOT / "feasible" / "results" / "VAL_replica_fixed_indomain.json",
+                   help="the three scalars of the hypothesis rule, as chosen on validation rooms")
+    p.add_argument("--cell-product", type=Path, default=REPO_ROOT / "feasible" / "results" / "CELL_product.json",
+                   help="lambda of the cell-product rule, as chosen on validation rooms")
     p.add_argument("--gpu", default="0")
     return p.parse_args()
 
@@ -125,8 +132,15 @@ def main() -> int:
         out["online"]["model_load_s"] = time.perf_counter() - t0
     finally:
         os.chdir(cwd)
-    policy = json.loads((REPO_ROOT / "outputs" / "metrics" / "unified_policy.json").read_text())["policy"]["unlocSTFT"]
-    fuse_cfg = ModeFusionConfig(**{k: (-np.inf if v is None else v) for k, v in policy.items()})
+    sel = json.loads(args.selection.read_text())["results"]["unloc"]["selected"]
+    w_, s_, tv_, ta_ = sel["scalars"]
+    fuse_cfg = ModeFusionConfig(vis_evidence=sel["structure"][0], ac_evidence=sel["structure"][1], rule="continuous",
+                                weight=w_, sigmoid_scale=s_, tau_v=tv_, tau_a=ta_, ac_transform="standard")
+    lam = float(json.loads(args.cell_product.read_text())["replica/unloc"]["lam"])
+    Wp = np.load(args.projection)["W"].astype(np.float32)          # (1746, 128)
+    out["params"]["acoustic projection W"] = {"total": int(Wp.size), "shape": list(Wp.shape)}
+    out["params"]["fusion rule"] = {"hypothesis rule": 3, "cell-product rule": 1}
+    print(f"[rule] hypothesis rule {fuse_cfg}; cell-product lambda {lam:g}; W {Wp.shape}")
     mcfg = ModeConfig(nms_radius_m=1.5, n_modes=10, local_radius_m=0.5)
 
     def sync():
@@ -154,9 +168,15 @@ def main() -> int:
         t0 = time.perf_counter()
         cand, present = candidate_features(g, rows, cols, mask.shape, cfg)
         t_feat = time.perf_counter() - t0
+        # the learned projection, once per building: every candidate feature
+        # becomes 128 floats, which is what is kept and matched at inference
+        t0 = time.perf_counter()
+        candP = (cand.reshape(len(cand), -1) @ Wp)[..., None]
+        t_proj = time.perf_counter() - t0
         out["offline"][scene] = {
             "cells": int(len(rows)), "rendered": int(present.sum()),
             "grid_bytes": int(g.stat().st_size), "feature_bytes": int(cand.nbytes),
+            "feature_bytes_projected": int(candP.nbytes), "project_s": t_proj,
             "featurise_s": t_feat,
             "desdf_shape": list(desdf["desdf"].shape),
             "desdf_bytes": int(desdf["desdf"].nbytes),
@@ -171,7 +191,7 @@ def main() -> int:
         picks = np.linspace(0, len(ds) - 1, args.n_queries + args.warmup).astype(int)
 
         T = {k: [] for k in ("image_io", "vis_encoder", "vis_rays", "vis_localize",
-                             "ac_io", "ac_feature", "ac_score", "modes", "fusion", "total")}
+                             "ac_io", "ac_feature", "ac_score", "modes", "fusion", "total", "ac_project", "cell_product")}
         torch.cuda.reset_peak_memory_stats()
         for n, k in enumerate(picks):
             i = int(ds[int(k)].split("_")[1])
@@ -213,7 +233,10 @@ def main() -> int:
             obs = observation_feature(rir, cfg, rate)
             tt["ac_feature"] = time.perf_counter() - t0
             t0 = time.perf_counter()
-            ac = score(cand, obs, present, cfg)
+            obsP = (obs.reshape(-1) @ Wp)[:, None]
+            tt["ac_project"] = time.perf_counter() - t0
+            t0 = time.perf_counter()
+            ac = score(candP, obsP, present, cfg)
             tt["ac_score"] = time.perf_counter() - t0
 
             t0 = time.perf_counter()
@@ -225,6 +248,11 @@ def main() -> int:
             t0 = time.perf_counter()
             choose(vis_ev, ac_ev, fuse_cfg)
             tt["fusion"] = time.perf_counter() - t0
+            # the cell-product rule needs neither hypotheses nor a gate
+            t0 = time.perf_counter()
+            za = (ac - ac.mean()) / max(float(ac.std()), 1e-9)
+            int(np.argmax(np.log(np.clip(vis, 1e-300, None)) + lam * za))
+            tt["cell_product"] = time.perf_counter() - t0
             tt["total"] = time.perf_counter() - t_all
 
             if n >= args.warmup:
@@ -235,8 +263,8 @@ def main() -> int:
         med["gpu_peak_mb"] = torch.cuda.max_memory_allocated() / 2**20
         per_scene_online.append(dict(scene=scene, **med))
         print(f"[online] {scene}: total {med['total']:.0f} ms  encoder {med['vis_encoder']:.0f}  "
-              f"localize {med['vis_localize']:.0f}  acoustic {med['ac_feature']+med['ac_score']:.1f}  "
-              f"modes+fusion {med['modes']+med['fusion']:.1f}  (n={med['n']})")
+              f"localize {med['vis_localize']:.0f}  acoustic {med['ac_feature']+med['ac_project']+med['ac_score']:.1f}  "
+              f"modes+fusion {med['modes']+med['fusion']:.1f}  cell-product {med['cell_product']:.2f}  (n={med['n']})")
         del cand
 
     out["online"]["per_scene_ms"] = per_scene_online

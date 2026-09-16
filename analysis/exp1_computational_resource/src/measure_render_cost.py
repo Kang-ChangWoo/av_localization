@@ -20,7 +20,7 @@ is measured here rather than asserted. Rendering times are read from the shard
 logs of the actual runs, not re-estimated, so they include the engine's real
 behaviour rather than a best case.
 
-    python analysis/compute_cost.py
+    python analysis/exp1_computational_resource/src/measure_render_cost.py
 """
 
 from __future__ import annotations
@@ -34,8 +34,8 @@ from pathlib import Path
 
 import numpy as np
 
-HERE = Path(__file__).resolve().parent
-REPO_ROOT = HERE.parent
+HERE = Path(__file__).resolve().parents[1]          # analysis/exp1_computational_resource
+REPO_ROOT = HERE.parents[1]                          # av_localization
 import sys
 sys.path.insert(0, str(REPO_ROOT))
 
@@ -48,7 +48,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--log-dir", type=Path, default=REPO_ROOT / "logs")
     p.add_argument("--repeats", type=int, default=20, help="timing repeats per stage")
     p.add_argument("--k", type=int, default=10, help="hypotheses scored per query")
-    p.add_argument("--out", type=Path, default=HERE / "results" / "compute_cost.md")
+    p.add_argument("--out", type=Path, default=HERE / "md" / "render_cost.md")
     return p.parse_args()
 
 
@@ -211,7 +211,7 @@ def main() -> int:
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text("\n".join(out) + "\n")
-    (args.out.parent / "compute_cost.json").write_text(
+    (HERE / "data" / "render_cost.json").write_text(
         json.dumps(dict(results=js, provenance=stamp()), indent=2, default=str))
     print("\n".join(out))
     print(f"\nwrote {args.out}")
