@@ -21,7 +21,7 @@ Per query, the branch's own computation is a few milliseconds:
 So the branch adds 4–5 ms of computation, plus 8–10 ms if the hypothesis rule
 is used and 0.2 ms if the cell-product rule is. The visual backbone's encoder
 alone is 140–180 ms on the same GPU. The projection is free: 0.1 ms per query,
-and once per building 5 s for the candidate side.
+and a hundredth of a second once per building for all candidate cells.
 
 What actually dominates the acoustic branch's wall time is reading the
 impulse response, 70–125 ms on this machine, because the recordings live on
