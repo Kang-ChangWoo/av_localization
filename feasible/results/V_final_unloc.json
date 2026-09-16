@@ -451,15 +451,15 @@
   ],
   "policy": "ModeFusionConfig(vis_evidence='centre', ac_evidence='quantile', rule='continuous', weight=1.0, tau_v=0.1, tau_a=-2.0, sigmoid_scale=0.1, lam=1.0, ac_transform='standard')",
   "provenance": {
-    "utc": "2026-09-15T18:24:54Z",
+    "utc": "2026-09-16T04:57:30Z",
     "argv": [
       "feasible/run_degradation_final.py"
     ],
     "git": {
-      "commit": "904958403a73",
+      "commit": "7b57ce904638",
       "dirty": true,
-      "diff_sha1": "a847d4eb7135",
-      "diff_lines": 1580
+      "diff_sha1": "9ac141054801",
+      "diff_lines": 135
     },
     "env": {
       "python": "3.8.20",

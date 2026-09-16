@@ -58,11 +58,13 @@ def jobs():
 
 
 def has_injection(tag):
+    """True when the table carries the injected rows and the per-cell field dump."""
     for cond in ("raw_scan_open", "floorplan_closed"):
         p = ROOT / "outputs" / "analysis" / f"modes_{cond}_{tag}.csv"
         if p.exists():
             with open(p) as f:
-                return ",source," in f.readline()
+                head = f.readline()
+            return ",source," in head and (ROOT / "outputs" / "analysis" / f"fields_{cond}_{tag}.npz").exists()
     return False
 
 

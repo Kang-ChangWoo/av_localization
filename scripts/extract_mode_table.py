@@ -341,6 +341,9 @@ def main() -> int:
 
     root = Path(args.dataset_root)
     q_rows, m_rows, r_rows, inputs = [], [], [], []
+    # the per-cell fields themselves, so any cell-level rule (and a learned one)
+    # can be evaluated or fitted offline without another pass over the grids
+    fields = dict(query_id=[], scene=[], logv=[], za=[], dist=[], yaw=[])
 
     for coll in args.collections:
         for scene in args.scenes:
@@ -472,6 +475,9 @@ def main() -> int:
                 inj_ac_rank_agg = aggregate(ra, ac_modes, ac_discs, mcfg)
                 zac = (ac - ac.mean()) / max(float(ac.std()), 1e-9)
                 logv = np.log(np.clip(vis, 1e-300, None))
+                fields["query_id"].append(qid); fields["scene"].append(scene)
+                fields["logv"].append(logv.astype(np.float16)); fields["za"].append(zac.astype(np.float16))
+                fields["dist"].append(dist.astype(np.float16)); fields["yaw"].append(yaw.astype(np.float16))
                 cellprod = {f"e_cellprod_b{b:g}_T{T:g}": float(dist[int((b * logv + zac / T).argmax())])
                             for b in (0.25, 0.5, 1.0, 2.0) for T in (0.5, 1.0, 2.0, 5.0)}
 
@@ -611,6 +617,10 @@ def main() -> int:
     # run in do not share a pandas, and a dependency here would silently make
     # one backbone unrunnable
     import csv
+    np.savez_compressed(args.out_dir / f"fields_{tag}.npz",
+                        query_id=np.array(fields["query_id"]), scene=np.array(fields["scene"]),
+                        **{k: np.array(fields[k], dtype=object) for k in ("logv", "za", "dist", "yaw")})
+    print(f"wrote {args.out_dir / f'fields_{tag}.npz'}  ({len(fields['query_id'])} queries, per-cell log-posterior, standardised acoustic score, distance, yaw)")
     for name, rowset in (("queries", q_rows), ("modes", m_rows), ("mode_ranges", r_rows)):
         p = args.out_dir / f"{name}_{tag}.csv"
         keys = list(rowset[0].keys())

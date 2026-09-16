@@ -666,7 +666,7 @@
     }
   },
   "provenance": {
-    "utc": "2026-09-15T19:27:37Z",
+    "utc": "2026-09-16T04:56:49Z",
     "argv": [
       "scripts/val_select.py",
       "--dataset",
@@ -677,10 +677,10 @@
       "--variants"
     ],
     "git": {
-      "commit": "ab455bfdf80b",
+      "commit": "7b57ce904638",
       "dirty": true,
-      "diff_sha1": "efdaff5fd079",
-      "diff_lines": 571
+      "diff_sha1": "055f4c7e48fb",
+      "diff_lines": 81
     },
     "env": {
       "python": "3.8.20",
