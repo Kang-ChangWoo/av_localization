@@ -67,11 +67,21 @@ def evaluate(ds, bb):
     rows = []
     for i, q in enumerate(Q["query_id"]):
         m = M[str(q)]; k, acted = choose(m[vc], m[ac], cfg); kv = int(np.argmax(m[vc]))
-        top = np.sort(m[vc])[::-1]
+        # Visual ambiguity, exactly as the gate computes it. v_k = log pi(h_k):
+        # the backbone's posterior over cells with heading collapsed by max,
+        # read at the centre of hypothesis k, where h_1..h_K are the K=10
+        # spatial hypotheses after non-maximum suppression at 1.5 m. Then
+        #     m_v = v_(1) - v_(2)      (log-odds between the two strongest)
+        # is what the gate reads. u_v, the normalised entropy of softmax(v)
+        # over the K hypotheses, is recorded beside it for reference only.
+        v = np.asarray(m[vc], float); top = np.sort(v)[::-1]
+        m_v = float(top[0] - top[1]) if top.size > 1 else np.inf
+        pk = np.exp(v - v.max()); pk /= pk.sum()
+        u_v = float(-(pk * np.log(pk + 1e-300)).sum() / np.log(max(len(v), 2)))
         rows.append(dict(scene=str(Q["scene"][i]), e_vis=float(m["dist_gt_m"][kv]), e_ours=float(m["dist_gt_m"][k]),
-                         e_ac=float(Q["e_ac"][i]), amb=float(top[0] - top[1]) if top.size > 1 else np.inf,
+                         e_ac=float(Q["e_ac"][i]), amb=m_v, u_v=u_v,
                          acted=bool(acted), covered=bool((m["dist_gt_m"] < 1).any()),
-                         d=m["dist_gt_m"], v=m[vc], a=m[ac], n_cells=int(Q["n_cells"][i])))
+                         d=m["dist_gt_m"], v=v, a=np.asarray(m[ac], float), n_cells=int(Q["n_cells"][i])))
     return rows, cfg
 
 
@@ -93,36 +103,79 @@ def outcomes(rows):
     return o
 
 
+def quintile_of(rows, bins=5):
+    """Equal-count groups: every test sample gets one m_v, samples are sorted by
+    it (stable, so ties keep table order) and split into `bins` groups of equal
+    size. Q1 is the most ambiguous 20 %, Q5 the most confident 20 %. The
+    boundaries are read off the test distribution of that benchmark and
+    backbone; they are analysis-only and play no part in the method."""
+    amb = np.array([r["amb"] for r in rows])
+    order = np.argsort(amb, kind="stable")
+    q = np.empty(len(rows), int)
+    for i, idx in enumerate(np.array_split(order, bins)):
+        q[idx] = i + 1
+    return q
+
+
 def by_ambiguity(rows, bins=5):
-    amb = np.array([r["amb"] for r in rows]); q = np.quantile(amb, np.linspace(0, 1, bins + 1))
+    amb = np.array([r["amb"] for r in rows]); q = quintile_of(rows, bins)
     out = []
-    for i in range(bins):
-        sel = (amb >= q[i]) & (amb <= q[i + 1]) if i == bins - 1 else (amb >= q[i]) & (amb < q[i + 1])
-        rs = [r for r, ok in zip(rows, sel) if ok]
-        if not rs:
-            continue
-        out.append(dict(quantile=i + 1, lo=float(q[i]), hi=float(q[i + 1]), n=len(rs),
+    for i in range(1, bins + 1):
+        rs = [r for r, qq in zip(rows, q) if qq == i]; a = amb[q == i]
+        out.append(dict(quantile=i, lo=float(a.min()), hi=float(a.max()), n=len(rs),
+                        ties_at_zero=int((a == 0).sum()), mean_u_v=float(np.mean([r["u_v"] for r in rs])),
                         vision=float(np.mean([r["e_vis"] < 1 for r in rs])), ours=float(np.mean([r["e_ours"] < 1 for r in rs])),
                         acted=float(np.mean([r["acted"] for r in rs]))))
     return out
 
 
-def pairwise(rows):
-    """Correct hypothesis against each incorrect one; who orders them right."""
-    amb = np.array([r["amb"] for r in rows]); terc = np.quantile(amb[np.isfinite(amb)], (1 / 3, 2 / 3))
+def pairwise(rows, bins=5, boot=5000, seed=0):
+    """Forced choice between a correct and an incorrect hypothesis, no gate.
+
+    For each test sample, the hypotheses are the K=10 spatial hypotheses after
+    NMS. C is the set within 1 m of the truth, I the set at 1 m or beyond.
+    Every pair (c, i) in C x I is a trial; a sample with |C||I| = 0 contributes
+    none. Two orderings are scored on the same pairs:
+        acoustic right   alpha_c > alpha_i, where alpha is the acoustic
+                         evidence of the hypothesis alone (0.9 quantile of
+                         the projected acoustic score over its disc); no
+                         visual prior, no gate, no fusion enters;
+        visual right     v_c > v_i, the backbone's own posterior.
+    Each sample is weighted equally (its pairs share weight 1/|C||I|), and
+    the interval is a bootstrap over samples, not over pairs. Strata are the
+    same equal-count quintiles of m_v as Table 3.
+    The earlier protocol is kept for continuity: only the two strongest
+    hypotheses, only samples where exactly one of them is within 1 m."""
+    rng = np.random.default_rng(seed)
+    q = quintile_of(rows, bins)
+    per = []            # one (acoustic mean, visual mean, n_pairs, quintile) per sample with pairs
+    legacy = []         # (acoustic right, visual right) per decidable top-2 sample
+    for r, qq in zip(rows, q):
+        good = np.nonzero(r["d"] < 1)[0]; bad = np.nonzero(r["d"] >= 1)[0]
+        if good.size and bad.size:
+            A = (r["a"][good][:, None] > r["a"][bad][None, :]); V = (r["v"][good][:, None] > r["v"][bad][None, :])
+            per.append((float(A.mean()), float(V.mean()), int(A.size), int(qq)))
+        if r["d"].size >= 2:
+            top2 = np.argsort(-r["v"])[:2]; ok = r["d"][top2] < 1
+            if ok.sum() == 1:
+                c, i = (top2[0], top2[1]) if ok[0] else (top2[1], top2[0])
+                legacy.append((float(r["a"][c] > r["a"][i]), float(r["v"][c] > r["v"][i])))
+    per = np.array(per) if per else np.zeros((0, 4))
     out = {}
-    for name, sel in (("ambiguous", amb <= terc[0]), ("middle", (amb > terc[0]) & (amb <= terc[1])), ("confident", amb > terc[1]), ("all", np.ones_like(amb, bool))):
-        na = nv = n = 0
-        for r, ok in zip(rows, sel):
-            if not ok:
-                continue
-            good = np.nonzero(r["d"] < 1)[0]; bad = np.nonzero(r["d"] >= 1)[0]
-            if good.size == 0 or bad.size == 0:
-                continue
-            g = int(good[np.argmax(r["v"][good])])       # the best-ranked correct hypothesis
-            for b in bad:
-                n += 1; na += int(r["a"][g] > r["a"][b]); nv += int(r["v"][g] > r["v"][b])
-        out[name] = dict(pairs=n, acoustic=float(na / max(n, 1)), visual=float(nv / max(n, 1)))
+    for name, sel in [(f"Q{i}", per[:, 3] == i) for i in range(1, bins + 1)] + [("all", np.ones(len(per), bool))]:
+        P = per[sel]
+        if len(P) == 0:
+            out[name] = dict(samples=0); continue
+        ci = []
+        for col in (0, 1):
+            bs = P[rng.integers(0, len(P), size=(boot, len(P))), col].mean(axis=1)
+            ci.append([float(np.percentile(bs, 2.5)), float(np.percentile(bs, 97.5))])
+        out[name] = dict(samples=int(len(P)), pairs=int(P[:, 2].sum()), pairs_per_sample=float(P[:, 2].mean()),
+                         max_pairs=int(P[:, 2].max()), acoustic=float(P[:, 0].mean()), visual=float(P[:, 1].mean()),
+                         acoustic_ci=ci[0], visual_ci=ci[1])
+    L = np.array(legacy) if legacy else np.zeros((0, 2))
+    out["legacy_top2"] = dict(samples=int(len(L)), acoustic=float(L[:, 0].mean()) if len(L) else np.nan,
+                              visual=float(L[:, 1].mean()) if len(L) else np.nan)
     return out
 
 
@@ -183,17 +236,20 @@ def main() -> int:
         ax.set_xlabel("visual ambiguity quintile (Q1 most ambiguous)")
     axes[0].set_ylabel("recall @1 m (%)"); axes[0].legend(frameon=False)
     fig.tight_layout(); fig.savefig(HERE / "figs" / "C_by_ambiguity.png", dpi=170); plt.close(fig)
-    # D. pairwise forced choice
+    # D. pairwise forced choice, by the same quintiles as C
     fig, axes = plt.subplots(1, 3, figsize=(10, 3.0), sharey=True)
     for ax, (ds, name) in zip(axes, DS):
         for j, (bb, lab) in enumerate(BB):
             k = f"{ds}/{bb}"
             if k not in J:
                 continue
-            pw = J[k]["pairwise"]; strata = ["ambiguous", "middle", "confident"]; x = np.arange(3) + (j - 1) * 0.27
-            ax.plot(x, [100 * pw[s]["acoustic"] for s in strata], "o-", color=C["acoustic"], alpha=0.5 + 0.25 * j, label=f"acoustic, {lab}" if ds == "replica" else None)
-            ax.plot(x, [100 * pw[s]["visual"] for s in strata], "s--", color=C["vision"], alpha=0.5 + 0.25 * j, label=f"visual, {lab}" if ds == "replica" else None)
-        ax.axhline(50, color="#999", lw=0.6); ax.set_xticks(range(3)); ax.set_xticklabels(strata); ax.set_title(name)
+            pw = J[k]["pairwise"]; qs = [f"Q{i}" for i in range(1, 6)]; x = np.arange(5) + (j - 1) * 0.2
+            ax.errorbar(x, [100 * pw[q]["acoustic"] for q in qs], yerr=[[100 * (pw[q]["acoustic"] - pw[q]["acoustic_ci"][0]) for q in qs], [100 * (pw[q]["acoustic_ci"][1] - pw[q]["acoustic"]) for q in qs]],
+                        fmt="o-", color=C["acoustic"], alpha=0.45 + 0.27 * j, capsize=2, label=f"acoustic, {lab}" if ds == "replica" else None)
+            ax.errorbar(x, [100 * pw[q]["visual"] for q in qs], yerr=[[100 * (pw[q]["visual"] - pw[q]["visual_ci"][0]) for q in qs], [100 * (pw[q]["visual_ci"][1] - pw[q]["visual"]) for q in qs]],
+                        fmt="s--", color=C["vision"], alpha=0.45 + 0.27 * j, capsize=2, label=f"visual, {lab}" if ds == "replica" else None)
+        ax.axhline(50, color="#999", lw=0.6); ax.set_xticks(range(5)); ax.set_xticklabels(qs); ax.set_title(name)
+        ax.set_xlabel("visual ambiguity quintile (Q1 most ambiguous)")
     axes[0].set_ylabel("correct hypothesis ranked first (%)"); axes[0].legend(frameon=False, fontsize=6)
     fig.tight_layout(); fig.savefig(HERE / "figs" / "D_pairwise.png", dpi=170); plt.close(fig)
     # E. candidate set
@@ -233,26 +289,40 @@ def main() -> int:
             continue
         for s in sorted(J[k]["scenes"], key=lambda s: -s["gain"]):
             W(f"| {name} | {s['scene']} | {s['n']} | {s['cells']} | {100*s['vision']:.1f} | {100*s['acoustic']:.1f} | {100*s['ours']:.1f} | {100*s['gain']:+.1f} |")
-    W("\n## Table 3. Recall by visual-ambiguity quintile, UnLoc (Q1 most ambiguous)\n")
-    W("| benchmark | quintile | log-odds range | n | vision | with sound | gain | gate open |")
-    W("|---|---|---|---|---|---|---|---|")
+    W("\n## Table 3. Recall by visual-ambiguity quintile, UnLoc (equal-count groups of m_v; Q1 most ambiguous)\n")
+    W("| benchmark | quintile | m_v range | ties at 0 | mean u_v | n | vision | with sound | gain | gate open |")
+    W("|---|---|---|---|---|---|---|---|---|---|")
     for ds, name in DS:
         k = f"{ds}/unloc"
         if k not in J:
             continue
         for q in J[k]["ambiguity"]:
-            W(f"| {name} | Q{q['quantile']} | {q['lo']:.3f}–{q['hi']:.3f} | {q['n']} | {100*q['vision']:.1f} | {100*q['ours']:.1f} | {100*(q['ours']-q['vision']):+.1f} | {100*q['acted']:.0f}% |")
-    W("\n## Table 4. Forced choice between the correct hypothesis and an incorrect one\n")
-    W("| benchmark | backbone | stratum | pairs | acoustic right | visual right |")
-    W("|---|---|---|---|---|---|")
+            W(f"| {name} | Q{q['quantile']} | {q['lo']:.3f}–{q['hi']:.3f} | {q['ties_at_zero']} | {q['mean_u_v']:.2f} | {q['n']} | {100*q['vision']:.1f} | {100*q['ours']:.1f} | {100*(q['ours']-q['vision']):+.1f} | {100*q['acted']:.0f}% |")
+    W("\n## Table 4. Forced choice between a correct and an incorrect hypothesis, no gate (all C×I pairs per sample, samples weighted equally, sample-level bootstrap)\n")
+    W("| benchmark | backbone | quintile | samples with pairs | pairs | pairs / sample (max) | acoustic right [95% CI] | visual right [95% CI] |")
+    W("|---|---|---|---|---|---|---|---|")
     for ds, name in DS:
         for bb, lab in BB:
             k = f"{ds}/{bb}"
             if k not in J:
                 continue
-            for st in ("ambiguous", "middle", "confident", "all"):
+            for st in ("Q1", "Q2", "Q3", "Q4", "Q5", "all"):
                 p = J[k]["pairwise"][st]
-                W(f"| {name} | {lab} | {st} | {p['pairs']} | {100*p['acoustic']:.1f} | {100*p['visual']:.1f} |")
+                if not p.get("samples"):
+                    continue
+                W(f"| {name} | {lab} | {st} | {p['samples']} | {p['pairs']} | {p['pairs_per_sample']:.1f} ({p['max_pairs']}) | "
+                  f"{100*p['acoustic']:.1f} [{100*p['acoustic_ci'][0]:.1f}, {100*p['acoustic_ci'][1]:.1f}] | "
+                  f"{100*p['visual']:.1f} [{100*p['visual_ci'][0]:.1f}, {100*p['visual_ci'][1]:.1f}] |")
+    W("\n## Table 4b. The earlier protocol, for continuity: only the two strongest hypotheses, only samples where exactly one is within 1 m\n")
+    W("| benchmark | backbone | decidable samples | acoustic right | visual right |")
+    W("|---|---|---|---|---|")
+    for ds, name in DS:
+        for bb, lab in BB:
+            k = f"{ds}/{bb}"
+            if k not in J:
+                continue
+            p = J[k]["pairwise"]["legacy_top2"]
+            W(f"| {name} | {lab} | {p['samples']} | {100*p['acoustic']:.1f} | {100*p['visual']:.1f} |")
     W("\n## Table 5. The acoustic score as the candidate set grows, UnLoc\n")
     W("| benchmark | K | acoustic alone among K | gated fusion over K | oracle over K |")
     W("|---|---|---|---|---|")
