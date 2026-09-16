@@ -43,6 +43,7 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parents[1]
 UNLOC_ROOT = REPO_ROOT.parent / "UnLoc"
 DISCO_ROOT = REPO_ROOT.parent / "DisCo-FLoc"
+SRL_ROOT = REPO_ROOT.parent / "SemRayLoc"
 sys.path.insert(0, str(REPO_ROOT))
 
 # post-direct time ranges, in milliseconds. The envelope frame is 2 ms, so each
@@ -65,7 +66,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--grid-dir", default="outputs/acoustic_grid_v2")
     p.add_argument("--backbone", default="unloc",
                    choices=["unloc", "f3loc_mono", "disco_rrp",
-                            "f3loc_mv", "f3loc_comp"])
+                            "f3loc_mv", "f3loc_comp", "semrayloc"])
+    p.add_argument("--depth-ckpt", default=None,
+                   help="semrayloc only: the depth-ray network; --checkpoint is the semantic-ray one")
+    p.add_argument("--semdesdf-dir", type=Path, default=None,
+                   help="semrayloc only: where <scene>/semdesdf.npy lives (scripts/build_semantic_desdf.py)")
+    p.add_argument("--sem-weight", type=float, default=0.4,
+                   help="semrayloc only: weight of the semantic probability volume against the depth "
+                        "one (SemRayLoc's released evaluation uses 0.6 / 0.4)")
     p.add_argument("--mono-ckpt", default=None,
                    help="the complementary net selects between a frozen mono "
                         "and a frozen mv net, so it needs both")
@@ -242,6 +250,45 @@ def main() -> int:
                 orn_slice=args.orn_slice)
             return (np.asarray(pd_.cpu(), dtype=np.float64),
                     np.asarray(orn.cpu()))
+    elif args.backbone == "semrayloc":
+        # SemRayLoc (Grader & Averbuch-Elor, ICCV 2025): a depth-ray network and a
+        # semantic-ray network (wall / window / door per ray), each matched
+        # against its own DESDF, the two probability volumes summed with the
+        # released weights. Both networks are trained here on the benchmark's
+        # own training rooms (scripts/train_semrayloc.py); the semantic ray of
+        # each query is the class with the largest probability rather than a
+        # multinomial sample, so the table is deterministic.
+        sys.path.insert(0, str(SRL_ROOT))
+        from modules.depth.depth_net_pl import depth_net_pl
+        from modules.semantic.semantic_net_pl import semantic_net_pl
+        from utils.localization_utils import (
+            get_ray_from_depth, get_ray_from_semantics, localize,
+        )
+        ck = args.checkpoint
+        dnet = depth_net_pl.load_from_checkpoint(args.depth_ckpt, map_location=device).to(device).eval()
+        snet = semantic_net_pl.load_from_checkpoint(ck, map_location=device).to(device).eval()
+        hfov_deg = float(np.degrees(2 * np.arctan(1 / (2 * F_W))))
+        SEM = {}   # the current scene's semantic DESDF, set where the depth one is loaded
+
+        def posterior(img_bgr, desdf_t):
+            x = img_bgr[:, :, ::-1].astype(np.float32) / 255.0
+            x = torch.tensor(np.transpose(x, (2, 0, 1))[None], dtype=torch.float32, device=device)
+            m = torch.ones(x.shape[0], x.shape[2], x.shape[3], dtype=torch.uint8, device=device)
+            with torch.no_grad():
+                d = dnet.encoder(x, m)[0].squeeze(0).float().cpu().numpy()
+                logits = snet(x, m)[0].squeeze(0)
+                cls = logits.argmax(-1).cpu().numpy()
+            rays_d = torch.tensor(get_ray_from_depth(d, V=args.n_rays, F_W=F_W),
+                                  device=device, dtype=torch.float32)
+            rays_s = torch.tensor(get_ray_from_semantics(cls, angle_between_rays=hfov_deg / 40,
+                                                         desired_ray_count=args.n_rays),
+                                  device=device, dtype=torch.float32)
+            pv_d = localize(desdf_t, rays_d, return_np=False, orn_slice=args.orn_slice)[0]
+            pv_s = localize(SEM["t"], rays_s, return_np=False, orn_slice=args.orn_slice,
+                            localize_type="semantic")[0]
+            pv = (1 - args.sem_weight) * pv_d + args.sem_weight * pv_s
+            pd_, orn = torch.max(pv, dim=2)
+            return np.asarray(pd_, dtype=np.float64), np.asarray(orn)
     elif args.backbone == "disco_rrp":
         # DisCo's ray regression predictor only. Its second, contrastive stage
         # loses 5.4 points when transferred to Replica zero-shot, so extending
@@ -370,6 +417,11 @@ def main() -> int:
             mask = valid_pose_mask(occ, pg)
             rows, cols = np.nonzero(mask)
             dt = torch.tensor(desdf["desdf"], device=device)
+            if args.backbone == "semrayloc":
+                sdd = np.load(args.semdesdf_dir / scene / "semdesdf.npy", allow_pickle=True).item()
+                assert (sdd["l"], sdd["t"], sdd["semdesdf"].shape) == (desdf["l"], desdf["t"], desdf["desdf"].shape), \
+                    f"{scene}: semantic DESDF frame differs from the depth one"
+                SEM["t"] = torch.tensor(sdd["semdesdf"], device=device, dtype=torch.float32)
 
             # the whole grid's envelope, once, at the full window; every time
             # range below is a slice of these frames

@@ -38,7 +38,7 @@ def gpu_free_mib(g):
 # other tenants hold most of every card, so a job starts when enough is left for
 # it rather than when the card is empty: the ViT-L backbone needs about 12 GB,
 # the two ResNet ones about 4 GB
-NEED_MIB = {"unloc": 12000, "f3loc": 4000, "disco": 4000}
+NEED_MIB = {"unloc": 12000, "f3loc": 4000, "disco": 4000, "srl": 5000}
 MAX_TRIES = 3
 
 AN = ROOT / "outputs" / "analysis"

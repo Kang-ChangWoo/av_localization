@@ -34,7 +34,7 @@ from scripts.room_cv_eval import read, group          # noqa: E402
 from run_projection_matrix import COND, IDENT, PREFIX, SOURCES, tag_of  # noqa: E402
 
 AN = REPO_ROOT / "outputs" / "analysis"
-LABEL = {"f3loc": "F3Loc mono", "unloc": "UnLoc", "disco": "DisCo-FLoc RRP"}
+LABEL = {"f3loc": "F3Loc mono", "unloc": "UnLoc", "disco": "DisCo-FLoc RRP", "srl": "SemRayLoc"}
 TH = [0.1, 0.5, 1.0, 2.0, 5.0]
 
 

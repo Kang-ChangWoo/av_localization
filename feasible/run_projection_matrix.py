@@ -110,13 +110,35 @@ BASE = {
         "checkpoints/epoch=06-val_action_loss=0.90.ckpt --feature stft_band --nfft 256 --hop 64 "
         "--n-rays 7 --f-w 0.5959 --n-poses 20"),
 }
-PREFIX = {"f3loc": "f3loc_mono", "unloc": "unloc", "disco": "disco_rrp"}
+# SemRayLoc (depth rays + semantic rays, ICCV 2025), both networks trained on
+# the benchmark's own training rooms by scripts/train_semrayloc.py; the
+# semantic DESDF from scripts/build_semantic_desdf.py. Added after the three
+# backbones above; feasible/run_srl_pipeline.py runs it end to end.
+SRL = ROOT / "outputs" / "srl"
+BASE[("replica", "srl")] = (
+    "--dataset-root /root/storage/echoloc_dataset/replica --collections replica_f replica_g "
+    "--scenes office_4 apartment_2 frl_apartment_5 --condition raw_scan_open "
+    f"--grid-dir outputs/acoustic_grid_v2 --backbone semrayloc --checkpoint {SRL}/replica/semantic/best.ckpt "
+    f"--depth-ckpt {SRL}/replica/depth/best.ckpt --semdesdf-dir outputs/semdesdf/replica "
+    "--feature stft_band --nfft 256 --hop 64 --n-poses 100")
+BASE[("mp3d", "srl")] = (
+    "--dataset-root /root/storage/echoloc_dataset/mp3d --collections mp3d_f mp3d_g "
+    f"--scenes {MP3D_SCENES} --condition raw_scan_open --grid-dir outputs/acoustic_grid_mp3d "
+    f"--backbone semrayloc --checkpoint {SRL}/mp3d/semantic/best.ckpt --depth-ckpt {SRL}/mp3d/depth/best.ckpt "
+    "--semdesdf-dir outputs/semdesdf/mp3d --feature stft_band --nfft 256 --hop 64 --n-poses 40")
+BASE[("s3d", "srl")] = (
+    "--dataset-root /root/storage/echoloc_dataset/s3d --collections s3d "
+    f"--scenes {S3D_SCENES} --condition floorplan_closed --grid-dir outputs/acoustic_grid_s3d "
+    f"--backbone semrayloc --checkpoint {SRL}/s3d/semantic/best.ckpt --depth-ckpt {SRL}/s3d/depth/best.ckpt "
+    "--semdesdf-dir outputs/semdesdf/s3d --feature stft_band --nfft 256 --hop 64 --n-rays 7 --f-w 0.5959 --n-poses 20")
+PREFIX = {"f3loc": "f3loc_mono", "unloc": "unloc", "disco": "disco_rrp", "srl": "semrayloc"}
 COND = {"replica": "raw_scan_open", "mp3d": "raw_scan_open", "s3d": "floorplan_closed"}
 # the identity (no projection) table each target already has
 IDENT = {("replica", "f3loc"): "f3STFT", ("replica", "unloc"): "unlocSTFT", ("replica", "disco"): "discoID",
          ("mp3d", "f3loc"): "f3loc_mono_mp3d12", ("mp3d", "unloc"): "unloc_mp3d12",
          ("mp3d", "disco"): "disco_rrp_mp3d12",
-         ("s3d", "f3loc"): "f3loc_mono_s3d", ("s3d", "unloc"): "unloc_s3d", ("s3d", "disco"): "disco_rrp_s3d"}
+         ("s3d", "f3loc"): "f3loc_mono_s3d", ("s3d", "unloc"): "unloc_s3d", ("s3d", "disco"): "disco_rrp_s3d",
+         ("replica", "srl"): "semrayloc", ("mp3d", "srl"): "semrayloc_mp3d12", ("s3d", "srl"): "semrayloc_s3d"}
 # tables that already exist for a (target, backbone, source) and need no extraction
 EXISTING = {("replica", "f3loc", "R"): "f3loc_mono_proj", ("replica", "unloc", "R"): "unloc_uproj",
             ("mp3d", "f3loc", "M"): "f3loc_mono_mp3d12proj", ("mp3d", "unloc", "M"): "unloc_mp3d12proj",
