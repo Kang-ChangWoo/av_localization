@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """SemRayLoc as a fourth visual backbone, end to end under the headline protocol.
 
-For each benchmark: wait for scripts/train_semrayloc.py to finish both ray
-networks on the benchmark's training rooms, take the checkpoint with the lowest
+For each benchmark: wait for scripts/train_semrayloc.py to finish the semantic ray
+network on the benchmark's training rooms (the depth net is the F3Loc mono
+checkpoint already trained there), take the checkpoint with the lowest
 validation loss (the validation rooms choose, as everywhere), link it as
 best.ckpt, then extract the mode tables on the test rooms and on the validation
 rooms, each without a projection and under the benchmark's own projection
@@ -50,7 +51,7 @@ def best_checkpoint(d: Path) -> Path | None:
 
 
 def link_best(ds: str) -> bool:
-    found = {net: best_checkpoint(SRL / ds / net) for net in ("semantic", "depth")}
+    found = {net: best_checkpoint(SRL / ds / net) for net in ("semantic",)}   # the depth net is F3Loc mono, already trained
     if any(b is None for b in found.values()):
         return False
     for net, b in found.items():

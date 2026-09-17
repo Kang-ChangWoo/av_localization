@@ -69,6 +69,12 @@ def parse_args() -> argparse.Namespace:
                             "f3loc_mv", "f3loc_comp", "semrayloc"])
     p.add_argument("--depth-ckpt", default=None,
                    help="semrayloc only: the depth-ray network; --checkpoint is the semantic-ray one")
+    p.add_argument("--depth-arch", default="f3loc", choices=["f3loc", "srl"],
+                   help="semrayloc only: which depth-ray network --depth-ckpt holds. SemRayLoc's "
+                        "depth net is F3Loc's mono net (same code), so 'f3loc' uses the F3Loc mono "
+                        "checkpoint trained here on the benchmark's own training rooms and the "
+                        "SemRayLoc row differs from the F3Loc row by the semantic branch alone; "
+                        "'srl' uses a depth net trained by scripts/train_semrayloc.py --net depth")
     p.add_argument("--semdesdf-dir", type=Path, default=None,
                    help="semrayloc only: where <scene>/semdesdf.npy lives (scripts/build_semantic_desdf.py)")
     p.add_argument("--sem-weight", type=float, default=0.4,
@@ -258,25 +264,45 @@ def main() -> int:
         # own training rooms (scripts/train_semrayloc.py); the semantic ray of
         # each query is the class with the largest probability rather than a
         # multinomial sample, so the table is deterministic.
+        ck = args.checkpoint
+        if args.depth_arch == "f3loc":
+            # the vendored F3Loc tree and SemRayLoc both ship packages called
+            # `modules` and `utils`: F3Loc's mono net is loaded first, then those
+            # names are dropped from sys.modules so SemRayLoc's resolve below
+            from track1_core._vendor import VENDOR_ROOT, ensure_on_path
+            ensure_on_path()
+            from track1_core.models import MonoDepthModule
+            dnet = MonoDepthModule.load_from_checkpoint(args.depth_ckpt).to(device).eval()
+            for k in [k for k in sys.modules if k in ("modules", "utils")
+                      or k.startswith("modules.") or k.startswith("utils.")]:
+                del sys.modules[k]
+            sys.path.remove(str(VENDOR_ROOT))
         sys.path.insert(0, str(SRL_ROOT))
-        from modules.depth.depth_net_pl import depth_net_pl
         from modules.semantic.semantic_net_pl import semantic_net_pl
         from utils.localization_utils import (
             get_ray_from_depth, get_ray_from_semantics, localize,
         )
-        ck = args.checkpoint
-        dnet = depth_net_pl.load_from_checkpoint(args.depth_ckpt, map_location=device).to(device).eval()
         snet = semantic_net_pl.load_from_checkpoint(ck, map_location=device).to(device).eval()
+        if args.depth_arch == "srl":
+            from modules.depth.depth_net_pl import depth_net_pl
+            dnet = depth_net_pl.load_from_checkpoint(args.depth_ckpt, map_location=device).to(device).eval()
         hfov_deg = float(np.degrees(2 * np.arctan(1 / (2 * F_W))))
         SEM = {}   # the current scene's semantic DESDF, set where the depth one is loaded
+        MEAN = np.array((0.485, 0.456, 0.406), dtype=np.float32)
+        STD = np.array((0.229, 0.224, 0.225), dtype=np.float32)
 
         def posterior(img_bgr, desdf_t):
             x = img_bgr[:, :, ::-1].astype(np.float32) / 255.0
-            x = torch.tensor(np.transpose(x, (2, 0, 1))[None], dtype=torch.float32, device=device)
-            m = torch.ones(x.shape[0], x.shape[2], x.shape[3], dtype=torch.uint8, device=device)
+            xt = torch.tensor(np.transpose(x, (2, 0, 1))[None], dtype=torch.float32, device=device)
+            m = torch.ones(xt.shape[0], xt.shape[2], xt.shape[3], dtype=torch.uint8, device=device)
             with torch.no_grad():
-                d = dnet.encoder(x, m)[0].squeeze(0).float().cpu().numpy()
-                logits = snet(x, m)[0].squeeze(0)
+                if args.depth_arch == "srl":
+                    d = dnet.encoder(xt, m)[0].squeeze(0).float().cpu().numpy()
+                else:
+                    xn = torch.tensor(np.transpose((x - MEAN) / STD, (2, 0, 1))[None],
+                                      dtype=torch.float32, device=device)
+                    d = dnet.encoder(xn, None)[0].squeeze(0).float().cpu().numpy()
+                logits = snet(xt, m)[0].squeeze(0)
                 cls = logits.argmax(-1).cpu().numpy()
             rays_d = torch.tensor(get_ray_from_depth(d, V=args.n_rays, F_W=F_W),
                                   device=device, dtype=torch.float32)

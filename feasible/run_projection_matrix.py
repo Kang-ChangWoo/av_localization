@@ -110,26 +110,28 @@ BASE = {
         "checkpoints/epoch=06-val_action_loss=0.90.ckpt --feature stft_band --nfft 256 --hop 64 "
         "--n-rays 7 --f-w 0.5959 --n-poses 20"),
 }
-# SemRayLoc (depth rays + semantic rays, ICCV 2025), both networks trained on
-# the benchmark's own training rooms by scripts/train_semrayloc.py; the
-# semantic DESDF from scripts/build_semantic_desdf.py. Added after the three
+# SemRayLoc (depth rays + semantic rays, ICCV 2025). Its depth net is F3Loc's
+# mono net, so the F3Loc mono checkpoint trained here on the benchmark's own
+# training rooms serves as it and the row differs from F3Loc's by the semantic
+# branch alone; the semantic net is trained by scripts/train_semrayloc.py, the
+# semantic DESDF by scripts/build_semantic_desdf.py. Added after the three
 # backbones above; feasible/run_srl_pipeline.py runs it end to end.
 SRL = ROOT / "outputs" / "srl"
 BASE[("replica", "srl")] = (
     "--dataset-root /root/storage/echoloc_dataset/replica --collections replica_f replica_g "
     "--scenes office_4 apartment_2 frl_apartment_5 --condition raw_scan_open "
     f"--grid-dir outputs/acoustic_grid_v2 --backbone semrayloc --checkpoint {SRL}/replica/semantic/best.ckpt "
-    f"--depth-ckpt {SRL}/replica/depth/best.ckpt --semdesdf-dir outputs/semdesdf/replica "
+    f"--depth-ckpt outputs/echoloc_mono_fg/mono.ckpt --depth-arch f3loc --semdesdf-dir outputs/semdesdf/replica "
     "--feature stft_band --nfft 256 --hop 64 --n-poses 100")
 BASE[("mp3d", "srl")] = (
     "--dataset-root /root/storage/echoloc_dataset/mp3d --collections mp3d_f mp3d_g "
     f"--scenes {MP3D_SCENES} --condition raw_scan_open --grid-dir outputs/acoustic_grid_mp3d "
-    f"--backbone semrayloc --checkpoint {SRL}/mp3d/semantic/best.ckpt --depth-ckpt {SRL}/mp3d/depth/best.ckpt "
+    f"--backbone semrayloc --checkpoint {SRL}/mp3d/semantic/best.ckpt --depth-ckpt outputs/visual/mp3d/mono_lr3e4/mono.ckpt --depth-arch f3loc "
     "--semdesdf-dir outputs/semdesdf/mp3d --feature stft_band --nfft 256 --hop 64 --n-poses 40")
 BASE[("s3d", "srl")] = (
     "--dataset-root /root/storage/echoloc_dataset/s3d --collections s3d "
     f"--scenes {S3D_SCENES} --condition floorplan_closed --grid-dir outputs/acoustic_grid_s3d "
-    f"--backbone semrayloc --checkpoint {SRL}/s3d/semantic/best.ckpt --depth-ckpt {SRL}/s3d/depth/best.ckpt "
+    f"--backbone semrayloc --checkpoint {SRL}/s3d/semantic/best.ckpt --depth-ckpt outputs/visual/s3d/mono_lr3e4/mono.ckpt --depth-arch f3loc "
     "--semdesdf-dir outputs/semdesdf/s3d --feature stft_band --nfft 256 --hop 64 --n-rays 7 --f-w 0.5959 --n-poses 20")
 PREFIX = {"f3loc": "f3loc_mono", "unloc": "unloc", "disco": "disco_rrp", "srl": "semrayloc"}
 COND = {"replica": "raw_scan_open", "mp3d": "raw_scan_open", "s3d": "floorplan_closed"}
