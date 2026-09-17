@@ -1,0 +1,157 @@
+{
+  "dataset": "replica",
+  "results": {
+    "srl": {
+      "selected": {
+        "val": 0.41333333333333333,
+        "source": "R",
+        "structure": [
+          "centre",
+          "quantile"
+        ],
+        "rule": "simple",
+        "scalars": [
+          2.0,
+          0.1,
+          0.05,
+          -2.0
+        ],
+        "test_tag": "semraylocprojR",
+        "n": 600,
+        "vision": 0.29,
+        "ours": 0.38666666666666666,
+        "gain": 0.09666666666666666,
+        "ci": [
+          0.06333333333333334,
+          0.13
+        ],
+        "recalls": {
+          "0.1m": 0.04,
+          "0.5m": 0.2783333333333333,
+          "1.0m": 0.38666666666666666,
+          "2.0m": 0.49833333333333335,
+          "5.0m": 0.89
+        },
+        "vision_recalls": {
+          "0.1m": 0.03,
+          "0.5m": 0.20333333333333334,
+          "1.0m": 0.29,
+          "2.0m": 0.4,
+          "5.0m": 0.815
+        },
+        "median": 2.043582826220291,
+        "vision_median": 2.6640231491559705
+      },
+      "three-scalar rule": {
+        "val": 0.41333333333333333,
+        "source": "R",
+        "structure": [
+          "centre",
+          "quantile"
+        ],
+        "rule": "simple",
+        "scalars": [
+          2.0,
+          0.1,
+          0.05,
+          -2.0
+        ],
+        "test_tag": "semraylocprojR",
+        "n": 600,
+        "vision": 0.29,
+        "ours": 0.38666666666666666,
+        "gain": 0.09666666666666666,
+        "ci": [
+          0.06333333333333334,
+          0.13
+        ],
+        "recalls": {
+          "0.1m": 0.04,
+          "0.5m": 0.2783333333333333,
+          "1.0m": 0.38666666666666666,
+          "2.0m": 0.49833333333333335,
+          "5.0m": 0.89
+        },
+        "vision_recalls": {
+          "0.1m": 0.03,
+          "0.5m": 0.20333333333333334,
+          "1.0m": 0.29,
+          "2.0m": 0.4,
+          "5.0m": 0.815
+        },
+        "median": 2.043582826220291,
+        "vision_median": 2.6640231491559705
+      },
+      "no projection": {
+        "val": 0.37166666666666665,
+        "source": null,
+        "structure": [
+          "centre",
+          "quantile"
+        ],
+        "rule": "simple",
+        "scalars": [
+          0.5,
+          0.02,
+          0.1,
+          -2.0
+        ],
+        "test_tag": "semrayloc",
+        "n": 600,
+        "vision": 0.29,
+        "ours": 0.325,
+        "gain": 0.035,
+        "ci": [
+          0.006666666666666667,
+          0.06333333333333334
+        ],
+        "recalls": {
+          "0.1m": 0.03,
+          "0.5m": 0.23166666666666666,
+          "1.0m": 0.325,
+          "2.0m": 0.43666666666666665,
+          "5.0m": 0.8333333333333334
+        },
+        "vision_recalls": {
+          "0.1m": 0.03,
+          "0.5m": 0.20333333333333334,
+          "1.0m": 0.29,
+          "2.0m": 0.4,
+          "5.0m": 0.815
+        },
+        "median": 2.473885998049699,
+        "vision_median": 2.6640231491559705
+      }
+    }
+  },
+  "provenance": {
+    "utc": "2026-09-17T05:22:34Z",
+    "argv": [
+      "scripts/val_select.py",
+      "--dataset",
+      "replica",
+      "--backbones",
+      "srl",
+      "--fixed",
+      "--source",
+      "indomain",
+      "--out",
+      "feasible/results/VAL_replica_fixed_indomain_srl.md"
+    ],
+    "git": {
+      "commit": "3458530d2fe0",
+      "dirty": true,
+      "diff_sha1": "bc7b666e709c",
+      "diff_lines": 35
+    },
+    "env": {
+      "python": "3.8.20",
+      "platform": "Linux-6.8.0-84-generic-x86_64-with-glibc2.17",
+      "numpy": "1.24.3",
+      "torch": "2.4.1",
+      "cv2": "5.0.0",
+      "scipy": "1.10.1"
+    },
+    "inputs": []
+  }
+}

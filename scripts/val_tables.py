@@ -95,9 +95,15 @@ def main() -> int:
     QA = {"furnished": "furnished scan", "matched": "floorplan only"}
     for key, name, qa in DS:
         j = load(RES / f"VAL_{key}_fixed_indomain.json")
-        for i, (bb, label) in enumerate(BB):
+        # SemRayLoc (semantic rays on top of the F3Loc mono depth net) is selected
+        # by the same script into its own file, feasible/run_srl_pipeline.py
+        rows = [(bb, label, j) for bb, label in BB]
+        j_srl = load(RES / f"VAL_{key}_fixed_indomain_srl.json")
+        if j_srl:
+            rows.append(("srl", "SemRayLoc", j_srl))
+        for i, (bb, label, j) in enumerate(rows):
             r = (j or {}).get("results", {}).get(bb, {}).get("selected")
-            first = (rf"\multirow{{{2*len(BB)}}}{{*}}{{{name}}} & \multirow{{{2*len(BB)}}}{{*}}{{{QA[qa]}}} "
+            first = (rf"\multirow{{{2*len(rows)}}}{{*}}{{{name}}} & \multirow{{{2*len(rows)}}}{{*}}{{{QA[qa]}}} "
                      if i == 0 else "& ")
             if not r or "vision" not in r:
                 M.append(rf"{first}& \multirow{{2}}{{*}}{{{label}}} & $\times$ & {TBD} & & & & & & \\")
@@ -110,7 +116,7 @@ def main() -> int:
                          + " & ".join(f"{x:.1f}" for x in v) + rf" & {r['vision_median']:.2f} & -- \\")
                 M.append(rf"& & & $\checkmark$ & " + " & ".join(rf"\textbf{{{x:.1f}}}" for x in o)
                          + rf" & \textbf{{{r['median']:.2f}}} & \textbf{{{g:+.1f}}}\,{{\scriptsize[{lo:+.1f},{hi:+.1f}]}} \\")
-            if i < len(BB) - 1:
+            if i < len(rows) - 1:
                 M.append(r"\cmidrule(lr){3-11}")
         M.append(r"\midrule")
     M[-1] = r"\bottomrule\end{tabular}\end{table*}"

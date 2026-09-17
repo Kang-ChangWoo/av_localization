@@ -82,7 +82,8 @@ def jobs_for(ds):
             tag = (IDENT[(ds, "srl")] if s is None else tag_of(ds, "srl", s)) if split == "test" else val_tag("srl", s, ds)
             suffix = tag[len(PREFIX["srl"]):]
             proj = f" --acoustic-projection {W[s]}" if s else ""
-            out.append((tag, f"{PY} scripts/extract_mode_table.py {b} --tag {suffix}{proj} > logs/extract_{tag}.log 2>&1"))
+            # the suffix is empty for the no-projection test table, hence the quotes
+            out.append((tag, f"{PY} scripts/extract_mode_table.py {b} --tag '{suffix}'{proj} > logs/extract_{tag}.log 2>&1"))
     return out
 
 
@@ -94,7 +95,9 @@ def main() -> int:
     while len(selected) < len(OWN):
         for ds in OWN:
             if pending[ds] is None and link_best(ds):
-                pending[ds] = [(t, c) for t, c in jobs_for(ds) if not table(ds, t).exists()]
+                # a table still being written by an extraction started earlier is not queued again
+                pending[ds] = [(t, c) for t, c in jobs_for(ds) if not table(ds, t).exists()
+                               and subprocess.run(["pgrep", "-f", f"extract_{t}.log"], capture_output=True).returncode != 0]
                 log(f"{ds}: {len(pending[ds])} extractions to run")
         for g, (p, ds, tag) in list(running.items()):
             if p.poll() is not None:
@@ -115,6 +118,9 @@ def main() -> int:
             if ds in selected or pending[ds] is None or pending[ds] or any(r[1] == ds for r in running.values()):
                 continue
             if not all(table(ds, t).exists() for t, _ in jobs_for(ds)):
+                if any(subprocess.run(["pgrep", "-f", f"extract_{t}.log"], capture_output=True).returncode == 0
+                       for t, _ in jobs_for(ds)):
+                    continue          # an extraction started outside this driver is still running
                 log(f"{ds}: a table is missing after extraction; not selecting")
                 selected.add(ds)
                 continue

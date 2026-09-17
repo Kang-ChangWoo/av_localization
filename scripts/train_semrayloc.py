@@ -47,6 +47,11 @@ def parse_args():
     p.add_argument("--precision", default="bf16-mixed",
                    help="fp16 mixed precision drove the depth net's attention to NaN within the first "
                         "epoch on every benchmark (the semantic net was fine); bf16 has the fp32 range")
+    p.add_argument("--monitor", default="loss-valid",
+                   help="validation metric that picks the checkpoint: loss-valid (SemRayLoc's own) or, "
+                        "for the semantic net, acc_rays_val (the ray class is what the localiser uses; on "
+                        "Replica the validation loss rises from epoch 1 through over-confidence while "
+                        "the ray accuracy keeps improving)")
     p.add_argument("--max-steps", type=int, default=-1)
     p.add_argument("--limit-train-batches", type=float, default=1.0)
     p.add_argument("--limit-val-batches", type=float, default=1.0)
@@ -139,8 +144,9 @@ def main() -> int:
 
     out = a.output_dir / a.run_name
     out.mkdir(parents=True, exist_ok=True)
-    ck = ModelCheckpoint(monitor="loss-valid", dirpath=out, filename=f"{a.net}_net-{{epoch:02d}}-{{loss-valid:.3f}}",
-                         save_top_k=2, mode="min", save_last=True)
+    mode = "max" if a.monitor.startswith("acc") else "min"
+    ck = ModelCheckpoint(monitor=a.monitor, dirpath=out, filename=f"{a.net}_net-{{epoch:02d}}-{{{a.monitor}:.3f}}",
+                         save_top_k=2, mode=mode, save_last=True)
     trainer = Trainer(max_epochs=a.epochs, max_steps=a.max_steps, callbacks=[ck], accelerator="gpu", devices=1,
                       precision=a.precision, log_every_n_steps=50, default_root_dir=out,
                       limit_train_batches=a.limit_train_batches, limit_val_batches=a.limit_val_batches,
