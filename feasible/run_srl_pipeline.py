@@ -50,12 +50,11 @@ def best_checkpoint(d: Path) -> Path | None:
 
 
 def link_best(ds: str) -> bool:
-    for net in ("semantic", "depth"):
-        d = SRL / ds / net
-        b = best_checkpoint(d)
-        if b is None:
-            return False
-        lnk = d / "best.ckpt"
+    found = {net: best_checkpoint(SRL / ds / net) for net in ("semantic", "depth")}
+    if any(b is None for b in found.values()):
+        return False
+    for net, b in found.items():
+        lnk = SRL / ds / net / "best.ckpt"
         if lnk.is_symlink() or lnk.exists():
             lnk.unlink()
         lnk.symlink_to(b.name)
