@@ -24,6 +24,9 @@ TBD = r"\emph{tbd}"
 BB = [("f3loc", "F3Loc mono"), ("unloc", "UnLoc"), ("disco", "DisCo-FLoc RRP")]
 DS = [("replica", "Replica", "furnished"), ("mp3d", "Matterport3D", "furnished"),
       ("s3d", "Structured3D", "matched")]
+# Gibson joins the tables once its validation-selected results exist
+if (Path(__file__).resolve().parents[1] / "feasible" / "results" / "VAL_gibson_fixed_indomain.json").exists():
+    DS.insert(2, ("gibson", "Gibson", "furnished"))
 TH = ["0.1m", "0.5m", "1.0m", "2.0m", "5.0m"]
 
 

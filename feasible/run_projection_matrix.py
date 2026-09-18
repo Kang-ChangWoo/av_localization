@@ -41,7 +41,9 @@ W = {"R": MET / "acoustic_projection.npz",
      # furnished twin and so enter as (x, x) pairs: a position-separation term
      # only. Included because the reader will ask; the honest expectation is
      # that it changes little.
-     "T": MET / "acoustic_projection_three.npz"}
+     "T": MET / "acoustic_projection_three.npz",
+     # G: Gibson's own training floors (795), used only on Gibson; not part of the matrix
+     "G": MET / "acoustic_projection_gibson.npz"}
 SOURCES = ("R", "M", "B", "T")
 POOLED = {"B": [MET / "proj_feature_cache_mp3d.npz"],
           "T": [MET / "proj_feature_cache_mp3d.npz", MET / "proj_feature_cache_s3d.npz"]}
@@ -134,13 +136,14 @@ BASE[("s3d", "srl")] = (
     f"--backbone semrayloc --checkpoint {SRL}/s3d/semantic/best.ckpt --depth-ckpt outputs/visual/s3d/mono_lr3e4/mono.ckpt --depth-arch f3loc "
     "--semdesdf-dir outputs/semdesdf/s3d --feature stft_band --nfft 256 --hop 64 --n-rays 7 --f-w 0.5959 --n-poses 20")
 PREFIX = {"f3loc": "f3loc_mono", "unloc": "unloc", "disco": "disco_rrp", "srl": "semrayloc"}
-COND = {"replica": "raw_scan_open", "mp3d": "raw_scan_open", "s3d": "floorplan_closed"}
+COND = {"replica": "raw_scan_open", "mp3d": "raw_scan_open", "s3d": "floorplan_closed", "gibson": "raw_scan_open"}
 # the identity (no projection) table each target already has
 IDENT = {("replica", "f3loc"): "f3STFT", ("replica", "unloc"): "unlocSTFT", ("replica", "disco"): "discoID",
          ("mp3d", "f3loc"): "f3loc_mono_mp3d12", ("mp3d", "unloc"): "unloc_mp3d12",
          ("mp3d", "disco"): "disco_rrp_mp3d12",
          ("s3d", "f3loc"): "f3loc_mono_s3d", ("s3d", "unloc"): "unloc_s3d", ("s3d", "disco"): "disco_rrp_s3d",
-         ("replica", "srl"): "semrayloc", ("mp3d", "srl"): "semrayloc_mp3d12", ("s3d", "srl"): "semrayloc_s3d"}
+         ("replica", "srl"): "semrayloc", ("mp3d", "srl"): "semrayloc_mp3d12", ("s3d", "srl"): "semrayloc_s3d",
+         ("gibson", "f3loc"): "f3loc_mono_gibson", ("gibson", "unloc"): "unloc_gibson", ("gibson", "disco"): "disco_rrp_gibson"}
 # tables that already exist for a (target, backbone, source) and need no extraction
 EXISTING = {("replica", "f3loc", "R"): "f3loc_mono_proj", ("replica", "unloc", "R"): "unloc_uproj",
             ("mp3d", "f3loc", "M"): "f3loc_mono_mp3d12proj", ("mp3d", "unloc", "M"): "unloc_mp3d12proj",
@@ -150,7 +153,7 @@ EXISTING = {("replica", "f3loc", "R"): "f3loc_mono_proj", ("replica", "unloc", "
 def tag_of(target, backbone, source):
     if (target, backbone, source) in EXISTING:
         return EXISTING[(target, backbone, source)]
-    suffix = {"replica": "", "mp3d": "_mp3d12", "s3d": "_s3d"}[target]
+    suffix = {"replica": "", "mp3d": "_mp3d12", "s3d": "_s3d", "gibson": "_gibson"}[target]
     return f"{PREFIX[backbone]}{suffix}proj{source}"
 
 

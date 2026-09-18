@@ -40,7 +40,7 @@ TH = [0.1, 0.5, 1.0, 2.0, 5.0]
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--dataset", required=True, choices=["replica", "mp3d", "s3d"])
+    p.add_argument("--dataset", required=True, choices=["replica", "mp3d", "s3d", "gibson"])
     p.add_argument("--backbones", nargs="+", default=["f3loc", "unloc", "disco"])
     p.add_argument("--boot", type=int, default=10000)
     p.add_argument("--simplicity-margin", type=float, default=0.01,
@@ -82,7 +82,8 @@ VAL_ROOMS = {"replica": {"apartment_1", "frl_apartment_4", "office_3"},
              "mp3d": {"EU6Fwq7SyZv_f2", "1LXtFkjw3qL_f2", "1LXtFkjw3qL_f0", "1pXnuDYAj8r_f1",
                       "r47D5H71a5s_f0", "ZMojNkEp431_f0"},
              "s3d": {"scene_03242", "scene_03209", "scene_03203", "scene_03220", "scene_03248",
-                     "scene_03215", "scene_03231", "scene_03236", "scene_03223", "scene_03208"}}
+                     "scene_03215", "scene_03231", "scene_03236", "scene_03223", "scene_03208"},
+             "gibson": {"Wiconisco_f0", "Macksville_f0", "Southfield_f3", "Wesley_f1", "Jennie_f0", "Scioto_f2"}}
 
 
 def load(cond: str, tag: str, expect_rooms=None, inject: int = 0):
@@ -115,7 +116,7 @@ def main() -> int:
                       itertools.product(base, (-2.0, 0.0, 0.2, 0.4))]}
     if args.fixed:
         rules = {"simple": rules["simple"]}
-    INDOMAIN = {"replica": "R", "mp3d": "M", "s3d": "B"}
+    INDOMAIN = {"replica": "R", "mp3d": "M", "s3d": "B", "gibson": "G"}
     allowed_sources = {"val": (None,) + tuple(SOURCES),
                        "indomain": (INDOMAIN[args.dataset], None),
                        "B": ("B", None), "T": ("T", None)}[args.source]

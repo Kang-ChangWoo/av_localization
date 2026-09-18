@@ -47,6 +47,8 @@ VAL_ROOMS = {
     "mp3d": "EU6Fwq7SyZv_f2 1LXtFkjw3qL_f2 1LXtFkjw3qL_f0 1pXnuDYAj8r_f1 r47D5H71a5s_f0 ZMojNkEp431_f0",
     "s3d": ("scene_03242 scene_03209 scene_03203 scene_03220 scene_03248 scene_03215 "
             "scene_03231 scene_03236 scene_03223 scene_03208"),
+    # six validation floors of median size; feasible/run_gibson_pipeline.py runs Gibson
+    "gibson": "Wiconisco_f0 Macksville_f0 Southfield_f3 Wesley_f1 Jennie_f0 Scioto_f2",
 }
 
 
@@ -77,12 +79,12 @@ def command(ds, backbone, source, gpu):
 
 
 def main() -> int:
-    jobs = [(ds, bb, src) for ds in VAL_ROOMS for bb in ("f3loc", "unloc", "disco")
+    jobs = [(ds, bb, src) for ds in ("replica", "mp3d", "s3d") for bb in ("f3loc", "unloc", "disco")
             for src in (None,) + tuple(SOURCES)]
     jobs = [j for j in jobs if not table(j[0], val_tag(j[1], j[2], j[0])).exists()]
     log(f"{len(jobs)} validation extractions to run")
     running, selected, tries = {}, set(), {}
-    while jobs or running or len(selected) < len(VAL_ROOMS):
+    while jobs or running or len(selected) < 3:
         for g, (p, key) in list(running.items()):
             if p.poll() is not None:
                 ok = table(key[0], val_tag(key[1], key[2], key[0])).exists()
@@ -108,7 +110,7 @@ def main() -> int:
             running[g] = (subprocess.Popen(cmd, shell=True, cwd=ROOT), key)
             log(f"gpu {g}: started {key} -> {tag}")
         # a benchmark is selected once none of its extractions are pending or running
-        for ds in VAL_ROOMS:
+        for ds in ("replica", "mp3d", "s3d"):
             if ds in selected:
                 continue
             pending = [j for j in jobs if j[0] == ds] + [k for _, k in running.values() if k[0] == ds]
