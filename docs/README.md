@@ -37,7 +37,6 @@ Read in this order if you are new to the project.
 |---|---|
 | `decision_log.md` | running log of what was decided and why |
 | `data_provenance_incident.md` | the sample-rate incident, in full. Read this before trusting any acoustic number older than 2026-09-09. |
-| `history/` | superseded write-ups, kept because they are the record. See `history/README.md` for what replaced each and why. |
 
 ## A note on the scripts
 
