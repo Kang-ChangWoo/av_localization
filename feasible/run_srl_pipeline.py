@@ -40,26 +40,31 @@ NEED = 5000
 def best_checkpoint(d: Path) -> Path | None:
     if not (d / "final_metrics.json").exists():
         return None
-    cands = []
-    for f in d.glob("*_net-epoch=*-loss-valid=*.ckpt"):
-        m = re.search(r"loss-valid=([0-9.]+)\.ckpt$", f.name)
-        if m:
-            cands.append((float(m.group(1)), f))
-    if not cands:
-        return None
-    return min(cands)[1]
+    acc = [(float(m.group(1)), f) for f in d.glob("*_net-epoch=*-acc_rays_val=*.ckpt")
+           if (m := re.search(r"acc_rays_val=([0-9.]+)\.ckpt$", f.name))]
+    if acc:
+        return max(acc)[1]
+    loss = [(float(m.group(1)), f) for f in d.glob("*_net-epoch=*-loss-valid=*.ckpt")
+            if (m := re.search(r"loss-valid=([0-9.]+)\.ckpt$", f.name))]
+    return min(loss)[1] if loss else None
 
 
 def link_best(ds: str) -> bool:
-    found = {net: best_checkpoint(SRL / ds / net) for net in ("semantic",)}   # the depth net is F3Loc mono, already trained
-    if any(b is None for b in found.values()):
+    """best.ckpt for the semantic net (the depth net is F3Loc mono, already trained).
+
+    The checkpoint is chosen on the validation rooms by ray accuracy, which is
+    what the localiser consumes; an existing best.ckpt link is a choice already
+    made and is kept."""
+    lnk = SRL / ds / "semantic" / "best.ckpt"
+    if lnk.is_symlink() and lnk.exists():
+        return True
+    b = best_checkpoint(SRL / ds / "semantic")
+    if b is None:
         return False
-    for net, b in found.items():
-        lnk = SRL / ds / net / "best.ckpt"
-        if lnk.is_symlink() or lnk.exists():
-            lnk.unlink()
-        lnk.symlink_to(b.name)
-        log(f"{ds}/{net}: best {b.name}")
+    if lnk.is_symlink():
+        lnk.unlink()
+    lnk.symlink_to(b.name)
+    log(f"{ds}/semantic: best {b.name}")
     return True
 
 
