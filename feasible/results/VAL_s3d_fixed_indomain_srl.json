@@ -125,7 +125,7 @@
     }
   },
   "provenance": {
-    "utc": "2026-09-17T05:42:56Z",
+    "utc": "2026-09-18T13:13:58Z",
     "argv": [
       "scripts/val_select.py",
       "--dataset",
@@ -139,10 +139,10 @@
       "feasible/results/VAL_s3d_fixed_indomain_srl.md"
     ],
     "git": {
-      "commit": "3458530d2fe0",
+      "commit": "dd41338f9efa",
       "dirty": true,
-      "diff_sha1": "64ba0c8981cc",
-      "diff_lines": 63
+      "diff_sha1": "5298ff10f850",
+      "diff_lines": 408
     },
     "env": {
       "python": "3.8.20",
