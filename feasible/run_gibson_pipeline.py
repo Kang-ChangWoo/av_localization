@@ -36,8 +36,24 @@ ROOT_DS = Path("/root/storage/echoloc_dataset/gibson")
 GRID = ROOT / "outputs" / "acoustic_grid_gibson"
 GRID_VAL = ROOT / "outputs" / "acoustic_grid_val" / "gibson"
 NEED = {"unloc": 12000, "f3loc": 4000, "disco": 4000}
-GPUS = list(range(8))
-TEST = json.loads((ROOT_DS / "dataset_meta.json").read_text())["split"]["test"]
+# three at a time, not eight: an extraction holds one scene's whole candidate grid
+# in RAM (the rir array of every cell), so concurrency multiplies the peak
+GPUS = [0, 1, 2]
+# a floor whose grid alone exceeds this is left out of the table rather than
+# thrashing the machine; which ones were dropped is logged and written beside the
+# results. Gibson's test split has one such floor, Sargents_f2 (176k free cells,
+# 24% of the whole split's cells, against a median of 6k).
+MAX_GRID_GB = float(os.environ.get("GIBSON_MAX_GRID_GB", 40))
+ALL_TEST = json.loads((ROOT_DS / "dataset_meta.json").read_text())["split"]["test"]
+
+
+def usable_test():
+    """(floors whose grid is present and small enough, floors dropped as too large)."""
+    keep, drop = [], []
+    for s in ALL_TEST:
+        f = GRID / f"{s}.npz"
+        (keep if f.exists() and f.stat().st_size <= MAX_GRID_GB * 1e9 else drop).append(s)
+    return keep, drop
 
 
 def ckpt(backbone):
@@ -64,7 +80,7 @@ def ckpt(backbone):
 
 
 def base(backbone, split):
-    scenes = TEST if split == "test" else VAL_ROOMS[DS].split()
+    scenes = usable_test()[0] if split == "test" else VAL_ROOMS[DS].split()
     extra = {"f3loc": f"--backbone f3loc_mono --checkpoint {ckpt('f3loc')}",
              "unloc": f"--backbone unloc --checkpoint {ckpt('unloc')}",
              "disco": f"--backbone disco_rrp --checkpoint {ckpt('disco')}"}[backbone]
@@ -92,7 +108,9 @@ def jobs_for(backbone):
 
 
 def grids_ready():
-    return all((GRID / f"{s}.npz").exists() for s in TEST) and all((GRID_VAL / f"{s}.npz").exists() for s in VAL_ROOMS[DS].split())
+    """All test grids present (or too large to use) and every validation grid present."""
+    keep, drop = usable_test()
+    return len(keep) + len(drop) == len(ALL_TEST) and all((GRID_VAL / f"{s}.npz").exists() for s in VAL_ROOMS[DS].split())
 
 
 def main() -> int:
@@ -134,7 +152,10 @@ def main() -> int:
                 done.add(bb)
         time.sleep(180)
     ok = [bb for bb in NEED if all(table(t).exists() for t, _ in jobs_for(bb))]
-    log(f"validation selection on Gibson for {ok}")
+    keep, drop = usable_test()
+    (HERE / "results" / "gibson_scenes.json").write_text(json.dumps(
+        dict(used=keep, dropped_too_large=drop, max_grid_gb=MAX_GRID_GB), indent=1))
+    log(f"validation selection on Gibson for {ok}; {len(keep)} test floors used, dropped {drop}")
     subprocess.run(f"{PY} scripts/val_select.py --dataset gibson --backbones {' '.join(ok)} --fixed --source indomain "
                    f"> feasible/logs/VAL_gibson.log 2>&1", shell=True, cwd=ROOT)
     subprocess.run(f"{PY} scripts/val_tables.py > /dev/null 2>&1", shell=True, cwd=ROOT)
