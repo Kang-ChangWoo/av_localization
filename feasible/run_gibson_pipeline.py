@@ -39,7 +39,7 @@ GRID_VAL = ROOT / "outputs" / "acoustic_grid_val" / "gibson"
 NEED = {"unloc": 12000, "f3loc": 4000, "disco": 4000}
 # three at a time, not eight: an extraction holds one scene's whole candidate grid
 # in RAM (the rir array of every cell), so concurrency multiplies the peak
-GPUS = [3, 4, 5]        # 0 belongs to another tenant; 1 and 2 keep the two extractions already running
+GPUS = [3, 4, 5, 6, 7]   # 0 belongs to another tenant; 1 and 2 carry extractions started earlier
 # a floor whose grid alone exceeds this is left out of the table rather than
 # thrashing the machine; which ones were dropped is logged and written beside the
 # results. Gibson's test split has one such floor, Sargents_f2 (176k free cells,
@@ -106,6 +106,17 @@ def table(tag):
     return AN / f"queries_{COND[DS]}_{tag}.csv"
 
 
+def running_elsewhere(tag):
+    """Is some extraction (this driver's or an earlier one's) already writing this table?"""
+    return subprocess.run(["pgrep", "-f", f"extract_{tag}.log"], capture_output=True).returncode == 0
+
+
+def gpu_busy(g):
+    """Does a card already carry an extraction this driver did not start?"""
+    return subprocess.run(["pgrep", "-f", f"extract_mode_table.py --gpu {g} "],
+                          capture_output=True).returncode == 0
+
+
 def jobs_for(backbone):
     out = []
     for split in ("test", "val"):
@@ -134,14 +145,14 @@ def main() -> int:
         for bb in NEED:
             if pending[bb] is None and ready and ckpt(bb) is not None:
                 pending[bb] = [(t, c) for t, c in jobs_for(bb) if not table(t).exists()
-                               and subprocess.run(["pgrep", "-f", f"extract_{t}.log"], capture_output=True).returncode != 0]
+                               and not running_elsewhere(t)]
                 log(f"{bb}: checkpoint {ckpt(bb)}; {len(pending[bb])} extractions to run")
         for g, (p, bb, tag) in list(running.items()):
             if p.poll() is not None:
                 log(f"gpu {g}: {bb} {tag} {'done' if table(tag).exists() else 'FAILED'}")
                 del running[g]
         for g in GPUS:
-            if g in running:
+            if g in running or gpu_busy(g):
                 continue
             free = gpu_free_mib(g)
             nxt = next(((bb, j) for bb in NEED if pending[bb] and free >= NEED[bb] for j in pending[bb][:1]), None)
@@ -155,11 +166,14 @@ def main() -> int:
         for bb in NEED:
             if bb in done or pending[bb] is None or pending[bb] or any(r[1] == bb for r in running.values()):
                 continue
-            if all(table(t).exists() for t, _ in jobs_for(bb)):
+            missing = [t for t, _ in jobs_for(bb) if not table(t).exists()]
+            if not missing:
                 done.add(bb)
                 log(f"{bb}: all four tables on disk")
+            elif any(running_elsewhere(t) for t in missing):
+                continue          # an extraction started outside this driver is still working
             else:
-                log(f"{bb}: a table is missing after extraction; giving up on it")
+                log(f"{bb}: {missing} missing and nothing is producing them; giving up")
                 done.add(bb)
         time.sleep(180)
     ok = [bb for bb in NEED if all(table(t).exists() for t, _ in jobs_for(bb))]
