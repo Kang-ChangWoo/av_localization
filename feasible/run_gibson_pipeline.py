@@ -18,6 +18,7 @@ scripts/val_tables.py adds the Gibson rows.
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
