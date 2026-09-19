@@ -46,15 +46,25 @@ GPUS = [0, 1, 2]
 # 24% of the whole split's cells, against a median of 6k).
 MAX_GRID_GB = float(os.environ.get("GIBSON_MAX_GRID_GB", 40))
 ALL_TEST = json.loads((ROOT_DS / "dataset_meta.json").read_text())["split"]["test"]
+# Deliberately excluded, not merely unrendered: its candidate grid does not fit in
+# memory as the extractor loads it (one array holding every cell's impulse response).
+EXCLUDED = {"Sargents_f2"}      # 176k free cells, 24% of the split's cells, median is 6k
 
 
 def usable_test():
-    """(floors whose grid is present and small enough, floors dropped as too large)."""
-    keep, drop = [], []
+    """(floors to extract, floors excluded, floors whose grid is not on disk yet)."""
+    keep, drop, pending = [], [], []
     for s in ALL_TEST:
         f = GRID / f"{s}.npz"
-        (keep if f.exists() and f.stat().st_size <= MAX_GRID_GB * 1e9 else drop).append(s)
-    return keep, drop
+        if s in EXCLUDED:
+            drop.append(s)
+        elif not f.exists():
+            pending.append(s)
+        elif f.stat().st_size > MAX_GRID_GB * 1e9:
+            drop.append(s)
+        else:
+            keep.append(s)
+    return keep, drop, pending
 
 
 def ckpt(backbone):
@@ -110,8 +120,8 @@ def jobs_for(backbone):
 
 def grids_ready():
     """All test grids present (or too large to use) and every validation grid present."""
-    keep, drop = usable_test()
-    return len(keep) + len(drop) == len(ALL_TEST) and all((GRID_VAL / f"{s}.npz").exists() for s in VAL_ROOMS[DS].split())
+    keep, drop, pending = usable_test()
+    return not pending and all((GRID_VAL / f"{s}.npz").exists() for s in VAL_ROOMS[DS].split())
 
 
 def main() -> int:
@@ -153,9 +163,10 @@ def main() -> int:
                 done.add(bb)
         time.sleep(180)
     ok = [bb for bb in NEED if all(table(t).exists() for t, _ in jobs_for(bb))]
-    keep, drop = usable_test()
+    keep, drop, _ = usable_test()
     (HERE / "results" / "gibson_scenes.json").write_text(json.dumps(
-        dict(used=keep, dropped_too_large=drop, max_grid_gb=MAX_GRID_GB), indent=1))
+        dict(used=keep, excluded=drop, max_grid_gb=MAX_GRID_GB,
+             reason="excluded floors' candidate grids exceed what the extractor can hold in memory"), indent=1))
     log(f"validation selection on Gibson for {ok}; {len(keep)} test floors used, dropped {drop}")
     subprocess.run(f"{PY} scripts/val_select.py --dataset gibson --backbones {' '.join(ok)} --fixed --source indomain "
                    f"> feasible/logs/VAL_gibson.log 2>&1", shell=True, cwd=ROOT)
