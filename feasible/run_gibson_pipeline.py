@@ -39,7 +39,7 @@ GRID_VAL = ROOT / "outputs" / "acoustic_grid_val" / "gibson"
 NEED = {"unloc": 12000, "f3loc": 4000, "disco": 4000}
 # three at a time, not eight: an extraction holds one scene's whole candidate grid
 # in RAM (the rir array of every cell), so concurrency multiplies the peak
-GPUS = [0, 1, 2]
+GPUS = [3, 4, 5]        # 0 belongs to another tenant; 1 and 2 keep the two extractions already running
 # a floor whose grid alone exceeds this is left out of the table rather than
 # thrashing the machine; which ones were dropped is logged and written beside the
 # results. Gibson's test split has one such floor, Sargents_f2 (176k free cells,
