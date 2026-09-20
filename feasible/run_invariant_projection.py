@@ -225,7 +225,9 @@ def main() -> int:
     np.savez(args.weights, W=Wn, dim=args.dim, feature_shape=np.array(next(iter(data["train"].values()))["f"].shape[1:]))
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text("\n".join(lines) + "\n")
-    (args.out.parent / "P_invariant_projection.json").write_text(
+    # the JSON sits next to the markdown under the same stem, so a run for one
+    # dataset can no longer overwrite another dataset's record (that happened once)
+    args.out.with_suffix(".json").write_text(
         json.dumps(dict(results=js, history=hist, provenance=stamp()), indent=2, default=str))
     print("\n".join(lines)); print(f"\nwrote {args.out} and {args.weights}")
     return 0
