@@ -87,7 +87,11 @@ def main() -> int:
              r"own training rooms (pooled for Structured3D), a hypothesis is summarised by the visual "
              r"log-posterior at its centre and the $0.9$ quantile of the acoustic score over its disc, "
              r"and only the rule's three scalars are chosen per backbone on validation rooms; the "
-             r"test rooms are evaluated once. Gains at $1$\,m carry paired bootstrap intervals over queries.}")
+             r"test rooms are evaluated once. Gains at $1$\,m carry paired bootstrap intervals over queries. "
+             r"Gibson is reported on 68 of its 69 test floors: one floor (Sargents\_f2, 176k free cells, "
+             r"a quarter of the split's cells) exceeded the memory of the acoustic-grid extractor and is "
+             r"excluded from every row, visual and acoustic alike. Gibson has no semantic annotation, so "
+             r"SemRayLoc has no Gibson row.}")
     M.append(r"\label{tab:main_multi}")
     M.append(r"\setlength{\tabcolsep}{5pt}")
     M.append(r"\begin{tabular}{lllcccccccl}\toprule")
