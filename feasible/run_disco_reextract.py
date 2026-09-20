@@ -40,9 +40,18 @@ RES = HERE / "results"
 RUN_NAME = {"s3d": "rrp_s3d_val", "gibson": "rrp_gibson_val", "mp3d": "rrp_mp3d_lr1e4_val", "replica": "rrp_replica_f_val"}
 INDOMAIN = {"replica": "R", "mp3d": "M", "s3d": "B", "gibson": "G"}
 ORDER = ("s3d", "gibson", "mp3d", "replica")          # the order the retrains are queued
-GPU = 1                                                 # the one card this session may use
+# the extraction (~4 GB) takes whichever of these cards has the most room at the
+# moment it starts; GPU 1 is shared with the EchoRecon session's training and
+# may be full, so 0 and 2 are allowed as well (owner's decision, 2026-09-20)
+GPU_CANDIDATES = (1, 0, 2)
 NEED_MIB = 4000
 POLL_S = 600
+
+
+def pick_gpu():
+    free = {g: gpu_free_mib(g) for g in GPU_CANDIDATES}
+    g = max(free, key=free.get)
+    return (g, free[g]) if free[g] >= NEED_MIB else (None, free)
 
 
 def run_dir(ds):
@@ -100,7 +109,7 @@ def commands(ds, ckpt):
     for split, src, tag in tags(ds):
         suffix = tag[len(PREFIX["disco"]):]
         proj = f" --acoustic-projection {W[src]}" if src else ""
-        out.append((tag, f"{PY} scripts/extract_mode_table.py --gpu {GPU} {base_cmd(ds, split, ckpt)} "
+        out.append((tag, f"{PY} scripts/extract_mode_table.py --gpu {{gpu}} {base_cmd(ds, split, ckpt)} "
                          f"--tag '{suffix}'{proj} > logs/extract_{tag}.log 2>&1"))
     return out
 
@@ -121,11 +130,12 @@ def extract(ds, ckpt):
     todo = [(t, c) for t, c in commands(ds, ckpt) if not table(ds, t).exists()]
     tries = {}
     while todo:
-        if gpu_free_mib(GPU) < NEED_MIB:
+        g, free = pick_gpu()
+        if g is None:
             time.sleep(60); continue
         tag, cmd = todo.pop(0)
-        log(f"{ds}: extracting {tag}")
-        subprocess.run(cmd, shell=True, cwd=ROOT)
+        log(f"{ds}: extracting {tag} on gpu {g} ({free} MiB free)")
+        subprocess.run(cmd.format(gpu=g), shell=True, cwd=ROOT)
         if not table(ds, tag).exists():
             tries[tag] = tries.get(tag, 0) + 1
             log(f"{ds}: {tag} produced no table (try {tries[tag]})")
@@ -147,7 +157,7 @@ def main() -> int:
             ck = best_ckpt(ds)
             print(f"== {ds}: run {run_dir(ds)}  training={training(ds)}  best={ck}")
             for tag, cmd in commands(ds, ck or Path("<ckpt>")):
-                print(f"  [{tag}] {cmd}")
+                print(f"  [{tag}] {cmd.format(gpu='<gpu>')}")
         return 0
     for ds in a.datasets:
         while training(ds) or best_ckpt(ds) is None:
