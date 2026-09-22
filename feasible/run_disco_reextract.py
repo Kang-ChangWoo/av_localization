@@ -136,6 +136,12 @@ def extract(ds, ckpt):
         tag, cmd = todo.pop(0)
         log(f"{ds}: extracting {tag} on gpu {g} ({free} MiB free)")
         subprocess.run(cmd.format(gpu=g), shell=True, cwd=ROOT)
+        # Replica's identity table keeps its legacy name "discoID" while the
+        # extractor names its outputs after the backbone; move them across
+        suffix = tag[len(PREFIX["disco"]):]
+        if suffix == "" and not table(ds, tag).exists():
+            for f in AN.glob(f"*_{COND[ds]}_disco_rrp.*"):
+                f.rename(f.with_name(f.name.replace("_disco_rrp.", f"_{tag}.")))
         if not table(ds, tag).exists():
             tries[tag] = tries.get(tag, 0) + 1
             log(f"{ds}: {tag} produced no table (try {tries[tag]})")
