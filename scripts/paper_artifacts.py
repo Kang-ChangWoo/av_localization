@@ -130,7 +130,9 @@ def read(p: Path) -> dict[str, np.ndarray]:
 
 def group(M: dict[str, np.ndarray]) -> dict[str, dict[str, np.ndarray]]:
     g: dict[str, dict[str, list]] = {}
-    cols = [c for c in M if c not in ("query_id", "scene", "collection")]
+    # the extractor now also writes string columns (e.g. `source`, which marks
+    # injected acoustic candidates); only numeric columns are grouped
+    cols = [c for c in M if c not in ("query_id", "scene", "collection") and M[c].dtype != object]
     for i, q in enumerate(M["query_id"]):
         if int(M["mode"][i]) >= 100:      # injected acoustic candidates, not part of the shortlist
             continue

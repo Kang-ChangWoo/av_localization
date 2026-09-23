@@ -53,7 +53,9 @@ $1$\,m\,/\,$30^\circ$ recall, with median error, under the definitions of
 bootstrap intervals over queries. Because queries in one room share a floorplan
 and an acoustic field, we also report room-clustered intervals
 (Tab.~\ref{tab:cluster}); with three Replica rooms those span zero, and we do
-not claim building-level generalisation from Replica alone. Every backbone and
+not claim building-level generalisation from Replica alone.
+% TODO (2026-09-23): the DisCo room-clustered interval is now [+9.0, +12.0] and
+% does not span zero; "those span zero" holds for F3Loc and UnLoc only. Reword. Every backbone and
 the projection are trained once, with seed $0$; no number in this paper is an
 average over training seeds, and the intervals measure query sampling only.
 
@@ -82,16 +84,16 @@ $1$. Every number here is at batch $1$.
 
 Tab.~\ref{tab:main_roomcv} is the headline. With rooms held out and the
 structure fixed, attaching the acoustic term improves recall at $1$\,m by
-$5.0$ points $[1.7, 8.5]$ on F3Loc and $7.0$ $[3.8, 10.2]$ on UnLoc, on $600$
-queries each; on DisCo-FLoc it is $0.7$ $[-1.8, 3.2]$, which is no gain.
-Median error falls from $2.15$ to $1.49$\,m on F3Loc and $0.90$ to $0.46$\,m on
-UnLoc. The gain lives between $0.5$ and $2$\,m: at $0.1$\,m it is within
+$6.5$ points $[3.3, 9.8]$ on F3Loc, $7.5$ $[4.3, 10.7]$ on UnLoc and
+$7.5$ $[4.2, 10.8]$ on DisCo-FLoc, on $600$ queries each.
+Median error falls from $2.15$ to $1.36$\,m on F3Loc, $0.90$ to $0.46$\,m on
+UnLoc and $2.62$ to $1.91$\,m on DisCo-FLoc. The gain lives between $0.5$ and $2$\,m: at $0.1$\,m it is within
 noise, because selecting among hypotheses cannot refine a position inside one,
 and at $5$\,m the backbones are near saturation.
 
 The structure is fixed on purpose. Searching it inside each fold as well, over
-twelve summary pairs, moves F3Loc to $+4.2$, UnLoc to $+4.5$ and DisCo-FLoc to
-$+2.7$, and picks a different pair in nearly every fold: with two fitting rooms
+twelve summary pairs, moves F3Loc to $+5.5$, UnLoc to $+6.2$ and DisCo-FLoc to
+$+5.5$, and picks a different pair in nearly every fold: with two fitting rooms
 the search overfits them and the held-out room pays. A protocol whose result
 depends on which of two rooms it was fitted on is reporting noise, so the
 paper commits to one structure and lets the scalars alone move.
@@ -103,9 +105,9 @@ They are smaller than Replica's and only UnLoc's interval excludes zero.
 Matterport3D rooms are larger, with a median of $13{,}186$ candidate cells
 against Replica's $5{,}344$, and the furniture gap is wider: the acoustic score
 alone reaches $4.2\%$ there against Replica's $20.7\%$. \textbf{The effect size
-this paper claims is two to seven points on two backbones, and none on the
-third.} It is small, and it is not universal: DisCo-FLoc's ray predictor gains
-nothing on Replica under the fixed structure.
+this paper claims on Replica is 6 to 8 points at $1$\,m, on all three
+backbones.} It is small, and its intervals over three rooms are wide
+(Tab.~\ref{tab:cluster}).
 
 Structured3D gives $+23.6$, $+31.2$ and $+26.7$. We report these because it is
 the only benchmark with thirty test rooms, which is what makes its intervals
@@ -137,11 +139,11 @@ visual hypotheses does not rescue it: the acoustic score choosing alone among
 them falls from $38.3\%$ at $K{=}1$ to $26.3\%$ at $K{=}10$ on F3Loc, and
 likewise on the other two backbones. The gated fusion over the same ten
 hypotheses, scored with rooms held out exactly as in Tab.~\ref{tab:main_roomcv},
-rises instead, to $43.3\%$ on F3Loc and $57.7\%$ on UnLoc; on DisCo-FLoc it
-reaches $41.2\%$, which is where the headline table leaves it. The claim is
+rises instead, to $44.8\%$ on F3Loc, $58.2\%$ on UnLoc and
+$44.5\%$ on DisCo-FLoc, which is where the headline table leaves them. The claim is
 therefore not that acoustics can choose among a few places, but that it can
 help vision choose among a few places, and only where the visual posterior is
-ambiguous. The oracle over the same ten hypotheses reaches $85$--$93\%$; the
+ambiguous. The oracle over the same ten hypotheses reaches $86$--$93\%$; the
 distance to it is what better acoustic discrimination could still buy.
 
 \begin{figure}[t]\centering
@@ -156,13 +158,13 @@ ambiguous. The two cross exactly where the gate opens.}
 \paragraph{The evidence is there even where the gain is small.} A $21\%$
 acoustic-alone recall invites the objection that the cue is nearly empty.
 Fig.~\ref{fig:pairwise} answers it with a forced binary choice between the
-correct hypothesis and one incorrect one, $4{,}500$--$5{,}000$ pairs per
+correct hypothesis and one incorrect one, $4{,}600$--$5{,}000$ pairs per
 backbone. The acoustic score picks correctly $76$--$80\%$ of the time and is
 within three points of that in every stratum, visually ambiguous or confident,
 spatially close or far. The visual ordering is not: it reaches $78$--$89\%$
 where vision is confident and falls to $66$--$75\%$ where it is ambiguous. In
-the ambiguous stratum the acoustic score beats the visual ordering by $10.7$,
-$5.3$ and $9.7$ points on the three backbones; in the confident stratum vision
+the ambiguous stratum the acoustic score beats the visual ordering by $10.6$,
+$5.3$ and $6.9$ points on the three backbones; in the confident stratum vision
 wins. That crossover is the empirical justification for gating on visual
 ambiguity rather than on anything acoustic.
 
@@ -209,6 +211,9 @@ cannot be trusted to choose by itself, which Fig.~\ref{fig:candidate} shows at
 every $K$. Both cell-wise rules have intervals that span zero. Replacing the
 smooth gate by a hard threshold turns the result negative, because near either
 boundary a hard rule commits fully on an arbitrarily small difference.
+% TODO (2026-09-23): after the DisCo re-extraction and the joint policy refit the
+% hard-gate row is +2.0 [-3.3, +7.7] against the smooth gate's +5.0 [+1.0, +9.3];
+% it no longer "turns negative". Sentence left for the author to reword.
 
 The same table under matched geometry inverts the ordering: unconditional
 reranking becomes the best rule and every gate costs points. The gating

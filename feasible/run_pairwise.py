@@ -100,6 +100,9 @@ def main() -> int:
         M = read(mp)
         per: dict = {}
         for i, q in enumerate(M["query_id"]):
+            # injected acoustic candidates (mode >= 100, written by the newer extractor) are not part of the visual shortlist
+            if int(M["mode"][i]) >= 100:
+                continue
             d = per.setdefault(str(q), dict(d=[], a=[], v=[], m=[]))
             d["d"].append(M["dist_gt_m"][i]); d["a"].append(M[args.ac_col][i])
             d["v"].append(M[args.vis_col][i]); d["m"].append(M["mode"][i])

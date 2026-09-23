@@ -29,15 +29,15 @@ For every query with a correct hypothesis (within 1 m) among its ten, each incor
 
 ## DisCo-FLoc RRP
 
-600 queries, 4524 pairs. Visual ambiguity is split at its median log-odds (0.01).
+600 queries, 4727 pairs. Visual ambiguity is split at its median log-odds (0.01).
 
 | stratum | pairs | acoustic picks correct | 95% CI | visual ordering | 95% CI |
 |---|---|---|---|---|---|
-| all | 4524 | 77.7% | [76.5, 79.0] | 77.9% | [76.6, 79.1] |
-| visually ambiguous | 2261 | 81.3% | [79.7, 82.9] | 71.6% | [69.7, 73.5] |
-| visually confident | 2263 | 74.2% | [72.4, 76.0] | 84.1% | [82.6, 85.6] |
-| spatially close (<2 m) | 1180 | 78.6% | [76.2, 80.8] | 83.5% | [81.3, 85.6] |
-| spatially far (>4 m) | 1507 | 78.1% | [76.0, 80.2] | 72.3% | [70.0, 74.5] |
+| all | 4727 | 77.4% | [76.2, 78.6] | 75.5% | [74.2, 76.7] |
+| visually ambiguous | 2358 | 79.2% | [77.5, 80.8] | 72.3% | [70.5, 74.0] |
+| visually confident | 2369 | 75.7% | [74.0, 77.4] | 78.7% | [77.0, 80.3] |
+| spatially close (<2 m) | 1231 | 78.1% | [75.9, 80.4] | 81.8% | [79.6, 83.9] |
+| spatially far (>4 m) | 1586 | 77.0% | [74.9, 79.1] | 69.1% | [66.8, 71.4] |
 
 What to read off this. Above 50% everywhere means the cue is not empty. Where acoustics beats the visual ordering is where the gate should act; where it does not, the gate should stay closed, and that is what the visual-ambiguity strata test directly.
 

@@ -71,7 +71,9 @@ def read(p: Path) -> dict[str, np.ndarray]:
 
 def group(M: dict[str, np.ndarray]) -> dict[str, dict[str, np.ndarray]]:
     g: dict[str, dict[str, list]] = {}
-    cols = [c for c in M if c not in ("query_id", "scene", "collection")]
+    # the extractor now also writes string columns (e.g. `source`, which marks
+    # injected acoustic candidates); only numeric columns are grouped
+    cols = [c for c in M if c not in ("query_id", "scene", "collection") and M[c].dtype != object]
     for i, q in enumerate(M["query_id"]):
         d = g.setdefault(str(q), {c: [] for c in cols})
         for c in cols:

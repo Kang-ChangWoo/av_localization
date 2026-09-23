@@ -93,7 +93,9 @@ are the right intervals for comparing two decision rules on one benchmark.
 
 They are not intervals on building-level generalisation, and Tab.~\ref{tab:cluster}
 makes the difference explicit. Queries inside a room share a floorplan, a
-candidate grid and an acoustic field; they are not independent draws. Resampling
+candidate grid and an acoustic field; they are not independent draws. % TODO (2026-09-23): with the re-extracted DisCo tables the DisCo room interval
+% is [+9.0, +12.0] and no longer spans zero (F3Loc and UnLoc still do). Reword.
+Resampling
 whole rooms instead of queries widens every Replica interval to span zero,
 because Replica's test split has three rooms and the effective sample size is
 three, not three hundred.

@@ -23,7 +23,7 @@ DisCo-FLoc (full) & Gibson-f & 13.1 & 50.9 & 56.7 & 55.4 \\
 \begin{table*}[t]
 \centering\small
 \caption{Single-frame localization. Recall in \%. $\checkmark$ denotes our acoustic verification. Acoustic candidates are always rendered from the floorplan; the \emph{query acoustics} column gives the geometry the observation itself was rendered on. Replica offers a furnished scan, so its query carries the furniture the floorplan does not model, which is the gap this method addresses. Structured3D ships no furnished mesh, so its query can only come from the same floorplan proxy as the candidates, which removes that gap and makes the acoustic side substantially easier; its rows are not comparable to Replica's on equal terms. Datasets without impulse responses are left empty rather than filled from a visual-only run.}
-\label{tab:main_multi}
+\label{tab:main_multi_collection}
 \setlength{\tabcolsep}{5.2pt}
 \renewcommand{\arraystretch}{1.12}
 \begin{tabular}{llllccccccccc}
@@ -41,17 +41,17 @@ DisCo-FLoc (full) & Gibson-f & 13.1 & 50.9 & 56.7 & 55.4 \\
 & & \multirow{2}{*}{F3Loc mono} & $\times$
 & 5.3 & 29.7 & 37.7 & 34.0 & 48.7 & 87.7 & 2.17 & 3.17 & -- \\
 & & & $\checkmark$
-& \textbf{5.3} & \textbf{32.7} & \textbf{42.0} & \textbf{36.3} & \textbf{54.3} & \textbf{89.0} & \textbf{1.63} & \textbf{3.15} & \textbf{+4.3}\,{\scriptsize[+0.3,+8.3]} \\
+& \textbf{5.7} & \textbf{34.3} & \textbf{44.0} & \textbf{39.0} & \textbf{56.7} & \textbf{89.3} & \textbf{1.33} & \textbf{2.99} & \textbf{+6.3}\,{\scriptsize[+2.0,+10.7]} \\
 \cmidrule(lr){3-13}
 & & \multirow{2}{*}{UnLoc} & $\times$
 & 9.0 & 44.7 & 49.7 & 49.0 & 53.3 & 83.7 & 1.12 & 3.28 & -- \\
 & & & $\checkmark$
-& 8.3 & 46.3 & 52.0 & 50.7 & 57.0 & 87.0 & 0.70 & 3.06 & +2.3\,{\scriptsize[-3.0,+7.7]} \\
+& \textbf{10.0} & \textbf{49.7} & \textbf{54.7} & \textbf{53.7} & \textbf{60.3} & \textbf{87.3} & \textbf{0.51} & \textbf{3.03} & \textbf{+5.0}\,{\scriptsize[+0.7,+9.3]} \\
 \cmidrule(lr){3-13}
 & & \multirow{2}{*}{DisCo-FLoc RRP} & $\times$
-& 5.3 & 31.0 & 41.0 & 39.3 & 46.7 & 83.0 & 2.39 & 3.48 & -- \\
+& 5.0 & 28.3 & 37.0 & 35.0 & 41.0 & 81.7 & 2.78 & 3.69 & -- \\
 & & & $\checkmark$
-& \textbf{6.0} & \textbf{34.7} & \textbf{46.0} & \textbf{44.0} & \textbf{53.0} & \textbf{85.3} & \textbf{1.45} & \textbf{3.30} & \textbf{+5.0}\,{\scriptsize[+0.7,+9.3]} \\
+& \textbf{6.3} & \textbf{36.3} & \textbf{47.0} & \textbf{45.0} & \textbf{52.0} & \textbf{85.7} & \textbf{1.51} & \textbf{3.34} & \textbf{+10.0}\,{\scriptsize[+6.0,+14.3]} \\
 \midrule
 \multirow{6}{*}{Gibson}
 & \multirow{6}{*}{\textendash}
@@ -69,34 +69,34 @@ DisCo-FLoc (full) & Gibson-f & 13.1 & 50.9 & 56.7 & 55.4 \\
 & \multirow{2}{*}{F3Loc mono} & $\times$
 & 0.7 & 14.9 & 24.0 & 22.2 & 34.0 & 64.9 & 3.86 & 5.07 & -- \\
 & & & $\checkmark$
-& \textbf{3.5} & \textbf{32.6} & \textbf{50.7} & \textbf{46.5} & \textbf{63.5} & \textbf{81.9} & \textbf{0.88} & \textbf{3.71} & \textbf{+26.7}\,{\scriptsize[+20.8,+32.6]} \\
+& \textbf{3.1} & \textbf{31.9} & \textbf{46.2} & \textbf{41.3} & \textbf{59.4} & \textbf{77.1} & \textbf{1.23} & \textbf{4.06} & \textbf{+22.2}\,{\scriptsize[+16.7,+27.8]} \\
 \cmidrule(lr){3-13}
 & & \multirow{2}{*}{DisCo-FLoc RRP} & $\times$
-& 2.1 & 12.8 & 20.1 & 19.8 & 29.5 & 60.8 & 4.32 & 5.26 & -- \\
+& 0.0 & 13.2 & 24.7 & 22.2 & 33.3 & 62.5 & 4.11 & 5.19 & -- \\
 & & & $\checkmark$
-& \textbf{2.1} & \textbf{32.6} & \textbf{49.7} & \textbf{45.1} & \textbf{59.7} & \textbf{79.5} & \textbf{1.01} & \textbf{4.04} & \textbf{+29.5}\,{\scriptsize[+23.6,+35.4]} \\
+& \textbf{1.4} & \textbf{27.8} & \textbf{42.4} & \textbf{37.8} & \textbf{52.4} & \textbf{75.0} & \textbf{1.67} & \textbf{4.33} & \textbf{+17.7}\,{\scriptsize[+11.8,+23.6]} \\
 \cmidrule(lr){3-13}
 & & \multirow{2}{*}{UnLoc} & $\times$
 & 1.7 & 23.6 & 29.9 & 28.8 & 35.8 & 64.9 & 3.61 & 5.08 & -- \\
 & & & $\checkmark$
-& \textbf{5.6} & \textbf{49.7} & \textbf{64.2} & \textbf{59.0} & \textbf{72.2} & \textbf{88.2} & \textbf{0.50} & \textbf{3.26} & \textbf{+34.4}\,{\scriptsize[+28.8,+40.3]} \\
+& \textbf{6.2} & \textbf{47.6} & \textbf{61.1} & \textbf{56.6} & \textbf{69.1} & \textbf{87.5} & \textbf{0.52} & \textbf{3.25} & \textbf{+31.2}\,{\scriptsize[+25.3,+37.2]} \\
 \midrule
 \multirow{6}{*}{Matterport3D}
 & \multirow{6}{*}{furnished scan}
 & \multirow{2}{*}{F3Loc mono} & $\times$
 & 5.6 & 24.8 & 33.3 & 32.3 & 38.3 & 51.7 & 4.72 & 10.95 & -- \\
 & & & $\checkmark$
-& 5.0 & 25.4 & 35.0 & 34.0 & 40.8 & 52.7 & 4.52 & 10.32 & +1.7\,{\scriptsize[-0.6,+4.2]} \\
+& \textbf{5.2} & \textbf{26.5} & \textbf{36.5} & \textbf{35.2} & \textbf{43.1} & \textbf{54.4} & \textbf{3.79} & \textbf{9.96} & \textbf{+3.1}\,{\scriptsize[+0.4,+6.0]} \\
 \cmidrule(lr){3-13}
 & & \multirow{2}{*}{UnLoc} & $\times$
 & 8.5 & 40.2 & 45.4 & 44.8 & 49.4 & 58.5 & 2.12 & 9.62 & -- \\
 & & & $\checkmark$
-& \textbf{9.0} & \textbf{42.9} & \textbf{48.3} & \textbf{47.5} & \textbf{53.3} & \textbf{62.1} & \textbf{1.28} & \textbf{9.30} & \textbf{+2.9}\,{\scriptsize[+0.2,+5.6]} \\
+& \textbf{9.0} & \textbf{43.1} & \textbf{48.5} & \textbf{47.7} & \textbf{53.5} & \textbf{61.9} & \textbf{1.25} & \textbf{9.37} & \textbf{+3.1}\,{\scriptsize[+0.6,+5.6]} \\
 \cmidrule(lr){3-13}
 & & \multirow{2}{*}{DisCo-FLoc RRP} & $\times$
-& 2.5 & 18.8 & 26.0 & 25.0 & 32.1 & 44.8 & 6.08 & 10.89 & -- \\
+& 2.1 & 15.0 & 22.9 & 21.7 & 29.6 & 44.8 & 6.15 & 10.82 & -- \\
 & & & $\checkmark$
-& 3.3 & 20.6 & 27.5 & 26.0 & 31.9 & 46.7 & 6.13 & 10.43 & +1.5\,{\scriptsize[-2.1,+5.0]} \\
+& 2.3 & 19.8 & 25.6 & 23.8 & 30.0 & 46.0 & 6.14 & 10.90 & +2.7\,{\scriptsize[-1.2,+6.5]} \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -107,13 +107,13 @@ DisCo-FLoc (full) & Gibson-f & 13.1 & 50.9 & 56.7 & 55.4 \\
 \begin{tabular}{llccccccc}\toprule
 Method & Audio & $0.1$\,m & $0.5$\,m & $1$\,m & $1$\,m\,$30^\circ$ & $2$\,m & $5$\,m & $10$\,m \\\midrule
 \multirow{2}{*}{F3Loc mono} & \textendash & 5.3 & 29.7 & 37.7 & 34.0 & 48.7 & 87.7 & 99.7 \\
- & \checkmark & \textbf{5.3} & \textbf{32.7} & \textbf{42.0} & \textbf{36.3} & \textbf{54.3} & \textbf{89.0} & \textbf{100.0} \\
+ & \checkmark & \textbf{5.7} & \textbf{34.3} & \textbf{44.0} & \textbf{39.0} & \textbf{56.7} & \textbf{89.3} & \textbf{100.0} \\
 \midrule
 \multirow{2}{*}{UnLoc} & \textendash & 9.0 & 44.7 & 49.7 & 49.0 & 53.3 & 83.7 & 100.0 \\
- & \checkmark & \textbf{8.3} & \textbf{46.3} & \textbf{52.0} & \textbf{50.7} & \textbf{57.0} & \textbf{87.0} & \textbf{100.0} \\
+ & \checkmark & \textbf{10.0} & \textbf{49.7} & \textbf{54.7} & \textbf{53.7} & \textbf{60.3} & \textbf{87.3} & \textbf{100.0} \\
 \midrule
-\multirow{2}{*}{DisCo-FLoc RRP} & \textendash & 5.3 & 31.0 & 41.0 & 39.3 & 46.7 & 83.0 & 100.0 \\
- & \checkmark & \textbf{6.0} & \textbf{34.7} & \textbf{46.0} & \textbf{44.0} & \textbf{53.0} & \textbf{85.3} & \textbf{100.0} \\
+\multirow{2}{*}{DisCo-FLoc RRP} & \textendash & 5.0 & 28.3 & 37.0 & 35.0 & 41.0 & 81.7 & 99.7 \\
+ & \checkmark & \textbf{6.3} & \textbf{36.3} & \textbf{47.0} & \textbf{45.0} & \textbf{52.0} & \textbf{85.7} & \textbf{99.7} \\
 
 \bottomrule\end{tabular}\end{table*}
 
@@ -123,13 +123,13 @@ Method & Audio & $0.1$\,m & $0.5$\,m & $1$\,m & $1$\,m\,$30^\circ$ & $2$\,m & $5
 \begin{tabular}{llcccccccc c}\toprule
 Visual backbone & Acoustic & $0.1$\,m & $0.5$\,m & $1$\,m & $1$\,m\,$30^\circ$ & $2$\,m & $5$\,m & Median & RMSE & $\Delta_{1\mathrm{m}}$ \\\midrule
 \multirow{2}{*}{F3Loc mono} & \textendash & 5.3 & 29.7 & 37.7 & 34.0 & 48.7 & 87.7 & 2.17 & 3.17 &  \\
- & \textbf{ours} & \textbf{5.3} & \textbf{32.7} & \textbf{42.0} & \textbf{36.3} & \textbf{54.3} & \textbf{89.0} & \textbf{1.63} & \textbf{3.15} & \textbf{+4.3}\,\tiny[+0.3,+8.3] \\
+ & \textbf{ours} & \textbf{5.7} & \textbf{34.3} & \textbf{44.0} & \textbf{39.0} & \textbf{56.7} & \textbf{89.3} & \textbf{1.33} & \textbf{2.99} & \textbf{+6.3}\,\tiny[+2.0,+10.7] \\
 \midrule
 \multirow{2}{*}{UnLoc} & \textendash & 9.0 & 44.7 & 49.7 & 49.0 & 53.3 & 83.7 & 1.12 & 3.28 &  \\
- & \textbf{ours} & \textbf{8.3} & \textbf{46.3} & \textbf{52.0} & \textbf{50.7} & \textbf{57.0} & \textbf{87.0} & \textbf{0.70} & \textbf{3.06} & \textbf{+2.3}\,\tiny[-3.0,+8.0] \\
+ & \textbf{ours} & \textbf{10.0} & \textbf{49.7} & \textbf{54.7} & \textbf{53.7} & \textbf{60.3} & \textbf{87.3} & \textbf{0.51} & \textbf{3.03} & \textbf{+5.0}\,\tiny[+0.7,+9.3] \\
 \midrule
-\multirow{2}{*}{DisCo-FLoc RRP} & \textendash & 5.3 & 31.0 & 41.0 & 39.3 & 46.7 & 83.0 & 2.39 & 3.48 &  \\
- & \textbf{ours} & \textbf{6.0} & \textbf{34.7} & \textbf{46.0} & \textbf{44.0} & \textbf{53.0} & \textbf{85.3} & \textbf{1.45} & \textbf{3.30} & \textbf{+5.0}\,\tiny[+1.0,+9.3] \\
+\multirow{2}{*}{DisCo-FLoc RRP} & \textendash & 5.0 & 28.3 & 37.0 & 35.0 & 41.0 & 81.7 & 2.78 & 3.69 &  \\
+ & \textbf{ours} & \textbf{6.3} & \textbf{36.3} & \textbf{47.0} & \textbf{45.0} & \textbf{52.0} & \textbf{85.7} & \textbf{1.51} & \textbf{3.34} & \textbf{+10.0}\,\tiny[+6.0,+14.3] \\
 
 \bottomrule\end{tabular}\end{table*}
 
@@ -139,13 +139,13 @@ Visual backbone & Acoustic & $0.1$\,m & $0.5$\,m & $1$\,m & $1$\,m\,$30^\circ$ &
 \begin{tabular}{llcccc}\toprule
 Backbone & Acoustic & apartment\_2 & frl\_apartment\_5 & office\_4 & All \\\midrule
 \multirow{2}{*}{F3Loc mono} & \textendash & 15.0 & 76.0 & 22.0 & 37.7 \\
- & \textbf{ours} & 22.0 & 73.0 & 31.0 & 42.0 \\
+ & \textbf{ours} & 24.0 & 73.0 & 35.0 & 44.0 \\
 \midrule
 \multirow{2}{*}{UnLoc} & \textendash & 24.0 & 76.0 & 49.0 & 49.7 \\
- & \textbf{ours} & 38.0 & 72.0 & 46.0 & 52.0 \\
+ & \textbf{ours} & 38.0 & 73.0 & 53.0 & 54.7 \\
 \midrule
-\multirow{2}{*}{DisCo-FLoc RRP} & \textendash & 18.0 & 68.0 & 37.0 & 41.0 \\
- & \textbf{ours} & 23.0 & 65.0 & 50.0 & 46.0 \\
+\multirow{2}{*}{DisCo-FLoc RRP} & \textendash & 17.0 & 61.0 & 33.0 & 37.0 \\
+ & \textbf{ours} & 26.0 & 70.0 & 45.0 & 47.0 \\
 
 \bottomrule\end{tabular}\end{table}
 
@@ -158,11 +158,11 @@ Level & Rule & $0.5$\,m & $1$\,m & $1$\,m\,$30^\circ$ & Median & $\Delta_{1\math
 cell & acoustic alone & 13.7 & 20.7 & - & 3.02 & -29.0\,\tiny[-36.7,-21.0] \\
 cell & rerank vision top-50 & 45.3 & 52.7 & 50.7 & 0.79 & +3.0\,\tiny[-3.3,+9.3] \\
 cell & log-rank fusion & 47.0 & 54.3 & 52.7 & 0.70 & +4.7\,\tiny[-1.3,+10.7] \\
-hypothesis & rerank, unconditional & 30.0 & 34.3 & 32.7 & 2.48 & -15.3\,\tiny[-23.0,-7.7] \\
-hypothesis & weighted sum, no gate & 45.3 & 50.7 & 49.3 & 0.84 & +1.0\,\tiny[-4.7,+6.7] \\
-hypothesis & hard gate on visual ambiguity & 41.0 & 46.3 & 44.7 & 1.52 & -3.3\,\tiny[-10.0,+3.3] \\
-hypothesis & + acoustic gate, relative evidence (4 scalars) & 48.3 & 54.0 & 52.7 & 0.61 & +4.3\,\tiny[-0.7,+9.3] \\
-hypothesis & \textbf{smooth gate on visual ambiguity (ours, 3 scalars)} & \textbf{46.3} & \textbf{52.0} & \textbf{50.7} & \textbf{0.70} & \textbf{+2.3}\,\tiny[-3.0,+7.7] \\
+hypothesis & rerank, unconditional & 30.0 & 34.0 & 33.0 & 2.61 & -15.7\,\tiny[-23.0,-8.3] \\
+hypothesis & weighted sum, no gate & 48.3 & 53.0 & 51.7 & 0.63 & +3.3\,\tiny[-2.0,+8.3] \\
+hypothesis & hard gate on visual ambiguity & 46.7 & 51.7 & 50.7 & 0.72 & +2.0\,\tiny[-3.3,+7.7] \\
+hypothesis & + acoustic gate, relative evidence (4 scalars) & 49.7 & 54.7 & 53.7 & 0.51 & +5.0\,\tiny[+0.7,+9.3] \\
+hypothesis & \textbf{smooth gate on visual ambiguity (ours, 3 scalars)} & \textbf{49.7} & \textbf{54.7} & \textbf{53.7} & \textbf{0.51} & \textbf{+5.0}\,\tiny[+1.0,+9.3] \\
 oracle & best of the ten hypotheses & 78.3 & 93.7 & 89.3 & 0.25 & +44.0\,\tiny[+38.7,+49.7] \\
 \bottomrule\end{tabular}\end{table}
 
@@ -186,8 +186,8 @@ stft nfft 64 wide bands & 1.33 & 17.3 & 179 & 24.3 \\
 \label{tab:bounds}
 \begin{tabular}{lcccc}\toprule
 Setting & Alone $1$\,m & GT rank & Ours $1$\,m & Oracle $1$\,m \\\midrule
-furnished query (the real setting) & 20.7 & 192 & 52.0 & 93.7 \\
-matched geometry (upper bound) & 94.3 & 1 & 72.7 & 93.7 \\
+furnished query (the real setting) & 20.7 & 192 & 54.7 & 93.7 \\
+matched geometry (upper bound) & 94.3 & 1 & 64.7 & 93.7 \\
 \midrule
 \multicolumn{5}{l}{\emph{Ground-truth coverage, which caps any reranking method}}\\
 \quad top-1 & \multicolumn{2}{c}{49.7 (cells)} & \multicolumn{2}{c}{49.7 (hypotheses)} \\

@@ -92,40 +92,40 @@
       }
     },
     "DisCo-FLoc RRP": {
-      "vision": 37.0,
+      "vision": 40.5,
       "hypotheses, K=1": {
         "size": 1,
-        "acoustic_choice": 0.37166666666666665,
-        "gated": 0.37166666666666665,
-        "oracle": 0.37166666666666665
+        "acoustic_choice": 0.405,
+        "gated": 0.405,
+        "oracle": 0.405
       },
       "hypotheses, K=2": {
         "size": 2,
-        "acoustic_choice": 0.38333333333333336,
-        "gated": 0.39166666666666666,
-        "oracle": 0.5483333333333333
+        "acoustic_choice": 0.36666666666666664,
+        "gated": 0.39,
+        "oracle": 0.5366666666666666
       },
       "hypotheses, K=3": {
         "size": 3,
-        "acoustic_choice": 0.375,
-        "gated": 0.39,
-        "oracle": 0.6583333333333333
+        "acoustic_choice": 0.3516666666666667,
+        "gated": 0.40166666666666667,
+        "oracle": 0.6666666666666666
       },
       "hypotheses, K=5": {
         "size": 5,
-        "acoustic_choice": 0.3616666666666667,
-        "gated": 0.42333333333333334,
-        "oracle": 0.7766666666666666
+        "acoustic_choice": 0.33,
+        "gated": 0.42,
+        "oracle": 0.7316666666666667
       },
       "hypotheses, K=10": {
         "size": 10,
-        "acoustic_choice": 0.31166666666666665,
-        "gated": 0.445,
-        "oracle": 0.8816666666666667
+        "acoustic_choice": 0.30833333333333335,
+        "gated": 0.43166666666666664,
+        "oracle": 0.845
       },
       "visual top-50 cells": {
         "size": 50,
-        "acoustic_choice": 0.5,
+        "acoustic_choice": 0.4583333333333333,
         "gated": null,
         "oracle": null
       },
@@ -138,15 +138,19 @@
     }
   },
   "provenance": {
-    "utc": "2026-09-23T04:33:23Z",
+    "utc": "2026-09-15T00:26:15Z",
     "argv": [
-      "feasible/run_candidate_set.py"
+      "feasible/run_candidate_set.py",
+      "--backbones",
+      "f3STFT",
+      "unlocSTFT",
+      "discoID"
     ],
     "git": {
-      "commit": "a4d454be911d",
+      "commit": "99d22620016b",
       "dirty": true,
-      "diff_sha1": "2dcf28f20673",
-      "diff_lines": 758
+      "diff_sha1": "f063911ef2af",
+      "diff_lines": 969
     },
     "env": {
       "python": "3.8.20",

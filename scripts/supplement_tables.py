@@ -74,6 +74,8 @@ def group(M: dict[str, np.ndarray]) -> dict[str, dict[str, np.ndarray]]:
             and M[c].dtype not in (object, bool)]
     g: dict[str, dict[str, list]] = {}
     for i, q in enumerate(M["query_id"]):
+        if int(M["mode"][i]) >= 100:      # injected acoustic candidates, not part of the shortlist
+            continue
         d = g.setdefault(str(q), {c: [] for c in cols})
         for c in cols:
             d[c].append(M[c][i])

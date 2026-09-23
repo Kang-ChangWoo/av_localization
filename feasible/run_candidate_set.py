@@ -119,6 +119,9 @@ def main() -> int:
         vc, acc = evidence_columns(cfg) if cfg else ("vis_lse", "ac_quantile")
         per: dict[str, dict] = {}
         for i, q in enumerate(M["query_id"]):
+            # injected acoustic candidates (mode >= 100, written by the newer extractor) are not part of the visual shortlist
+            if int(M["mode"][i]) >= 100:
+                continue
             d = per.setdefault(str(q), {"d": [], "ac": [], "v": [], "m": []})
             d["d"].append(M["dist_gt_m"][i])
             d["ac"].append(M[acc][i])

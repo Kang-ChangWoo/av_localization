@@ -33,13 +33,13 @@ Identical queries throughout; only the set of places the acoustic score is asked
 
 | candidate set | size | acoustic choice @1 m | gated fusion @1 m | oracle @1 m |
 |---|---|---|---|---|
-| vision alone (no acoustics) | 1 | 40.5% | 40.5% | – |
-| hypotheses, K=1 | 1 | 40.5% | 40.5% | 40.5% |
-| hypotheses, K=2 | 2 | 36.7% | 39.0% | 53.7% |
-| hypotheses, K=3 | 3 | 35.2% | 40.2% | 66.7% |
-| hypotheses, K=5 | 5 | 33.0% | 42.0% | 73.2% |
-| hypotheses, K=10 | 10 | 30.8% | 43.2% | 84.5% |
-| visual top-50 cells | 50 | 45.8% | – | – |
+| vision alone (no acoustics) | 1 | 37.0% | 37.0% | – |
+| hypotheses, K=1 | 1 | 37.2% | 37.2% | 37.2% |
+| hypotheses, K=2 | 2 | 38.3% | 39.2% | 54.8% |
+| hypotheses, K=3 | 3 | 37.5% | 39.0% | 65.8% |
+| hypotheses, K=5 | 5 | 36.2% | 42.3% | 77.7% |
+| hypotheses, K=10 | 10 | 31.2% | 44.5% | 88.2% |
+| visual top-50 cells | 50 | 50.0% | – | – |
 | all cells, acoustic only | 5344 | 20.8% | – | – |
 
 The curve falls with candidate-set size on every backbone: the same acoustic evidence that cannot find a pose on a map can choose between a handful of them. The distance to the oracle at small K is what better acoustic discrimination would buy without changing anything else.
