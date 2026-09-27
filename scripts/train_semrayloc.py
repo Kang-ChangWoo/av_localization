@@ -29,6 +29,7 @@ import argparse
 import json
 import os
 import sys
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -84,10 +85,18 @@ def parse_args():
                    help="cross-entropy weights for wall/window/door/unknown (semantic net). "
                         "Applied to the training loss AND to the reported weighted validation "
                         "loss; loss_rays_val stays unweighted so runs remain comparable.")
-    p.add_argument("--room-labels", choices=["const", "real"], default="const",
+    p.add_argument("--room-labels", choices=["const", "real", "shuffled"], default="const",
                    help="const: one constant room id for every frame (the pre-2026-09-25 "
                         "behaviour, room head carries no signal). real: per-frame ZInD label "
-                        "from chunks.json frames[].label, mapped with upstream's rule.")
+                        "from chunks.json frames[].label, mapped with upstream's rule. "
+                        "shuffled: the real labels with one random bijection of the id space "
+                        "applied per scene -- same within-scene grouping and group sizes, so "
+                        "the room loss stays learnable at a comparable magnitude, but the "
+                        "image->room-type mapping shared across scenes is destroyed.")
+    p.add_argument("--label-shuffle-seed", type=int, default=1234,
+                   help="seed for --room-labels shuffled. Deliberately separate from --seed so "
+                        "every training seed sees the SAME shuffled labels and the seed spread "
+                        "measures training noise only.")
     p.add_argument("--const-room-id", type=int, default=15,
                    help="room id used by --room-labels const (15 = undefined in the 16-entry "
                         "S3D table, which is what this script used before 2026-09-25)")
@@ -139,11 +148,37 @@ def _scene_room_ids(scene_dir: Path, n_frames: int, id_table):
     return ids, raw
 
 
+def _scene_shuffle(rids, scene, shuffle_seed, id_table):
+    """Scene-level label shuffle: one random bijection of the id space per scene.
+
+    Preserves exactly which frames of a scene share a label and how large each
+    label group is, so the room head still has a learnable structure of the same
+    size; what it destroys is the image -> room-type mapping that generalises
+    across scenes.  A frame-level shuffle would instead hand two panoramas of the
+    same room two different labels, which makes the aux task unlearnable noise and
+    changes the room-loss magnitude itself, breaking the comparison with the
+    real-label arm.
+
+    The permutation comes from a local Generator seeded with
+    (shuffle_seed, crc32(scene)): deterministic, identical across processes and
+    across training seeds, and it draws nothing from the global RNG, so the
+    dataloader shuffle stream stays identical to the real-label arm.
+    """
+    n_ids = len(id_table)
+    rng = np.random.default_rng([int(shuffle_seed), int(zlib.crc32(scene.encode("utf-8")))])
+    perm = rng.permutation(n_ids)
+    inv = {v: k for k, v in id_table.items()}
+    out_ids = [int(perm[int(r)]) for r in rids]
+    out_names = ["shuf:%s" % inv.get(i, i) for i in out_ids]
+    return out_ids, out_names
+
+
 class EchoLocRays:
     """One sample per frame of the given collections and scenes."""
 
     def __init__(self, root: Path, collections, scenes, ray_n, resize=None, with_semantic=True,
-                 room_labels="const", const_room_id=15, id_table=None):
+                 room_labels="const", const_room_id=15, id_table=None,
+                 label_shuffle_seed=1234):
         import torch  # noqa: F401
         self.items = []
         self.resize = resize
@@ -158,8 +193,10 @@ class EchoLocRays:
                 sem = (np.loadtxt(d / f"semantic{ray_n}.txt", ndmin=2, dtype=np.int64)
                        if with_semantic else np.zeros_like(depth, dtype=np.int64))
                 assert len(names) == len(depth) == len(sem), (d, len(names), len(depth), len(sem))
-                if room_labels == "real":
+                if room_labels in ("real", "shuffled"):
                     rids, rnames = _scene_room_ids(d, len(names), id_table)
+                    if room_labels == "shuffled":
+                        rids, rnames = _scene_shuffle(rids, sc, label_shuffle_seed, id_table)
                     for nm in rnames:
                         self.room_hist[nm] = self.room_hist.get(nm, 0) + 1
                 else:
@@ -364,7 +401,7 @@ def main() -> int:
     from modules.semantic.semantic_mapper import zind_room_type_to_id
 
     id_table = zind_room_type_to_id
-    if a.room_labels == "real":
+    if a.room_labels in ("real", "shuffled"):
         assert len(id_table) == 14 and id_table["undefined"] == 13, "upstream ZInD table changed"
         if a.num_room_types < len(id_table):
             raise SystemExit("--num-room-types %d is smaller than the ZInD table (%d)"
@@ -381,7 +418,8 @@ def main() -> int:
     tr, va = split["train"], split["val"]
     if a.max_scenes:
         tr, va = tr[: a.max_scenes], va[: a.max_scenes]
-    kw = dict(room_labels=a.room_labels, const_room_id=a.const_room_id, id_table=id_table)
+    kw = dict(room_labels=a.room_labels, const_room_id=a.const_room_id, id_table=id_table,
+              label_shuffle_seed=a.label_shuffle_seed)
     ds_tr = EchoLocRays(root, a.collections, tr, a.ray_n, a.resize, a.net == "semantic", **kw)
     ds_va = EchoLocRays(root, a.collections, va, a.ray_n, a.resize, a.net == "semantic", **kw)
     print("[data] train %d frames  val %d frames" % (len(ds_tr), len(ds_va)), flush=True)
@@ -397,6 +435,8 @@ def main() -> int:
     (out / "data_stats.json").write_text(json.dumps({
         "train_frames": len(ds_tr), "val_frames": len(ds_va),
         "room_mode": a.room_labels, "num_room_types": a.num_room_types,
+        "room_loss_weight": a.room_loss_weight,
+        "label_shuffle_seed": (a.label_shuffle_seed if a.room_labels == "shuffled" else None),
         "room_hist_train": ds_tr.room_hist, "room_hist_val": ds_va.room_hist,
         "class_weights": a.class_weights, "monitor": a.monitor,
         "epochs": a.epochs, "early_stop_patience": a.early_stop_patience,
