@@ -396,7 +396,18 @@ def main() -> int:
         ensure_on_path()
         from utils.localization_utils import get_ray_from_depth, localize
         from track1_core.models import MonoDepthModule
-        ck = args.checkpoint or str(REPO_ROOT / "outputs/echoloc_mono_fg/mono.ckpt")
+        # the fallback is Replica's f+g mono net and is right for Replica alone.
+        # Loaded silently against another benchmark it yields a plausible-looking
+        # table from the wrong weights, so every other collection names its own.
+        if args.checkpoint:
+            ck = args.checkpoint
+        elif set(args.collections) - {"replica_f", "replica_g"}:
+            raise SystemExit(
+                f"--checkpoint is required for --collections {' '.join(args.collections)}: "
+                f"the built-in fallback {REPO_ROOT / 'outputs/echoloc_mono_fg/mono.ckpt'} "
+                "is Replica's mono net")
+        else:
+            ck = str(REPO_ROOT / "outputs/echoloc_mono_fg/mono.ckpt")
         net = MonoDepthModule.load_from_checkpoint(ck).to(device).eval()
 
         def posterior(img_bgr, desdf_t):

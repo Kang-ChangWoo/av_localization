@@ -8,7 +8,9 @@
 # replica_g is still transferring, so only replica_f is used.
 
 data:
-  root: /root/storage/echoloc_dataset
+  # the collections moved under echoloc_dataset/replica/ in September; the
+  # pipeline passes --datasets replica_f replica_g on the command line
+  root: /root/storage/echoloc_dataset/replica
   datasets: [replica_f]
   L: 3
   views: ref
