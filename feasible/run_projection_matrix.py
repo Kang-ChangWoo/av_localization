@@ -58,6 +58,13 @@ MP3D_SCENES = ("8WUmhLawc2A_f0 EDJbREhghzL_f0 EDJbREhghzL_f1 Z6MFQCViBuw_f0 gTV8
                "sT4fr6TAbpF_f0 uNb9QFRL6hY_f1")
 UNLOC = ROOT.parent / "UnLoc" / "tb_logs" / "my_model"
 DISCO = ROOT.parent / "DisCo-FLoc"
+# The DisCo RRP checkpoints below are the validation-monitored retrains (configs
+# *_val.yaml, scripts/run_rrp_val_queue.sh), each the lowest val_action_loss of its
+# run -- the same choice run_disco_reextract.best_ckpt makes, and the weights behind
+# the current tables. The original runs monitored `val_split: test`, so their
+# checkpoints were chosen on the test split; those tables are archived under
+# outputs/analysis/archive_testselected_disco/ and the results they produced are kept
+# as feasible/results/VAL_<ds>_fixed_indomain.testselected_disco.{json,md}.
 
 # base extraction command per (target, backbone), without gpu, tag or projection
 BASE = {
@@ -78,7 +85,7 @@ BASE = {
         "--grid-dir outputs/acoustic_grid_v2 --backbone disco_rrp "
         # the in-domain ray predictor, trained on Replica's training rooms like the
         # other two backbones; the Gibson checkpoint reads 31.0% here against 40.5%
-        f"--checkpoint {DISCO}/logs/rrp_runs/rrp_replica_f_20260909_191458/checkpoints/epoch=05-val_action_loss=0.30.ckpt "
+        f"--checkpoint {DISCO}/logs/rrp_runs/rrp_replica_f_val_20260920_074725/checkpoints/epoch=02-val_action_loss=0.28.ckpt "
         "--feature stft_band --nfft 256 --hop 64 --n-poses 100"),
     ("mp3d", "f3loc"): (
         "--dataset-root /root/storage/echoloc_dataset/mp3d --collections mp3d_f mp3d_g "
@@ -93,8 +100,8 @@ BASE = {
     ("mp3d", "disco"): (
         "--dataset-root /root/storage/echoloc_dataset/mp3d --collections mp3d_f mp3d_g "
         f"--scenes {MP3D_SCENES} --condition raw_scan_open --grid-dir outputs/acoustic_grid_mp3d "
-        f"--backbone disco_rrp --checkpoint {DISCO}/logs/rrp_runs/rrp_mp3d_lr1e4_20260911_202717/"
-        "checkpoints/epoch=03-val_action_loss=0.92.ckpt --feature stft_band --nfft 256 --hop 64 --n-poses 40"),
+        f"--backbone disco_rrp --checkpoint {DISCO}/logs/rrp_runs/rrp_mp3d_lr1e4_val_20260921_054659/"
+        "checkpoints/epoch=06-val_action_loss=3.20.ckpt --feature stft_band --nfft 256 --hop 64 --n-poses 40"),
     ("s3d", "f3loc"): (
         "--dataset-root /root/storage/echoloc_dataset/s3d --collections s3d "
         f"--scenes {S3D_SCENES} --condition floorplan_closed --grid-dir outputs/acoustic_grid_s3d "
@@ -108,8 +115,8 @@ BASE = {
     ("s3d", "disco"): (
         "--dataset-root /root/storage/echoloc_dataset/s3d --collections s3d "
         f"--scenes {S3D_SCENES} --condition floorplan_closed --grid-dir outputs/acoustic_grid_s3d "
-        f"--backbone disco_rrp --checkpoint {DISCO}/logs/rrp_runs/rrp_s3d_20260911_132644/"
-        "checkpoints/epoch=06-val_action_loss=0.90.ckpt --feature stft_band --nfft 256 --hop 64 "
+        f"--backbone disco_rrp --checkpoint {DISCO}/logs/rrp_runs/rrp_s3d_val_20260920_074724/"
+        "checkpoints/epoch=06-val_action_loss=1.07.ckpt --feature stft_band --nfft 256 --hop 64 "
         "--n-rays 7 --f-w 0.5959 --n-poses 20"),
 }
 # SemRayLoc (depth rays + semantic rays, ICCV 2025). Its depth net is F3Loc's
