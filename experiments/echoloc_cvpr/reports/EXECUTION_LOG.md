@@ -5,6 +5,57 @@ experiments that actually ran appear here.
 
 ---
 
+## REP-02 / REP-03 — Replica and S3D reproduction sweep, 8/8 cells bit-identical
+
+- **Status:** DONE. **GATE-A is satisfied for Replica and Structured3D.**
+- **Verdict:** **Every cell reproduces bit-exactly.** Sixteen test-table extractions
+  (8 cells × identity and projected) re-run from scratch, re-selected on the validation
+  rooms, reproduce the committed vision, fused, gain, median *and* the validation-chosen
+  scalars with no deviation.
+- **Changed variable:** none. Determinism check.
+- **Command & hardware:** `rep03_sweep.py`, a refilling card pool, one cell per card on
+  **cards 2–7** of n1, 06:36→07:17 KST. Selection CPU-only in a real-file sandbox.
+- **SHA:** `3f4ad9b` extraction, collected at `2e59a9f`
+- **Controls:** validation tables reused from the repo read-only, so only the test
+  extraction varies. Nothing in the repo written — scratch `--out-dir` throughout.
+
+| dataset | backbone | vision | ours | gain | 95% CI (paired) | median | reproduces HEAD |
+|---|---|---|---|---|---|---|---|
+| Replica | F3Loc mono | 38.3 | 48.8 | +10.5 | [+7.0, +14.0] | 1.07 | bit-identical |
+| Replica | UnLoc | 50.7 | 60.0 | +9.3 | [+6.3, +12.5] | 0.39 | bit-identical |
+| Replica | DisCo RRP | 37.0 | 51.3 | +14.3 | [+10.7, +18.0] | 0.87 | bit-identical |
+| Replica | SemRayLoc | 35.0 | 42.3 | +7.3 | [+4.0, +10.5] | 1.47 | bit-identical |
+| S3D | F3Loc mono | 24.2 | 48.6 | +24.4 | [+20.3, +28.7] | 1.11 | bit-identical |
+| S3D | UnLoc | 30.1 | 57.9 | +27.8 | [+23.7, +31.9] | 0.58 | bit-identical |
+| S3D | DisCo RRP | 22.6 | 45.7 | +23.1 | [+19.2, +27.1] | 1.33 | bit-identical |
+| S3D | SemRayLoc | 32.6 | 55.4 | +22.8 | [+18.8, +26.7] | 0.80 | bit-identical |
+
+n = 600 per Replica cell, 558 per S3D cell.
+
+### What it supports
+
+- **The headline numbers for these eight cells are real and regenerable.** Together with
+  REP-03-MP3D-SRL (also bit-exact) that is **nine of nineteen** headline cells verified by
+  independent re-extraction. Gibson and ZInD are running now.
+- **No hidden run-to-run state.** Reproducing the validation-selected scalars, not just the
+  final recall, means the whole selection path is deterministic.
+
+### What it does NOT support
+
+- It does **not** validate the protocol, only its reproducibility. The test-informed
+  structure and source-map choices recorded in `AUDIT.md` are untouched by this and remain
+  the honest limitation.
+- S3D's figures still rest on 30 of 250 test scenes (n = 558), the thinnest evidence base of
+  the five benchmarks, which is why its CIs are the widest here.
+
+### Artifact paths
+
+`$NODE_LOCAL1/echoloc_cvpr/rep03_sweep/` — `analysis/` (16 table sets),
+`VAL_{replica,s3d}_rerun{,_srl}.{md,json}`, `logs/`, `farm/`. Index at
+`$NODE_LOCAL1/echoloc_cvpr/RUN_INDEX.tsv`.
+
+---
+
 ## REP-03-MP3D-SRL — MP3D SemRayLoc re-extraction, bit-exact reproduction
 
 - **Status:** DONE
