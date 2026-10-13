@@ -96,32 +96,53 @@ logged `hparams.yaml`, for `rrp_replica_f_val_20260920_074725`,
 `rrp_gibson_val_20260920_124720`. The superseded test-selected tables are kept, correctly
 quarantined, as `feasible/results/VAL_<ds>_fixed_indomain.testselected_disco.{json,md}`.
 
-### Finding: Replica's SemRayLoc row is selected on a different metric
+### Finding: the SemRayLoc rows are not selected the same way — and S3D is the odd one out
 
-Read from the actual symlink targets, not from the checkpoint table:
+**Corrected 2026-10-14 after reading the per-epoch metrics.** An earlier version of this
+section read the selection metric off the checkpoint *filenames* and concluded that Replica
+was the single deviating row. That was wrong. Filenames record which metric the
+`ModelCheckpoint` was monitoring, not which epoch was ultimately linked. Reading the linked
+epoch against each run's own `lightning_logs/*/metrics.csv` gives the opposite answer:
 
-| dataset | `outputs/srl/<ds>/semantic/best.ckpt` resolves to | metric |
-|---|---|---|
-| Replica | `semantic_net-epoch=07-acc_rays_val=0.819.ckpt` | **`acc_rays_val`** (max) |
-| MP3D | `semantic_net-epoch=02-loss-valid=0.656.ckpt` | `loss-valid` (min) |
-| S3D | `semantic_net-epoch=30-loss-valid=0.436.ckpt` | `loss-valid` (min) |
+| dataset | `best.ckpt` resolves to | `acc_rays_val` best | `loss-valid` best | linked epoch is |
+|---|---|---|---|---|
+| Replica | `semantic_acc/…epoch=07-acc_rays_val=0.819` | **ep 07** (0.8187) | ep 00 (0.8242) | **accuracy argmax** |
+| MP3D | `…epoch=02-loss-valid=0.656` | **ep 02** (0.7686) | ep 01 (0.6479) | **accuracy argmax** |
+| S3D | `…epoch=30-loss-valid=0.436` | ep 32 (0.8413) | **ep 30** (0.4363) | **loss argmin** |
 
-`scripts/train_semrayloc.py:110` defaults `--monitor` to `loss-valid` and `:456` flips
-`mode` to `max` when the monitor name starts with `acc` or contains `f1`, so both runs are
-internally consistent — and both metrics are computed on validation, so **there is no test
-leakage**. What breaks is the claim in `docs/headline_config.md` §1 that every row is picked
-the same way: Replica's SemRayLoc checkpoint is the argmax of a ray-accuracy metric while
-MP3D's and S3D's are the argmin of a validation loss.
+MP3D's link is the giveaway: it points at epoch 02 even though epoch 01 has the *lower*
+`loss-valid` (0.6479 vs 0.656) and both are on disk. Epoch 02 is MP3D's `acc_rays_val`
+argmax. So Replica and MP3D are both accuracy-selected and **only S3D is loss-selected**.
 
-Why it matters for the paper: Replica SemRayLoc is the weakest Replica row (vision 35.0,
-gain +7.3). Its vision baseline is therefore not on the same selection footing as MP3D's
-22.8 or S3D's 32.6, so the *cross-dataset* SemRayLoc comparison carries an uncontrolled
-variable. The within-dataset V vs V+A comparison is unaffected — both arms share the one
-checkpoint, so the paired Δ is still valid.
+This matches the code's stated intent. `feasible/run_srl_pipeline.py:40-49`
+(`best_checkpoint`) globs for `*-acc_rays_val=*.ckpt` **first** and only falls through to
+`*-loss-valid=*.ckpt` when no accuracy-monitored checkpoint exists, and its docstring
+(`:55-57`) says the checkpoint "is chosen on the validation rooms by ray accuracy, which is
+what the localiser consumes". S3D got the loss fallback because its run was monitored on
+loss and `save_top_k=2` kept only epochs 29 and 30 — **its accuracy-best epoch 32 is not on
+disk**.
 
-Cost to remove: re-select Replica's SemRayLoc semantic checkpoint on `loss-valid` from the
-existing run (no retraining needed if a `loss-valid` checkpoint from that run survives on
-disk), then re-extract the one row. Not yet done.
+Both metrics are validation metrics, so **there is no test leakage** either way. What breaks
+is `docs/headline_config.md` §1's claim that every row is picked the same way.
+
+Why it matters: on Replica the two metrics point in **opposite directions**. `loss-valid`
+is minimised at epoch 00 (0.830) and rises monotonically to 1.518 by epoch 11, while
+`acc_rays_val` climbs from 0.718 to a 0.819 peak. The network overfits in cross-entropy
+while getting better at the task the localiser actually uses. So "make them all
+`loss-valid`" selects a barely-trained epoch-0 network, and is not obviously the right fix.
+
+Two coherent ways to make the four SemRayLoc rows uniform:
+
+1. **Uniform on `loss-valid`** — fully available on disk, no retraining: Replica ep 00
+   (0.830), MP3D ep 01 (0.6479), S3D ep 30 (already). Changes **two** rows, and moves
+   Replica to a network 10 accuracy points worse than the one it uses now.
+2. **Uniform on `acc_rays_val`** — matches the code's stated intent, but S3D's ep 32
+   checkpoint does not exist. Requires retraining S3D's semantic net (40 epochs) or
+   re-running it with `--monitor acc_rays_val`.
+
+Status: option 1 is being measured for Replica (see `EXECUTION_LOG.md`), chosen because it
+needs no GPU-hours beyond one re-extraction and because it is the option Changwoo approved.
+Its result decides whether uniformity is worth the accuracy it costs.
 
 ### Test-informed decisions already disclosed, and confirmed here
 
