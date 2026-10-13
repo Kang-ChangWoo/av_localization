@@ -5,6 +5,63 @@ experiments that actually ran appear here.
 
 ---
 
+## REP-03-MP3D-SRL — MP3D SemRayLoc re-extraction, bit-exact reproduction
+
+- **Status:** DONE
+- **Verdict:** **The extraction → selection pipeline reproduces bit-exactly.** An independent
+  re-run of the MP3D SemRayLoc cell matched the archived batch-8 selection to ten decimal
+  places on every reported quantity. This closes D-02 and is the first verified REP-03 cell.
+- **Hypothesis:** the committed MP3D SemRayLoc aggregate can be regenerated from scratch, and
+  the missing per-query tables restored.
+- **Changed variable:** none — same checkpoint (`outputs/srl/mp3d/semantic/best.ckpt`), same
+  everything. This is a determinism check, not a comparison.
+- **Command & hardware:** `rep03_run.sh`, four independent cells one per card, **cards
+  2/3/4/6** on n1, 16:27→18:28 UTC (validation pair finished at 17:21, test pair at 18:28).
+  Selection in a real-file sandbox.
+- **n:** 960 test queries (12 rooms), 960 validation queries (6 rooms)
+- **SHA / ckpt md5:** `3f4ad9b` / `ca9d658a6a8b`
+
+| | n | vision | ours | gain | scalars (w, s, τv) | median |
+|---|---|---|---|---|---|---|
+| archived batch-8 selection | 960 | 0.228125 | 0.286458 | +0.058333 | 2, 0.02, 0.05 | 4.6958600253 |
+| **this re-run** | 960 | **0.228125** | **0.286458** | **+0.058333** | **2, 0.02, 0.05** | **4.6958600253** |
+
+Identical, including the validation-selected scalars — so the selection re-derived the same
+configuration from re-extracted tables, not just the same final recall.
+
+### What it supports
+
+- **Determinism.** The pipeline is bit-reproducible end to end on a fixed checkpoint. That
+  retires the worry that the committed numbers depend on unrecorded run-to-run state, and it
+  is the evidence `TEST-11`/`TEST-12` ask for.
+- **D-02 closed.** The per-query tables exist again, so this cell can now carry paired CIs,
+  scene-clustered bootstrap, and the W→C/C→W taxonomy.
+
+### What it does NOT support — read this before quoting the numbers
+
+**22.8 → 28.6 is no longer the current MP3D SemRayLoc row.** While this run was in flight,
+commit `90fb15a` (another session, not this one) adopted the batch-16 retrain for that cell,
+and HEAD now reports **24.9 → 31.8, +6.9**. `best.ckpt` on disk still points at the batch-8
+`epoch=02-loss-valid=0.656`, and the adopted row was produced by passing the batch-16
+checkpoint explicitly — so **the symlink and the committed row intentionally disagree**, and
+anything resolving `best.ckpt` reproduces the superseded number. That is exactly what this
+run did. Its value is the determinism result, not the figures.
+
+### Operational hazard found
+
+**Two agents were editing one working tree concurrently.** Within this session,
+`feasible/results/VAL_replica_fixed_indomain.json` and
+`VAL_mp3d_fixed_indomain_srl.json` both changed underneath an in-progress analysis, and
+`git merge --ff-only` silently imported the other session's commits. Two of my findings
+(D-01, and the first read of this cell) were distorted by comparing a mid-flight working tree
+against a committed table.
+
+Mitigations, now applied here: compare with `git show HEAD:<path>` and never a bare
+`open()`; re-read any result file immediately before quoting it; and treat the node checkout
+as shared state rather than private scratch.
+
+---
+
 ## AUD-04-FIX — Replica SemRayLoc under a loss-valid-selected semantic checkpoint
 
 - **Status:** DONE

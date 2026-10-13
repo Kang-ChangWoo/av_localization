@@ -82,9 +82,25 @@ adopts epoch 368. Until then:
 
 ---
 
-## D-02 — MP3D SemRayLoc: the headline cell has no per-query evidence on disk
+## D-02 — MP3D SemRayLoc: the headline cell had no per-query evidence on disk
 
-**Status: OPEN. Cause established. REP-03 is `BLOCKED` for this cell.**
+**Status: CLOSED 2026-10-14. The tables exist again and the cell reproduces bit-exactly.**
+
+Two things closed it, independently:
+
+1. The batch-16 adoption work (commit `90fb15a`, not this session) regenerated all four
+   MP3D SemRayLoc table sets. `outputs/analysis/` now holds 20 matching artifacts and the
+   superseded batch-8 set is archived under `outputs/analysis/archive_srl_mp3d_b8/`.
+2. This session's independent re-extraction (REP-03, cards 2/3/4/6, ~2 h) reproduced the
+   **batch-8** selection **bit-exactly** — n, vision, ours, gain and median agreeing to ten
+   decimal places with the archived `VAL_mp3d_fixed_indomain_srl.srl_b8.json`. See
+   `EXECUTION_LOG.md`, REP-03-MP3D-SRL.
+
+The reproducibility caveat from the original entry still stands and is unaffected: every
+`*_srl.json` provenance block records `"dirty": true`, so the code behind the SemRayLoc rows
+is identified by a diff hash rather than a commit.
+
+**Historical record of the original finding**, kept because it is why the re-extraction ran:
 
 `feasible/results/VAL_mp3d_fixed_indomain_srl.json` reports the headline MP3D SemRayLoc
 cell — n = 960, vision 0.2281 (22.8), ours 0.2865 (28.6), gain +0.0583 — and its own
