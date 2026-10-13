@@ -40,7 +40,7 @@ TH = [0.1, 0.5, 1.0, 2.0, 5.0]
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--dataset", required=True, choices=["replica", "mp3d", "s3d", "gibson"])
+    p.add_argument("--dataset", required=True, choices=["replica", "mp3d", "s3d", "gibson", "zind"])
     p.add_argument("--backbones", nargs="+", default=["f3loc", "unloc", "disco"])
     p.add_argument("--boot", type=int, default=10000)
     p.add_argument("--simplicity-margin", type=float, default=0.01,
@@ -52,7 +52,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--source", choices=["val", "indomain", "B", "T"], default="val",
                    help="how the projection source is chosen. 'val' searches it with the rest; "
                         "'indomain' is the source trained on the same benchmark (R on Replica, M "
-                        "on Matterport3D; Structured3D cannot train one and uses B); 'B' is the "
+                        "on Matterport3D; Structured3D and ZInD cannot train one and use B); 'B' is the "
                         "pooled projection everywhere. Both fixed choices are made in advance")
     p.add_argument("--variants", action="store_true",
                    help="with --fixed: also select and test the three ways of answering from "
@@ -83,7 +83,15 @@ VAL_ROOMS = {"replica": {"apartment_1", "frl_apartment_4", "office_3"},
                       "r47D5H71a5s_f0", "ZMojNkEp431_f0"},
              "s3d": {"scene_03242", "scene_03209", "scene_03203", "scene_03220", "scene_03248",
                      "scene_03215", "scene_03231", "scene_03236", "scene_03223", "scene_03208"},
-             "gibson": {"Wiconisco_f0", "Macksville_f0", "Southfield_f3", "Wesley_f1", "Jennie_f0", "Scioto_f2"}}
+             "gibson": {"Wiconisco_f0", "Macksville_f0", "Southfield_f3", "Wesley_f1", "Jennie_f0", "Scioto_f2"},
+             # eight floors of ZInD's own validation partition, picked by median
+             # free-space area and frozen before any render
+             # (/root/local1/changwoo/zind_grid_ext/val_floors.json, 2026-10-02).
+             # They are absent from the shipped desdf/, which covers the 252 test
+             # floors only, so both their DESDF and their candidate grid are built
+             # separately; see feasible/run_zind_pipeline.py.
+             "zind": {"0878_f1", "0888_f0", "1037_f2", "1077_f2", "1084_f1", "1095_f1",
+                      "1125_f0", "1534_f1"}}
 
 
 def load(cond: str, tag: str, expect_rooms=None, inject: int = 0):
@@ -116,7 +124,7 @@ def main() -> int:
                       itertools.product(base, (-2.0, 0.0, 0.2, 0.4))]}
     if args.fixed:
         rules = {"simple": rules["simple"]}
-    INDOMAIN = {"replica": "R", "mp3d": "M", "s3d": "B", "gibson": "G"}
+    INDOMAIN = {"replica": "R", "mp3d": "M", "s3d": "B", "gibson": "G", "zind": "B"}
     allowed_sources = {"val": (None,) + tuple(SOURCES),
                        "indomain": (INDOMAIN[args.dataset], None),
                        "B": ("B", None), "T": ("T", None)}[args.source]

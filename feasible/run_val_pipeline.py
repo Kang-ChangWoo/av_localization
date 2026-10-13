@@ -49,6 +49,10 @@ VAL_ROOMS = {
             "scene_03231 scene_03236 scene_03223 scene_03208"),
     # six validation floors of median size; feasible/run_gibson_pipeline.py runs Gibson
     "gibson": "Wiconisco_f0 Macksville_f0 Southfield_f3 Wesley_f1 Jennie_f0 Scioto_f2",
+    # eight floors of median free-space area from ZInD's own validation partition;
+    # feasible/run_zind_pipeline.py runs ZInD. Kept identical to val_select.py's
+    # VAL_ROOMS["zind"], which is the set the selection asserts the tables against.
+    "zind": "0878_f1 0888_f0 1037_f2 1077_f2 1084_f1 1095_f1 1125_f0 1534_f1",
 }
 
 

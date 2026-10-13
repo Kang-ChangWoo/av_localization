@@ -143,14 +143,21 @@ BASE[("s3d", "srl")] = (
     f"--backbone semrayloc --checkpoint {SRL}/s3d/semantic/best.ckpt --depth-ckpt outputs/visual/s3d/mono_lr3e4/mono.ckpt --depth-arch f3loc "
     "--semdesdf-dir outputs/semdesdf/s3d --feature stft_band --nfft 256 --hop 64 --n-rays 7 --f-w 0.5959 --n-poses 20")
 PREFIX = {"f3loc": "f3loc_mono", "unloc": "unloc", "disco": "disco_rrp", "srl": "semrayloc"}
-COND = {"replica": "raw_scan_open", "mp3d": "raw_scan_open", "s3d": "floorplan_closed", "gibson": "raw_scan_open"}
+COND = {"replica": "raw_scan_open", "mp3d": "raw_scan_open", "s3d": "floorplan_closed", "gibson": "raw_scan_open",
+        "zind": "floorplan_closed"}
 # the identity (no projection) table each target already has
 IDENT = {("replica", "f3loc"): "f3STFT", ("replica", "unloc"): "unlocSTFT", ("replica", "disco"): "discoID",
          ("mp3d", "f3loc"): "f3loc_mono_mp3d12", ("mp3d", "unloc"): "unloc_mp3d12",
          ("mp3d", "disco"): "disco_rrp_mp3d12",
          ("s3d", "f3loc"): "f3loc_mono_s3d", ("s3d", "unloc"): "unloc_s3d", ("s3d", "disco"): "disco_rrp_s3d",
          ("replica", "srl"): "semrayloc", ("mp3d", "srl"): "semrayloc_mp3d12", ("s3d", "srl"): "semrayloc_s3d",
-         ("gibson", "f3loc"): "f3loc_mono_gibson", ("gibson", "unloc"): "unloc_gibson", ("gibson", "disco"): "disco_rrp_gibson"}
+         ("gibson", "f3loc"): "f3loc_mono_gibson", ("gibson", "unloc"): "unloc_gibson", ("gibson", "disco"): "disco_rrp_gibson",
+         # ZInD, run end to end by feasible/run_zind_pipeline.py. Listed here
+         # because scripts/val_tables.py indexes IDENT for every benchmark in its
+         # DS list, so a benchmark that has a row but no entry raises KeyError
+         # before any number is read.
+         ("zind", "f3loc"): "f3loc_mono_zind", ("zind", "unloc"): "unloc_zind",
+         ("zind", "disco"): "disco_rrp_zind", ("zind", "srl"): "semrayloc_zind"}
 # tables that already exist for a (target, backbone, source) and need no extraction
 EXISTING = {("replica", "f3loc", "R"): "f3loc_mono_proj", ("replica", "unloc", "R"): "unloc_uproj",
             ("mp3d", "f3loc", "M"): "f3loc_mono_mp3d12proj", ("mp3d", "unloc", "M"): "unloc_mp3d12proj",
@@ -160,7 +167,8 @@ EXISTING = {("replica", "f3loc", "R"): "f3loc_mono_proj", ("replica", "unloc", "
 def tag_of(target, backbone, source):
     if (target, backbone, source) in EXISTING:
         return EXISTING[(target, backbone, source)]
-    suffix = {"replica": "", "mp3d": "_mp3d12", "s3d": "_s3d", "gibson": "_gibson"}[target]
+    suffix = {"replica": "", "mp3d": "_mp3d12", "s3d": "_s3d", "gibson": "_gibson",
+              "zind": "_zind"}[target]
     return f"{PREFIX[backbone]}{suffix}proj{source}"
 
 

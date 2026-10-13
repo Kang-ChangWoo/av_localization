@@ -23,7 +23,7 @@ OUT = REPO_ROOT / "docs" / "tables"
 TBD = r"\emph{tbd}"
 BB = [("f3loc", "F3Loc mono"), ("unloc", "UnLoc"), ("disco", "DisCo-FLoc RRP")]
 DS = [("replica", "Replica", "furnished"), ("mp3d", "Matterport3D", "furnished"),
-      ("s3d", "Structured3D", "matched")]
+      ("s3d", "Structured3D", "matched"), ("zind", "ZInD", "matched")]
 # Gibson joins the tables once its validation-selected results exist
 if (Path(__file__).resolve().parents[1] / "feasible" / "results" / "VAL_gibson_fixed_indomain.json").exists():
     DS.insert(2, ("gibson", "Gibson", "furnished"))
@@ -91,7 +91,10 @@ def main() -> int:
              r"Gibson is reported on 68 of its 69 test floors: one floor (Sargents\_f2, 176k free cells, "
              r"a quarter of the split's cells) exceeded the memory of the acoustic-grid extractor and is "
              r"excluded from every row, visual and acoustic alike. Gibson has no semantic annotation, so "
-             r"SemRayLoc has no Gibson row.}")
+             r"SemRayLoc has no Gibson row. ZInD ships no mesh, so its query recordings and its "
+             r"candidate grid are rendered on the same wall-only floorplan proxy: like Structured3D "
+             r"it is a matched-geometry row, and neither benchmark measures the furniture domain "
+             r"gap.}")
     M.append(r"\label{tab:main_multi}")
     M.append(r"\setlength{\tabcolsep}{5pt}")
     M.append(r"\begin{tabular}{lllcccccccl}\toprule")

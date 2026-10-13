@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -89,7 +90,21 @@ def main() -> int:
 
         out = args.out_dir / f"{scene}.npz"
         cfg = dict(cfgs[0]); cfg.pop("shard", None); cfg["shards_merged"] = len(shards)
-        np.savez(out, rir=rir, index=index, grid=grids[0], config=json.dumps(cfg))
+        # Write through a temporary file in the same directory and rename. A
+        # crash or a full disk during np.savez used to leave a truncated
+        # <scene>.npz behind, which the driver's existence check reads as
+        # "already done" -- and the driver then deletes the shards it was made
+        # from, so the floor is unrecoverably half-rendered.
+        tmp = out.with_name(out.name + ".tmp")
+        try:
+            with open(tmp, "wb") as fh:
+                np.savez(fh, rir=rir, index=index, grid=grids[0], config=json.dumps(cfg))
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(tmp, out)
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
         print(f"[merge] {scene}: {len(shards)} shards -> {rir.shape} "
               f"({out.stat().st_size / 1e6:.0f} MB)  "
               f"{cfg.get('sample_rate')} Hz, diffraction={cfg.get('diffraction')}")
