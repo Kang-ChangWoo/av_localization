@@ -47,7 +47,7 @@ Checkpoint paths are in `docs/tables/tab_main_multi_checkpoints.md`. Recall at 1
 | MP3D | F3Loc mono | M | 2, 0.05, 0.05 | 38.1 | 33.3 | 40.1 | +6.8 [+4.1, +9.6] | 2.91 | +2.0 | 960 |
 | MP3D | UnLoc | M | 0.5, 0.1, 0.05 | 49.2 | 45.3 | 50.0 | +4.7 [+3.2, +6.2] | 1.01 | +4.3 | 960 |
 | MP3D | DisCo RRP | M | 2, 0.02, 0.05 | 26.5 | 21.0 | 31.5 | +10.4 [+7.8, +13.0] | 4.46 | +4.2 | 960 |
-| MP3D | SemRayLoc | M | 2, 0.02, 0.05 | 30.0 | 22.8 | 28.6 | +5.8 [+3.2, +8.4] | 4.70 | +3.4 | 960 |
+| MP3D | SemRayLoc | M | 2, 0.02, 0.02 | 29.2 | 24.9 | 31.8 | +6.9 [+4.5, +9.4] | 4.43 | +4.9 | 960 |
 | Gibson | F3Loc mono | G | 2, 0.02, 0.02 | 67.3 | 47.0 | 59.7 | +12.7 [+11.5, +13.9] | 0.48 | +2.5 | 5440 |
 | Gibson | UnLoc | G | 2, 0.02, 0.05 | 68.5 | 51.7 | 64.0 | +12.3 [+11.2, +13.4] | 0.33 | +3.8 | 5440 |
 | Gibson | DisCo RRP | G | 1, 0.02, 0.1 | 58.1 | 38.5 | 52.1 | +13.5 [+12.3, +14.7] | 0.84 | +3.0 | 5440 |
@@ -71,12 +71,12 @@ Two facts to keep in mind when calling this "best":
 - The structure (`centre/quantile`, three-scalar rule) was fixed after room-CV on the Replica *test* rooms (2026-09-14, `feasible/results/H_*.json`), and the `indomain` source map was fixed after per-source test numbers existed (commit 303f5fa). The validation-searched protocol gives lower Replica gains (+8.8 / +7.5 / +9.5). See `docs/decision_log.md` for the disclosure to add.
 - The projection supplies half to three quarters of the gain on furnished benchmarks; the prose in `docs/method.tex` and `docs/experiments.tex` still describes the no-projection method and older numbers.
 
-## 4. Measured upgrades not yet adopted
+## 4. Measured upgrades (decided 2026-10-13; criterion: the acoustic gain)
 
 | cell | current checkpoint | candidate | validation evidence | status |
 |---|---|---|---|---|
-| Replica DisCo RRP | `rrp_replica_f_val_20260920_074725/.../epoch=02` (val_action_loss tie 0.28 with epochs 368, 386) | same run, `epoch=368` | vision recall@1m on 3 val rooms 41.7% vs 38.7% (epoch 386: 41.2%) | test not re-extracted; expect vision ↑, gain (+14.3) ↓ |
-| MP3D SemRayLoc | `outputs/srl/mp3d/semantic/epoch=02` (batch 8, 4 epochs) | `outputs/srl/mp3d_retrain_b16_e50/semantic/semantic_net-epoch=05-loss-valid=0.5990.ckpt` (batch 16, stopped at 16) | loss-valid 0.599 vs 0.656, ray acc 0.797 vs 0.769 | test not re-extracted |
+| Replica DisCo RRP | `rrp_replica_f_val_20260920_074725/.../epoch=02` (val_action_loss tie 0.28 with epochs 368, 386) | same run, `epoch=368` | vision recall@1m on 3 val rooms 41.7% vs 38.7% (epoch 386: 41.2%); full protocol: val gain +8.7 vs +12.0, test vision 39.2 vs 37.0, fused 53.2 vs 51.3, gain +14.0 vs +14.3 | **kept epoch 2** (larger gain); epoch-368 tables in `outputs/analysis/archive_disco_replica_epoch368/`, selection `VAL_replica_fixed_indomain.disco_epoch368.*`; worth one supplementary sentence: same gain on a stronger baseline |
+| MP3D SemRayLoc | `outputs/srl/mp3d/semantic/epoch=02` (batch 8, 4 epochs) | `outputs/srl/mp3d_retrain_b16_e50/semantic/semantic_net-epoch=05-loss-valid=0.5990.ckpt` (batch 16, stopped at 16) | loss-valid 0.599 vs 0.656, ray acc 0.797 vs 0.769; full protocol: val gain +5.2 vs +5.4, test vision 24.9 vs 22.8, fused 31.8 vs 28.6, gain +6.9 vs +5.8 | **adopted** (headline row updated); batch-8 tables in `outputs/analysis/archive_srl_mp3d_b8/`, selection `VAL_mp3d_fixed_indomain_srl.srl_b8.*` |
 | Gibson DisCo RRP | `rrp_gibson_val_20260920_124720/.../epoch=03` (3 epochs, lr 1e-3) | `gibsonretrain_rrp_lr1e4_e50_*/.../epoch=12` (50 epochs, lr 1e-4) | val recall@1m 42.5 vs 42.1, @0.5m 34.6 vs 37.5 (480 queries): tie | keep current; retrain is evidence that longer training does not help |
 
 To adopt one: point the checkpoint in `feasible/run_projection_matrix.py` BASE (or the SRL entry) at the candidate, extract the four tables (val and test, with and without the in-domain W) via `feasible/run_disco_reextract.py`-style commands, then

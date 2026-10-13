@@ -1,0 +1,15 @@
+# Validation-selected configuration, tested once: replica
+
+Every discrete choice and every scalar is chosen on the validation rooms by recall at 1 m; the test rooms are evaluated once with the chosen configuration and nothing is refit on them. `no projection` and `four-scalar rule` are the best configurations under the same validation-only selection with that part fixed, so each part's contribution is measured without the test rooms.
+
+| backbone | selection | source | structure | rule | scalars | val @1m | test vision | test ours | gain | 95% CI |
+|---|---|---|---|---|---|---|---|---|---|---|
+| F3Loc mono | selected | R | centre/quantile | simple | w=2 s=0.05 τv=0.02 | 48.8 | 38.3 | 48.8 | +10.5 | [+7.0, +14.0] |
+| F3Loc mono | three-scalar rule | R | centre/quantile | simple | w=2 s=0.05 τv=0.02 | 48.8 | 38.3 | 48.8 | +10.5 | [+7.0, +14.0] |
+| F3Loc mono | no projection | none | centre/quantile | simple | w=0.5 s=0.05 τv=0.05 | 43.5 | 38.3 | 44.5 | +6.2 | [+3.5, +8.8] |
+| UnLoc | selected | R | centre/quantile | simple | w=1 s=0.1 τv=0.1 | 55.7 | 50.7 | 60.0 | +9.3 | [+6.3, +12.5] |
+| UnLoc | three-scalar rule | R | centre/quantile | simple | w=1 s=0.1 τv=0.1 | 55.7 | 50.7 | 60.0 | +9.3 | [+6.3, +12.5] |
+| UnLoc | no projection | none | centre/quantile | simple | w=0.5 s=0.02 τv=0.05 | 52.5 | 50.7 | 55.8 | +5.2 | [+2.7, +7.7] |
+| DisCo-FLoc RRP | selected | R | centre/quantile | simple | w=1 s=0.1 τv=0.2 | 50.7 | 37.0 | 51.3 | +14.3 | [+10.7, +18.0] |
+| DisCo-FLoc RRP | three-scalar rule | R | centre/quantile | simple | w=1 s=0.1 τv=0.2 | 50.7 | 37.0 | 51.3 | +14.3 | [+10.7, +18.0] |
+| DisCo-FLoc RRP | no projection | none | centre/quantile | simple | w=0.5 s=0.02 τv=0.05 | 43.5 | 37.0 | 45.2 | +8.2 | [+5.2, +11.2] |

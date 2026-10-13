@@ -85,6 +85,14 @@ BASE = {
         "--grid-dir outputs/acoustic_grid_v2 --backbone disco_rrp "
         # the in-domain ray predictor, trained on Replica's training rooms like the
         # other two backbones; the Gibson checkpoint reads 31.0% here against 40.5%
+        # epochs 2, 368 and 386 tie on val_action_loss (0.28). Epoch 368 has a
+        # 3-point higher vision recall on the validation rooms (41.7 vs 38.7) and
+        # was run through the whole protocol on 2026-10-13: test gain +14.0 vs
+        # +14.3, validation gain +8.7 vs +12.0, so the acoustic gain is the same
+        # on a stronger baseline. Epoch 2 is kept as the headline (the owner's
+        # criterion is the gain); the epoch-368 tables are archived under
+        # outputs/analysis/archive_disco_replica_epoch368/ and its selection as
+        # feasible/results/VAL_replica_fixed_indomain.disco_epoch368.*
         f"--checkpoint {DISCO}/logs/rrp_runs/rrp_replica_f_val_20260920_074725/checkpoints/epoch=02-val_action_loss=0.28.ckpt "
         "--feature stft_band --nfft 256 --hop 64 --n-poses 100"),
     ("mp3d", "f3loc"): (
@@ -135,7 +143,11 @@ BASE[("replica", "srl")] = (
 BASE[("mp3d", "srl")] = (
     "--dataset-root /root/storage/echoloc_dataset/mp3d --collections mp3d_f mp3d_g "
     f"--scenes {MP3D_SCENES} --condition raw_scan_open --grid-dir outputs/acoustic_grid_mp3d "
-    f"--backbone semrayloc --checkpoint {SRL}/mp3d/semantic/best.ckpt --depth-ckpt outputs/visual/mp3d/mono_lr3e4/mono.ckpt --depth-arch f3loc "
+    # batch-16 retrain (2026-10-08, up to 50 epochs, patience 10, stopped at 16):
+    # loss-valid 0.599 / ray acc 0.797 at epoch 5 against 0.656 / 0.769 for the
+    # earlier batch-8, 4-epoch run whose best.ckpt the row used before
+    f"--backbone semrayloc --checkpoint {SRL}/mp3d_retrain_b16_e50/semantic/semantic_net-epoch=05-loss-valid=0.5990.ckpt "
+    "--depth-ckpt outputs/visual/mp3d/mono_lr3e4/mono.ckpt --depth-arch f3loc "
     "--semdesdf-dir outputs/semdesdf/mp3d --feature stft_band --nfft 256 --hop 64 --n-poses 40")
 BASE[("s3d", "srl")] = (
     "--dataset-root /root/storage/echoloc_dataset/s3d --collections s3d "

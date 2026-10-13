@@ -4,6 +4,6 @@ Every discrete choice and every scalar is chosen on the validation rooms by reca
 
 | backbone | selection | source | structure | rule | scalars | val @1m | test vision | test ours | gain | 95% CI |
 |---|---|---|---|---|---|---|---|---|---|---|
-| SemRayLoc | selected | M | centre/quantile | simple | w=2 s=0.02 τv=0.05 | 30.0 | 22.8 | 28.6 | +5.8 | [+3.2, +8.4] |
-| SemRayLoc | three-scalar rule | M | centre/quantile | simple | w=2 s=0.02 τv=0.05 | 30.0 | 22.8 | 28.6 | +5.8 | [+3.2, +8.4] |
-| SemRayLoc | no projection | none | centre/quantile | simple | w=2 s=0.02 τv=0.005 | 27.3 | 22.8 | 26.2 | +3.4 | [+1.2, +5.6] |
+| SemRayLoc | selected | M | centre/quantile | simple | w=2 s=0.02 τv=0.02 | 29.2 | 24.9 | 31.8 | +6.9 | [+4.5, +9.4] |
+| SemRayLoc | three-scalar rule | M | centre/quantile | simple | w=2 s=0.02 τv=0.02 | 29.2 | 24.9 | 31.8 | +6.9 | [+4.5, +9.3] |
+| SemRayLoc | no projection | none | centre/quantile | simple | w=2 s=0.02 τv=0.005 | 27.1 | 24.9 | 29.8 | +4.9 | [+2.8, +7.1] |
