@@ -68,7 +68,9 @@ To adopt one: point the checkpoint in `feasible/run_projection_matrix.py` BASE (
     /opt/conda/envs/f3loc/bin/python scripts/val_select.py --dataset <ds> --fixed --source indomain
     /opt/conda/envs/f3loc/bin/python scripts/val_tables.py
 
-and update `docs/tables/tab_main_multi_checkpoints.md` and the coauthor bundle `/root/storage/echoloc_assets/checkpoints/` + `MANIFEST.tsv`.
+and update `docs/tables/tab_main_multi_checkpoints.md` and the coauthor bundle
+`$ECHOLOC_ASSETS/checkpoints/` + `MANIFEST.tsv` (`$ECHOLOC_ASSETS` is the shared
+assets directory beside the dataset tree; see `CLAUDE.md` §5).
 
 ## 5. Regenerating the table from what is on disk
 

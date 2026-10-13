@@ -70,7 +70,7 @@ conda activate f3loc          # py3.8, torch 2.4.1+cu124, lightning 2.4.0
 cd av_localization
 ```
 
-The dataset root defaults to `/root/jeongeon/AV-FPLoc/datasets/f3loc` in the configs and is **read-only** — nothing is written to, copied from, or cached out of the dataset tree.
+The dataset root is machine-specific and **read-only** — nothing is written to, copied from, or cached out of the dataset tree. Point `$AVFPLOC_DATA_ROOT` at your own copy of the shared assets. The literal value sitting in `configs/*.yaml` is whatever the authoring machine used and is not portable; see `CLAUDE.md` §5.
 
 ## Reproduction
 
@@ -174,7 +174,7 @@ Use the documents in `docs/` as the source of truth for research design. Record 
 With the shared licensed assets and an existing SoundSpaces environment, run the read-only preflight:
 
 ```bash
-export AVFPLOC_DATA_ROOT=/root/jeongeon/AV-FPLoc
+export AVFPLOC_DATA_ROOT=/path/to/AV-FPLoc     # your copy of the shared licensed assets
 python scripts/verify_collaborator_env.py --scene Springhill
 ```
 

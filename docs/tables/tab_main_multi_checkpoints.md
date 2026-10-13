@@ -5,11 +5,17 @@ Verified on this node 2026-10-08: every file below exists. The table is generate
 the checkpoint paths come from `feasible/run_projection_matrix.py` (Replica / MP3D / S3D),
 `feasible/run_gibson_pipeline.py` (Gibson) and `feasible/run_zind_pipeline.py` (ZInD).
 
-Path roots:
+Path roots. `$ECHOLOC_WORKSPACE` is the outer workspace directory described in §1 of
+`CLAUDE.md` — the parent that holds this repo next to its sibling baselines. Set it to
+wherever that tree lives on your machine; the three roots below are derived from it and are
+exactly what `feasible/run_projection_matrix.py` resolves (`:59-60`).
 
-- `AV`    = `/root/storage/implementation/shared_audio/av_localization/av_localization`
-- `UNLOC` = `/root/storage/implementation/shared_audio/av_localization/UnLoc/tb_logs/my_model`
-- `DISCO` = `/root/storage/implementation/shared_audio/av_localization/DisCo-FLoc/logs/rrp_runs`
+- `AV`    = `$ECHOLOC_WORKSPACE/av_localization`
+- `UNLOC` = `$ECHOLOC_WORKSPACE/UnLoc/tb_logs/my_model`
+- `DISCO` = `$ECHOLOC_WORKSPACE/DisCo-FLoc/logs/rrp_runs`
+
+`$NODE_LOCAL1` and `$NODE_LOCAL2` below are two **node-local** scratch disks (not the shared
+network mount); the ZInD assets live only there.
 
 Sizes: F3Loc mono / SemRayLoc semantic ~298 MB, UnLoc ~1.3 GB, DisCo RRP ~178 MB.
 
@@ -62,15 +68,15 @@ run). The files above are what the current directory state resolves to; a new
 
 | Backbone | Checkpoint |
 |---|---|
-| F3Loc mono | `/root/local1/changwoo/zind_visual/zind_mono_lr3e4/mono.ckpt` |
-| UnLoc | `/root/local2/changwoo/zind_table/ckpt/unloc_zind_epoch07_step22632.ckpt` |
-| DisCo-FLoc RRP | `/root/local2/changwoo/zind_table/ckpt/disco_rrp_zind_epoch08_val0.96.ckpt` |
-| SemRayLoc (semantic) | `/root/local2/changwoo/zind_table/ckpt/srl_semantic_zind_epoch20_loss0.2507.ckpt` |
+| F3Loc mono | `$NODE_LOCAL1/zind_visual/zind_mono_lr3e4/mono.ckpt` |
+| UnLoc | `$NODE_LOCAL2/zind_table/ckpt/unloc_zind_epoch07_step22632.ckpt` |
+| DisCo-FLoc RRP | `$NODE_LOCAL2/zind_table/ckpt/disco_rrp_zind_epoch08_val0.96.ckpt` |
+| SemRayLoc (semantic) | `$NODE_LOCAL2/zind_table/ckpt/srl_semantic_zind_epoch20_loss0.2507.ckpt` |
 | SemRayLoc (depth) | = F3Loc mono above |
 
-These four live only on this node (`/root/local1`, `/root/local2`); reproducing the ZInD
-rows elsewhere means copying them along with the ZInD candidate grids
-(`/root/local2/changwoo/zind_grid_all`, `/root/local2/changwoo/zind_acoustic_grid_val`).
+These four live only on the node-local scratch disks (`$NODE_LOCAL1`, `$NODE_LOCAL2`), not on
+the shared mount; reproducing the ZInD rows elsewhere means copying them along with the ZInD
+candidate grids (`$NODE_LOCAL2/zind_grid_all`, `$NODE_LOCAL2/zind_acoustic_grid_val`).
 
 ## Acoustic projection weights (`AV/outputs/metrics/`)
 
@@ -91,6 +97,6 @@ or `acoustic_projection_zind.npz`.
 
 ## Other inputs per row
 
-- Candidate grids: `AV/outputs/acoustic_grid_v2` (Replica), `acoustic_grid_mp3d`, `acoustic_grid_s3d`, Gibson grid per `run_gibson_pipeline.py`, ZInD grids on `/root/local2` (above).
-- SemRayLoc semantic DESDF: `AV/outputs/semdesdf/{replica,mp3d,s3d}`, ZInD: `/root/local1/changwoo/zind_semdesdf`.
+- Candidate grids: `AV/outputs/acoustic_grid_v2` (Replica), `acoustic_grid_mp3d`, `acoustic_grid_s3d`, Gibson grid per `run_gibson_pipeline.py`, ZInD grids on `$NODE_LOCAL2` (above).
+- SemRayLoc semantic DESDF: `AV/outputs/semdesdf/{replica,mp3d,s3d}`, ZInD: `$NODE_LOCAL1/zind_semdesdf`.
 - Archived test-selected DisCo results (not in the table): `feasible/results/VAL_<ds>_fixed_indomain.testselected_disco.{json,md}`, tables under `outputs/analysis/archive_testselected_disco/`.

@@ -98,16 +98,19 @@ condition it came from.
   `outputs/echoloc_mono_fg/mono.ckpt` applied to anything. It is now guarded: with any other
   collection and no `--checkpoint`, it raises `SystemExit` (`:404-410`). Always let `BASE` pass
   the checkpoint through anyway — do not rely on the guard.
-- **The README's dataset root is stale.** README says the configs default to
-  `/root/jeongeon/AV-FPLoc/datasets/f3loc`; the actual yaml values are
-  `/root/storage/echoloc_dataset[/<dataset>]` and
-  `<repo>/data/f3loc` (verified in `configs/*.yaml`, 2026-10-13). Trust the yaml. `[문서 주장]`
-  for the README value.
-- **`/root/storage/echoloc_dataset` is the shared NFS mount** (`/data/changwoo` on the host),
-  and the dataset tree is read-only — nothing is written to, copied from, or cached out of it.
-  README measures the cold NFS read at ~460 img/s against ~7,000 img/s once warm, after one
-  pass of `scripts/warm_dataset_cache.py` `[문서 주장]`. Benchmarks present under
-  `echoloc_dataset/`: `replica`, `mp3d`, `s3d`, `gibson`, `zind`.
+- **The README's dataset root is stale.** README's `AVFPLOC_DATA_ROOT` export points at a
+  per-user home directory the configs no longer use; the actual yaml values are
+  `$ECHOLOC_DATASET_ROOT/<dataset>` and `<repo>/data/f3loc` (verified in `configs/*.yaml`,
+  2026-10-13). Trust the yaml. `[문서 주장]` for the README value.
+- **`$ECHOLOC_DATASET_ROOT` is the shared network mount**, bind-mounted into the container from
+  the storage host, and the dataset tree is read-only — nothing is written to, copied from, or
+  cached out of it. README measures the cold read at ~460 img/s against ~7,000 img/s once warm,
+  after one pass of `scripts/warm_dataset_cache.py` `[문서 주장]`. Benchmarks present under it:
+  `replica`, `mp3d`, `s3d`, `gibson`, `zind`.
+- **Docs here use variables; the code still hardcodes.** `configs/*.yaml`, the `BASE` dict in
+  `feasible/run_projection_matrix.py` and `feasible/run_zind_pipeline.py` carry the literal
+  mount paths rather than reading `$ECHOLOC_DATASET_ROOT`. Do not "fix" `BASE` without
+  re-extracting the tables — every acoustic cell is keyed to those argument strings.
 - **README's "GPUs 1-7 are used; GPU 0 is deliberately left free" is a property of the machine
   it was written on** `[문서 주장]`. Every card on a lab node may already be driven by another
   project's queue. Check occupancy and pass `--gpus` explicitly; never assume a free card.
@@ -149,10 +152,17 @@ Whether that belongs in git is Changwoo's open call. Until he decides:
 
 ## 8. Working tree and pushing
 
-The checkout on this node is HEAD for node work, and it currently carries **uncommitted
-changes** — 9 modified files plus several `.bak-pre-*` untracked, the ZInD table landing.
+The checkout on the compute node is HEAD for node work, and it normally carries **uncommitted
+changes** (as of 2026-10-14: `feasible/run_projection_matrix.py` modified, 4 untracked).
 Commit only the files your change touches, hunk by hunk if needed; never sweep that set into an
 unrelated commit.
 
-The container has **no GitHub credentials**. Route: bundle on the node, push from the macmini
-clone at `~/work/avloc-push/av_localization`. Never force-push.
+The container has **no GitHub credentials**. Route: commit on the node, then push from a
+separate credentialed clone (`$AVLOC_PUSH_CLONE`) on a machine that has them — fetch there and
+fast-forward, or bundle from the node. Never force-push, and never add a public remote to a
+checkout that also holds private working files.
+
+**Absolute paths do not belong in this repo's docs.** It is a public repository. Refer to
+machine locations by variable (`$ECHOLOC_WORKSPACE`, `$ECHOLOC_DATASET_ROOT`,
+`$ECHOLOC_ASSETS`, `$NODE_LOCAL1`, `$NODE_LOCAL2`, `$AVLOC_PUSH_CLONE`) and keep the
+explanation of what each one is for.
