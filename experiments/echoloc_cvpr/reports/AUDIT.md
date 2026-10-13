@@ -140,9 +140,19 @@ Two coherent ways to make the four SemRayLoc rows uniform:
    checkpoint does not exist. Requires retraining S3D's semantic net (40 epochs) or
    re-running it with `--monitor acc_rays_val`.
 
-Status: option 1 is being measured for Replica (see `EXECUTION_LOG.md`), chosen because it
-needs no GPU-hours beyond one re-extraction and because it is the option Changwoo approved.
-Its result decides whether uniformity is worth the accuracy it costs.
+**Resolved 2026-10-14 by measurement — see `EXECUTION_LOG.md`, AUD-04-FIX.** Option 1 was
+run on Replica: the `loss-valid` checkpoint scores **41.3 vs 46.7** on validation recall@1 m,
+the metric this protocol uses for every other choice, and drops test vision 35.0 → 29.0.
+**Option 1 is rejected** — it would adopt a model the selection criterion rejects. The
+coherent uniform rule (select the semantic net by validation localisation recall@1 m) is
+already satisfied by Replica's epoch 07 and MP3D's epoch 02, so **neither row needs
+changing**; the documentation claim was the thing that was wrong, and it has been corrected
+in `docs/headline_config.md` §1. Only S3D stays unverified, needing a ≈6 h retrain with
+`--monitor acc_rays_val` to produce its missing epoch-32 checkpoint.
+
+That run also produced the more consequential result: **`ΔR@1m` is not invariant to the
+backbone checkpoint** (gain +7.3 → +9.7 while vision fell 35.0 → 29.0). Gains are therefore
+confounded by backbone strength and must always be quoted beside the vision column.
 
 ### Test-informed decisions already disclosed, and confirmed here
 

@@ -18,6 +18,22 @@ and which upgrades are measured but not yet adopted. Companion to
 | queries | per scene `np.linspace` over sorted pose dirs: Replica 100, MP3D 40, Gibson 40, S3D 20, ZInD 20 per collection | `extract_mode_table.py --n-poses` |
 | test rooms | Replica 3, MP3D 12, Gibson 68 of 69 (Sargents_f2 excluded), S3D 30 of 250, ZInD 252 | `run_projection_matrix.py`, `run_gibson_pipeline.py`, `run_zind_pipeline.py` |
 
+**Backbone checkpoint selection is *not* uniform, and the earlier claim that it was has been
+withdrawn** (audited 2026-10-14, see `experiments/echoloc_cvpr/reports/AUDIT.md`). F3Loc mono
+and UnLoc are `loss-valid` argmin by hardcoded monitor; DisCo RRP is `val_action_loss` argmin
+on `val_split: val`; **SemRayLoc's semantic net is chosen by ray accuracy**
+(`run_srl_pipeline.best_checkpoint` globs `acc_rays_val` first and falls back to `loss-valid`
+only when no accuracy checkpoint exists — its docstring gives the reason: accuracy "is what
+the localiser consumes"). Replica and MP3D take the accuracy branch; **S3D took the fallback**
+because `save_top_k=2` on a loss-monitored run did not keep its accuracy-best epoch 32. No
+selection anywhere touches test.
+
+Re-selecting Replica's semantic net on `loss-valid` was measured rather than assumed
+(`EXECUTION_LOG.md`, AUD-04-FIX) and **rejected**: it scores 41.3 against 46.7 on validation
+recall@1 m, the very metric this protocol uses for every other choice. That run also showed
+**`ΔR@1m` is not invariant to the backbone checkpoint** — the gain rose +7.3 → +9.7 while
+vision fell 35.0 → 29.0 — so never quote a gain without the vision column beside it.
+
 ## 2. Every headline cell
 
 Checkpoint paths are in `docs/tables/tab_main_multi_checkpoints.md`. Recall at 1 m in %, gain with 95% paired bootstrap CI over queries, median error in m. "gain w/o W" is the same validation-selected rule without the projection (the ablation row in `feasible/results/VAL_<ds>_fixed_indomain*.md`).
