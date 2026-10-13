@@ -69,6 +69,15 @@ class GridScoreConfig:
                      which is chance.
     window_ms        envelope window. 0.5 ms measured best; 2.0 ms already
                      drops the percentile from 96.6 to 91.8.
+
+    **The defaults below are not the reported configuration.** Every table in
+    the paper is produced with ``feature='stft_band'``, ``nfft=256``,
+    ``hop=64``, and with ``sample_rate_hz``, ``direct_guard_samples`` and
+    ``usable_samples`` taken from the grid's own render rate
+    (``extract_mode_table.py:439-444``): 48 kHz, a 2 ms guard and a 128 ms
+    window, giving 93 frames and a 6*3*93 + 6*3*4 = 1746-dim feature, which is
+    the input width of the learned projection. Read the call site, not these
+    defaults, when asking what the reported numbers used.
     """
 
     sample_rate_hz: int = 8000
@@ -109,12 +118,18 @@ class GridScoreConfig:
 def to_config_rate(rir: np.ndarray, rate_hz: int, config: GridScoreConfig) -> np.ndarray:
     """Bring a recording to the rate the candidate grid was rendered at.
 
-    The dataset was re-rendered at 48 kHz while the candidate grid stayed at
-    8 kHz, and the guard and window are stored as sample counts rather than
-    times. Reading a 48 kHz file with an 8 kHz sample count silently takes a
-    2 ms guard as 0.33 ms and a 128 ms window as 21 ms, which is most of the
-    reflections thrown away. Decimating first keeps the physical convention
-    intact whatever rate the file arrives at.
+    The guard and window are stored as sample counts rather than times, so a
+    rate mismatch silently rescales them: reading a 48 kHz file against an
+    8 kHz sample count takes a 2 ms guard as 0.33 ms and a 128 ms window as
+    21 ms, throwing away most of the reflections. Decimating first keeps the
+    physical convention intact whatever rate the file arrives at.
+
+    As of 2026-10-14 this is a no-op on every benchmark: all five candidate
+    grids (Replica `acoustic_grid_v2`, MP3D, S3D, Gibson, ZInD) are rendered at
+    48 kHz, verified from each grid's own stored `config` blob, and
+    `extract_mode_table.py` reads that rate and derives the guard and window
+    from it. The guard is maintained by an earlier generation of the Replica
+    grid that was 8 kHz, and for any future grid rendered at a different rate.
     """
     if rate_hz == config.sample_rate_hz:
         return np.asarray(rir)
