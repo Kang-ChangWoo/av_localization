@@ -9,9 +9,38 @@ Opened 2026-10-14 at repo SHA `08ed5c1`.
 
 ---
 
-## D-01 — Replica DisCo RRP: the paper table disagrees with its own source JSON
+## D-01 — Replica DisCo RRP: a cited result file is overwritten in place, uncommitted
 
-**Status: OPEN. Cause [미확인]. Blocks REP-02/REP-03 for this cell.**
+**Status: OPEN, but reclassified. The committed repository is self-consistent.**
+
+**Corrected 2026-10-14.** The first version of this entry claimed the paper table disagreed
+with its own committed source JSON. That was wrong, and the error was mine: I read
+`VAL_replica_fixed_indomain.json` with a plain file open, which returns the **working tree**,
+and compared it against the committed `tab_main_multi.tex`. Comparing like with like:
+
+| | vision @1m | ours @1m | gain |
+|---|---|---|---|
+| `git show HEAD:…/VAL_replica_fixed_indomain.json` | **0.3700 (37.0)** | 0.5133 (51.3) | +0.1433 |
+| `docs/tables/tab_main_multi.tex:16` | **37.0** | — | — |
+| `docs/headline_config.md` §2 | **37.0** | 51.3 | +14.3 |
+| working tree, same path, uncommitted | 0.3917 (39.2) | 0.5317 (53.2) | +0.1400 |
+| `…disco_epoch02.json` (untracked backup) | 0.3700 (37.0) | 0.5133 (51.3) | +0.1433 |
+
+So **the committed state is coherent** — JSON, LaTeX table and `headline_config.md` all say
+37.0, and `headline_config.md` §4 is correct that the upgrade is not yet adopted in the
+committed numbers. Regenerating the paper table from HEAD would change nothing.
+
+**What is actually true, and still worth flagging:** a tracked, cited result file has been
+**overwritten in place** with the epoch-368 numbers and the change is uncommitted. It was
+written 2026-10-13 15:28 UTC (2026-10-14 00:28 KST), alongside untracked
+`VAL_mp3d_fixed_indomain_srl.srl_b8.{json,md}`, and not by this session's work. Whoever ran
+it did the defensive thing first — `…disco_epoch02.json` preserves the pre-overwrite numbers —
+but the live file a table cites now holds something the table does not.
+
+This is precisely the overwrite hazard `CLAUDE.md` §7 warns about: in this repo results are
+tracked, so re-running an evaluation under a **reused tag** silently replaces a cited file.
+The fix for future runs is the pattern used by AUD-04-FIX: extract to a scratch `--out-dir`
+and never let the selection write back into `feasible/results/`.
 
 `docs/headline_config.md` §2 names `feasible/results/VAL_<ds>_fixed_indomain.json` as the
 source of every headline cell, and `scripts/val_tables.py` generates
@@ -30,30 +59,26 @@ So the paper table and `headline_config.md` both carry **37.0**, which matches t
 generated from carries **39.2**. Regenerating `tab_main_multi.tex` from the current
 committed JSON would change the published Replica DisCo row.
 
-Compounding it: `headline_config.md` §4 lists this cell under "measured upgrades **not yet
-adopted**" and says "test not re-extracted", predicting "vision ↑, gain (+14.3) ↓". The
-committed JSON shows vision ↑ (37.0 → 39.2) and gain ↓ (+14.3 → +14.0) — exactly the
-predicted direction. Something was re-extracted; the documentation says it was not.
+The working-tree numbers are consistent with the pending checkpoint change also uncommitted
+on the node: `feasible/run_projection_matrix.py` repoints this cell from
+`epoch=02-val_action_loss=0.28` to `epoch=368-val_action_loss=0.28` (same run, same val
+loss, chosen on validation-room vision recall 41.7 % vs 38.7 %). The movement matches
+`headline_config.md` §4's prediction for that swap — vision ↑ 37.0 → 39.2, gain ↓ +14.3 →
++14.0 — so the overwrite is almost certainly that upgrade being evaluated, mid-flight.
 
-Also in flight, uncommitted on the node: `feasible/run_projection_matrix.py` repoints this
-cell's checkpoint from `epoch=02-val_action_loss=0.28` to
-`epoch=368-val_action_loss=0.28` (same run, same val loss, chosen on validation-room vision
-recall 41.7 % vs 38.7 %).
+Note the gain fell as vision rose, the same direction AUD-04-FIX found on Replica SemRayLoc.
+Two independent checkpoint swaps on Replica now move gain opposite to vision recall.
 
-What is **not** established: which checkpoint produced 0.3917. The committed JSON's last
-commit is `a4d454b`, which predates the epoch-368 work, so the simple story "the JSON was
-regenerated with epoch 368" is not supported by the git history. Do not assert a cause.
+**Resolving action — a decision, not a measurement.** Nothing needs re-running: the
+epoch-368 numbers already exist in the working tree and the epoch-02 numbers are preserved
+in `…disco_epoch02.json`. What is needed is Changwoo's call on whether the Replica DisCo row
+adopts epoch 368. Until then:
 
-**Resolving action.** Re-run the selection for Replica and diff, without touching the
-committed artifacts:
-
-    /opt/conda/envs/f3loc/bin/python scripts/val_select.py --dataset replica --fixed \
-        --source indomain --out <scratch>/VAL_replica_recheck.md
-
-then compare `results.disco.selected` against both JSONs above. Whichever it reproduces
-identifies the checkpoint actually behind the committed numbers. **Until that is done, the
-Replica DisCo row must not be quoted as reproduced**, and `tab_main_multi.tex` must not be
-regenerated — doing so would move a published number with no record of why.
+- **Do not commit the working-tree overwrite** — it would move a published number inside a
+  commit about something else.
+- **Do not regenerate `tab_main_multi.tex`** from the working tree; from HEAD it is a no-op.
+- Quote the Replica DisCo row as **37.0 → 51.3 (+14.3)**, which is what HEAD and the paper
+  table say.
 
 ---
 
