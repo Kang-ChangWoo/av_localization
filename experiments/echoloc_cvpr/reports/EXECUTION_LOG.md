@@ -5,6 +5,82 @@ experiments that actually ran appear here.
 
 ---
 
+## GAP-01 — Same-scene matched proxy vs furnished query, Replica · **DONE**
+
+- **Status:** DONE (Replica). MP3D extracting, Gibson queued.
+- **Verdict:** **The furniture mismatch is severe, and it is not survived by the matcher.**
+  Acoustic-only localisation collapses from **89.7 % to 36.0 % recall@1 m — a 53.7 point
+  drop** — when the only thing that changes is whether the query was recorded in the
+  furnished room or on the floorplan proxy. **GATE-D therefore fails as stated: the paper
+  cannot claim the matcher is robust to furnished-to-proxy mismatch.** What it can claim is
+  that fusion degrades gracefully — after fusion the same gap is only 4–13 points.
+- **Hypothesis:** acoustic verification should lose accuracy when the query carries furniture
+  the floorplan-derived reference cannot know about. Magnitude unknown before the run.
+- **Changed variable:** exactly one — `--condition raw_scan_open` → `floorplan_closed`,
+  which selects the query RIR set.
+- **Fixed controls:** same scenes (`office_4 apartment_2 frl_apartment_5`), same 300 poses
+  per scene, **the same candidate grid `outputs/acoustic_grid_v2`** (always rendered from the
+  floorplan, so the reference side never moves), same checkpoints, same projection R, same
+  `stft_band` feature. Asserted in the driver that the condition swapped and the grid did not.
+- **Control that passed:** vision error is **identical on all 600 queries in all four rows**
+  (600/600, `|Δe_vis| < 1e-9`). The visual branch never sees audio, so this confirms the two
+  arms differ only in query acoustics and the queries pair exactly.
+- **Command & hardware:** `gap01.py`, cards 4–7, 07:11→07:16Z, 8 cells (4 backbones ×
+  projected/identity). SHA `ad55b86`.
+
+| backbone | acoustic-only `e_ac` | reranked `e_rerank` | fused `e_fused` |
+|---|---|---|---|
+| | matched / furnished | matched / furnished | matched / furnished |
+| F3Loc mono | 89.7 / 36.0 (**+53.7**) | 57.5 / 47.8 (+9.7) | 56.8 / 48.5 (+8.3) |
+| UnLoc | 89.7 / 36.0 (**+53.7**) | 77.2 / 58.3 (+18.8) | 73.0 / 60.0 (+13.0) |
+| DisCo RRP | 89.7 / 36.0 (**+53.7**) | 65.3 / 52.2 (+13.2) | 63.0 / 53.3 (+9.7) |
+| SemRayLoc | 89.7 / 36.0 (**+53.7**) | 47.2 / 40.8 (+6.3) | 46.2 / 42.0 (+4.2) |
+
+n = 600 per cell. `e_ac` is **identical across all four backbones by construction** —
+acoustic-only localisation never consults the visual branch — which is a second control: it
+confirms the acoustic field and the grid are the same in every row, and that the 53.7-point
+drop is a property of the acoustics alone, not of any backbone.
+
+### What this supports
+
+1. **The acoustic branch carries real pose information.** 89.7 % standalone recall@1 m in the
+   matched condition, against the best visual backbone's 50.7 %, is not a weak signal — on
+   matched geometry acoustics alone beats vision alone decisively.
+2. **It is the direct causal evidence for the matched/furnished grouping.** The headline table
+   splits into matched benchmarks gaining +22 to +28 and furnished gaining +5 to +14. Until
+   now that split rested on a cross-dataset comparison, which the spec explicitly forbids
+   using as mismatch evidence (section 7). This is the same-scene control, and it reproduces
+   the split from one changed variable.
+3. **Fusion is doing real protective work.** The acoustic branch loses 53.7 points but the
+   fused system loses only 4–13, so the gate is absorbing most of the damage rather than
+   propagating it.
+
+### What it does NOT support
+
+- **The title's mismatch-robustness claim, as written.** A matcher that drops 53.7 points is
+  not robust to the mismatch; the *system* tolerates it because vision dominates when
+  acoustics get unreliable. Those are different claims and the paper currently makes the
+  stronger one. Per GATE-D, "geometry-mismatch robust" should come out of the title and
+  abstract unless a mismatch-aware matcher is shown to close part of this gap (BAS-04/GAP-04,
+  both blocked on the one-sided flag).
+- **Any dose-response statement.** This is two conditions, not a severity ladder. GAP-02/03
+  would be needed and both are asset-blocked.
+
+### Limitation
+
+The `e_ac`/`e_rerank`/`e_fused` columns are computed at the extraction-time default fusion
+scalars, not the validation-selected ones, so the fused figures here are not the headline
+protocol numbers and should not be quoted as such. The `e_ac` contrast is unaffected — an
+acoustic-only argmax takes no fusion scalar — and it carries the finding.
+
+### Next decision
+
+Extend to MP3D (running) and Gibson (queued): both ship `floorplan_closed` **and**
+`raw_scan_open` over the same scenes, which was verified before dispatch. Three furnished
+benchmarks with the same control turns this from one measurement into a pattern.
+
+---
+
 ## REP-03-GIBSON — Gibson reproduction, 3/3 cells bit-identical
 
 - **Status:** DONE
