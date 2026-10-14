@@ -73,11 +73,36 @@ scalars, not the validation-selected ones, so the fused figures here are not the
 protocol numbers and should not be quoted as such. The `e_ac` contrast is unaffected — an
 acoustic-only argmax takes no fusion scalar — and it carries the finding.
 
+### MP3D replication — same direction, near-identical magnitude
+
+F3Loc and UnLoc landed (DisCo and SemRayLoc still extracting). Same design: only
+`--condition` changes, candidate grid `outputs/acoustic_grid_mp3d` fixed, n = 960.
+
+| | acoustic-only | reranked | fused |
+|---|---|---|---|
+| **MP3D** F3Loc | 68.1 → 15.0 (**−53.1**) | 54.3 → 38.2 (−16.0) | 57.2 → 39.3 (−17.9) |
+| **MP3D** UnLoc | 68.1 → 15.0 (**−53.1**) | 64.2 → 47.8 (−16.4) | 66.8 → 45.2 (−21.6) |
+| **Replica** F3Loc | 89.7 → 36.0 (**−53.7**) | 57.5 → 47.8 (−9.7) | 56.8 → 48.5 (−8.3) |
+| **Replica** UnLoc | 89.7 → 36.0 (**−53.7**) | 77.2 → 58.3 (−18.8) | 73.0 → 60.0 (−13.0) |
+
+Vision identical across arms on **960/960** queries in both MP3D rows, as on Replica — the
+pairing control passes on both benchmarks.
+
+**Verdict: the finding replicates.** The acoustic-only collapse is **−53.1 pp on MP3D against
+−53.7 pp on Replica** — the same direction and, to within half a point, the same magnitude,
+despite very different absolute levels (MP3D is the harder benchmark: 68.1 % matched against
+Replica's 89.7 %, and a brutal 15.0 % once furniture is present). Two independent furnished
+benchmarks now give the same answer, so this is a pattern and not a Replica artefact.
+
+One difference worth carrying: **fusion protects less well on MP3D.** The fused gap is 17.9
+and 21.6 points against Replica's 8.3 and 13.0. So the "fusion degrades gracefully" consolation
+is itself benchmark-dependent and weaker on the larger, more ambiguous benchmark — which is
+the direction that matters for a general claim.
+
 ### Next decision
 
-Extend to MP3D (running) and Gibson (queued): both ship `floorplan_closed` **and**
-`raw_scan_open` over the same scenes, which was verified before dispatch. Three furnished
-benchmarks with the same control turns this from one measurement into a pattern.
+Gibson is queued (it also ships both conditions, verified). DisCo and SemRayLoc on MP3D are
+extracting. Nothing here changes the GATE-D verdict: it strengthens it.
 
 ---
 
