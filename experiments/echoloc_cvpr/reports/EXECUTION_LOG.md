@@ -5,13 +5,53 @@ experiments that actually ran appear here.
 
 ---
 
-## REP-02 / REP-03 — Replica and S3D reproduction sweep, 8/8 cells bit-identical
+## REP-03-GIBSON — Gibson reproduction, 3/3 cells bit-identical
 
-- **Status:** DONE. **GATE-A is satisfied for Replica and Structured3D.**
-- **Verdict:** **Every cell reproduces bit-exactly.** Sixteen test-table extractions
-  (8 cells × identity and projected) re-run from scratch, re-selected on the validation
-  rooms, reproduce the committed vision, fused, gain, median *and* the validation-chosen
-  scalars with no deviation.
+- **Status:** DONE
+- **Verdict:** **All three Gibson cells reproduce bit-exactly**, n = 5440 each.
+- **Command & hardware:** `wave2.py`, one cell per card, **cards 2–7** (identity and
+  projected for three backbones), 23:37Z → 02:45Z, ~3 h 8 min. Commands built by importing
+  `run_gibson_pipeline.base()` rather than transcribing, so the checkpoint globs are the
+  pipeline's own.
+- **SHA:** `ee3e417`
+
+| backbone | vision | ours | gain | 95% CI (paired) | n | reproduces HEAD |
+|---|---|---|---|---|---|---|
+| F3Loc mono | 47.0 | 59.7 | +12.7 | [+11.5, +13.9] | 5440 | bit-identical |
+| UnLoc | 51.7 | 64.0 | +12.3 | [+11.2, +13.4] | 5440 | bit-identical |
+| DisCo RRP | 38.5 | 52.1 | +13.5 | [+12.3, +14.7] | 5440 | bit-identical |
+
+Gibson's own `ckpt()` resolves UnLoc and DisCo by glob, so reproducing these numbers also
+confirms the glob still selects the same weights it did when the row was made.
+
+**The no-projection ablation is where Gibson's gain comes from**, and it reproduced too:
+F3Loc +2.5, UnLoc +3.8, DisCo +3.0 without the projection against +12.7/+12.3/+13.5 with it.
+On Gibson the learned projection supplies roughly three quarters of the gain — the largest
+such share of any benchmark, and a point the paper should make explicitly rather than leave
+in an ablation table.
+
+Running cell count: **12 of 19 headline cells** now independently verified (Replica 4,
+S3D 4, Gibson 3, MP3D SemRayLoc 1). ZInD's 8 are extracting.
+
+---
+
+## REP-02 / REP-03 — Replica and S3D reproduction sweep, 8/8 headline cells bit-identical
+
+- **Status:** DONE for the headline numbers; **3 ablation cells NOT reproduced** (see the
+  correction below). **GATE-A is satisfied for Replica and Structured3D.**
+- **Verdict:** **All 8 headline cells reproduce bit-exactly.** Re-extracted from scratch and
+  re-selected on the validation rooms, they reproduce the committed vision, fused, gain,
+  median *and* the validation-chosen scalars with no deviation.
+
+> **Correction (2026-10-14 12:0x KST).** An earlier version of this card said "sixteen
+> extractions, every cell reproduces". **13 of 16 extractions succeeded, not 16.** Three
+> identity-table extractions — Replica F3Loc, DisCo and SemRayLoc — failed with
+> `error: argument --tag: expected one argument`, and I did not check the exit codes before
+> reporting. Cause and consequence are below. The headline claim is unaffected, because the
+> selected row's vision/ours/gain/median come from the **projected** table and all eight of
+> those succeeded; what was not independently reproduced is the **"no projection" ablation
+> row** for those three cells, which silently fell back to the repo's own tables through the
+> sandbox symlink. Those three ablation figures should not be quoted as re-verified.
 - **Changed variable:** none. Determinism check.
 - **Command & hardware:** `rep03_sweep.py`, a refilling card pool, one cell per card on
   **cards 2–7** of n1, 06:36→07:17 KST. Selection CPU-only in a real-file sandbox.
@@ -48,11 +88,39 @@ n = 600 per Replica cell, 558 per S3D cell.
 - S3D's figures still rest on 30 of 250 test scenes (n = 558), the thinnest evidence base of
   the five benchmarks, which is why its CIs are the widest here.
 
+### Two defects found by the failure, both worth keeping
+
+**1. Three legacy identity tags are unreachable through `--tag`.** `extract_mode_table.py`
+always names its output `queries_<cond>_<PREFIX[backbone]><tag>.csv`, so the only reachable
+names are `PREFIX`-prefixed. But `IDENT` holds legacy names from an older scheme that are
+**not** extensions of `PREFIX`:
+
+| tag | `PREFIX` | reachable by `--tag`? |
+|---|---|---|
+| `unlocSTFT` | `unloc` | yes, suffix `STFT` |
+| `semrayloc` | `semrayloc` | yes, suffix is legitimately empty — must be quoted `--tag ""` |
+| `f3STFT` | `f3loc_mono` | **no** — not a `f3loc_mono*` name at all |
+| `discoID` | `disco_rrp` | **no** — not a `disco_rrp*` name at all |
+
+`run_projection_matrix.py` never hits this because it only *extracts* under `tag_of()`, which
+always returns `PREFIX+suffix`; the `IDENT` legacy names are only ever *read*. So those two
+tables cannot be regenerated under their own names at all — they are **unreproducible by
+name**, and re-verifying them requires extracting to a new name and comparing content.
+
+**2. My queue runner built `--tag ` with an empty argument.** Deriving the suffix as
+`tag[len(PREFIX):]` yields `""` whenever the tag is not longer than the prefix, and an
+unquoted empty shell word makes argparse consume the next flag. Fixed by quoting the value.
+The deeper lesson: **the runner recorded `FAILED:rc2` in the index and I reported the sweep
+without reading the exit codes.** A per-cell status column is worthless unless it is checked
+before the result is believed.
+
 ### Artifact paths
 
-`$NODE_LOCAL1/echoloc_cvpr/rep03_sweep/` — `analysis/` (16 table sets),
-`VAL_{replica,s3d}_rerun{,_srl}.{md,json}`, `logs/`, `farm/`. Index at
-`$NODE_LOCAL1/echoloc_cvpr/RUN_INDEX.tsv`.
+`$NODE_LOCAL1/echoloc_cvpr/rep03_sweep/` — `analysis/` (13 table sets),
+`VAL_{replica,s3d}_rerun{,_srl}.{md,json}`, `logs/`, `farm/`. Append-only index at
+`$NODE_LOCAL1/echoloc_cvpr/RUN_INDEX.tsv`; **one-row-per-run current state** at
+`STATUS.tsv`, generated by `status.py`, which also promotes a stale `RUNNING` row to
+`DONE(marker)` when a completion marker exists on disk.
 
 ---
 
